@@ -1,4 +1,4 @@
-const CACHE_NAME = 'elshamaa-pwa-v8'; // غيرت رقم الإصدار عشان يحذف الكاش القديم
+const CACHE_NAME = 'elshamaa-pwa-v9'; // غيرت رقم الإصدار عشان يحذف الكاش القديم
 const urlsToCache = [
   '/break-./',
   '/break-./index.html',
