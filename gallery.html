@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ELSHAMAA | معرض الإنجازات</title>
+    
+    <!-- خطوط وأيقونات -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --primary: #6366f1;
+            --accent: #06b6d4;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --danger: #ef4444;
+            --success: #10b981;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        /* --- الهيدر --- */
+        header {
+            background: rgba(15, 23, 42, 0.95);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding: 15px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .logo {
+            font-size: 1.6rem;
+            font-weight: 900;
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* زر العودة للنظام / رابط الموقع */
+        .nav-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: 0.3s;
+            padding: 8px 15px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .nav-link:hover {
+            color: var(--accent);
+            background: rgba(6, 182, 212, 0.1);
+            transform: translateX(5px);
+            border-color: var(--accent);
+        }
+        .nav-link i { transition: 0.3s; }
+        .nav-link:hover i { transform: rotate(-180deg); }
+
+        .admin-controls { display: flex; align-items: center; gap: 15px; }
+
+        .btn-login {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white; padding: 8px 15px; border-radius: 8px; cursor: pointer;
+            font-family: 'Cairo'; font-size: 0.9rem; transition: 0.3s;
+        }
+        .btn-login:hover { background: var(--primary); border-color: var(--primary); }
+
+        .user-info { display: none; align-items: center; gap: 10px; color: var(--accent); font-weight: bold; }
+        .btn-logout {
+            background: var(--danger); color: white; border: none;
+            padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;
+        }
+
+        /* --- Hero Section --- */
+        .hero {
+            text-align: center; padding: 60px 20px 40px;
+            background: radial-gradient(circle at center, rgba(99, 102, 241, 0.15) 0%, rgba(15, 23, 42, 0) 70%);
+        }
+        .hero h1 { font-size: 2.8rem; margin-bottom: 15px; color: white; }
+        .hero p { color: var(--text-muted); max-width: 600px; margin: 0 auto; }
+
+        /* --- لوحة الرفع --- */
+        #adminUploadSection {
+            max-width: 800px; margin: 0 auto 40px auto;
+            background: rgba(99, 102, 241, 0.1);
+            border: 2px dashed var(--primary); border-radius: 20px; padding: 25px;
+            display: none;
+        }
+
+        .upload-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; color: var(--primary); font-weight: bold; }
+        
+        .upload-area { display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px; }
+        
+        .upload-box {
+            background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px;
+            padding: 20px; text-align: center; cursor: pointer; transition: 0.3s;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; height: 200px;
+        }
+        .upload-box:hover { background: rgba(255,255,255,0.05); border-color: var(--accent); }
+        .upload-box i { font-size: 3rem; color: var(--text-muted); margin-bottom: 10px; }
+        .upload-box p { color: #aaa; font-size: 0.9rem; }
+
+        .upload-inputs { display: flex; flex-direction: column; gap: 10px; }
+        .upload-inputs textarea {
+            width: 100%; height: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px; color: white; padding: 15px; font-family: 'Cairo'; resize: none; outline: none;
+        }
+        .upload-inputs textarea:focus { border-color: var(--primary); }
+
+        .preview-container { display: none; margin-top: 10px; position: relative; }
+        .preview-img {
+            width: 100%; height: 200px; object-fit: cover; border-radius: 12px; border: 2px solid var(--accent);
+        }
+        .remove-preview {
+            position: absolute; top: -10px; right: -10px; background: var(--danger); color: white;
+            border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-weight: bold;
+        }
+
+        .btn-upload {
+            background: var(--accent); color: #000; border: none; padding: 12px; border-radius: 10px;
+            font-weight: bold; cursor: pointer; font-family: 'Cairo'; margin-top: 15px; transition: 0.3s; width: 100%;
+        }
+        .btn-upload:hover { background: #22d3ee; transform: scale(1.02); }
+        .btn-upload:disabled { background: #555; cursor: not-allowed; transform: none; }
+
+        /* --- شبكة الصور --- */
+        .container { max-width: 1400px; margin: 0 auto; padding: 0 20px 40px; }
+        
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .card {
+            background: var(--card-bg); border-radius: 20px;
+            overflow: hidden; border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s ease; cursor: pointer; position: relative;
+        }
+        
+        .card.hidden-card {
+            opacity: 0.6;
+            border: 2px dashed var(--danger);
+            transform: scale(0.98);
+        }
+
+        .card:hover:not(.hidden-card) { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.4); border-color: var(--accent); }
+        
+        .card-image { width: 100%; height: 250px; object-fit: cover; transition: 0.5s; }
+        .card:not(.hidden-card):hover .card-image { transform: scale(1.05); }
+        
+        .card-info { padding: 20px; }
+        .card-sender { font-weight: bold; color: var(--primary); margin-bottom: 5px; display: flex; align-items: center; gap: 8px; }
+        .card-date { font-size: 0.85rem; color: var(--text-muted); }
+        .card-msg { margin-top: 10px; color: #ccc; font-size: 0.95rem; line-height: 1.5; }
+
+        /* --- أزرار التحكم --- */
+        .card-actions {
+            position: absolute; top: 15px; right: 15px;
+            display: flex; gap: 8px; z-index: 10;
+        }
+
+        .action-btn {
+            width: 35px; height: 35px; border-radius: 50%; border: none;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 0.9rem; transition: 0.3s;
+        }
+
+        .btn-delete { background: var(--danger); color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .btn-delete:hover { background: #dc2626; transform: scale(1.1); }
+
+        .btn-restore { background: var(--success); color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .btn-restore:hover { background: #059669; transform: scale(1.1); }
+
+        /* --- Lightbox --- */
+        .lightbox {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 1000;
+            display: none; justify-content: center; align-items: center;
+            flex-direction: column; opacity: 0; transition: 0.3s;
+        }
+        .lightbox.active { display: flex; opacity: 1; }
+        .lightbox img { max-width: 90%; max-height: 85vh; border-radius: 10px; border: 2px solid var(--accent); }
+        .lightbox-details { text-align: center; color: white; margin-top: 20px; max-width: 600px; }
+        .close-lb { position: absolute; top: 20px; right: 20px; color: white; font-size: 2rem; cursor: pointer; }
+
+        /* --- Login Modal --- */
+        #loginModal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 2000;
+            justify-content: center; align-items: center; backdrop-filter: blur(5px);
+        }
+        .login-box {
+            background: var(--card-bg); padding: 40px; border-radius: 20px;
+            width: 90%; max-width: 350px; text-align: center;
+            border: 1px solid var(--primary); box-shadow: 0 0 30px rgba(99, 102, 241, 0.3);
+        }
+        .login-box h3 { color: var(--accent); margin-bottom: 20px; }
+        .login-input {
+            width: 100%; padding: 12px; margin: 10px 0;
+            background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px; color: white; outline: none; font-family: 'Cairo';
+        }
+        .login-input:focus { border-color: var(--primary); }
+        .btn-action {
+            width: 100%; padding: 12px; background: var(--primary);
+            border: none; color: white; border-radius: 8px;
+            font-weight: bold; cursor: pointer; font-family: 'Cairo'; margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .gallery-grid { grid-template-columns: 1fr; }
+            .upload-area { grid-template-columns: 1fr; }
+            .header-left { gap: 15px; }
+            .logo { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- الهيدر -->
+    <header>
+        <div class="header-left">
+            <div class="logo">ELSHAMAA</div>
+            <!-- زر دخول الإدارة تم نقله إلى هنا -->
+            <button id="loginBtn" onclick="openLoginModal()" class="btn-login">
+                <i class="fas fa-user-shield"></i> دخول الإدارة
+            </button>
+        </div>
+        
+        <div class="admin-controls">
+            <div id="userInfo" class="user-info">
+                <span id="userNameDisplay"></span>
+                <button onclick="logout()" class="btn-logout">خروج</button>
+            </div>
+            <!-- رابط موقع البريك تم نقله إلى هنا -->
+            <a href="index.html" class="nav-link">
+                <i class="fas fa-arrow-right"></i> موقع البريك
+            </a>
+        </div>
+    </header>
+
+    <!-- الترحيب -->
+    <section class="hero">
+        <h1>معرض الإنجازات</h1>
+        <p>توثيق اللحظات المميزة وأبطال العمل في ELSHAMAA</p>
+    </section>
+
+    <!-- منطقة الرفع (تظهر للأدمن فقط) -->
+    <div id="adminUploadSection">
+        <div class="upload-header">
+            <span><i class="fas fa-cloud-upload-alt"></i> إضافة صورة جديدة للمعرض</span>
+        </div>
+        
+        <div class="upload-area">
+            <div class="upload-box" onclick="document.getElementById('imgInput').click()">
+                <input type="file" id="imgInput" accept="image/*" style="display: none" onchange="previewImage(this)">
+                <div id="uploadPlaceholder">
+                    <i class="fas fa-image"></i>
+                    <p>اضغط لاختيار صورة</p>
+                </div>
+                <div id="previewContainer" class="preview-container">
+                    <img id="imgPreview" class="preview-img">
+                    <button onclick="clearImage()" class="remove-preview">×</button>
+                </div>
+            </div>
+
+            <div class="upload-inputs">
+                <textarea id="uploadMessage" placeholder="اكتب وصفاً أو رسالة لهذه الصورة..."></textarea>
+                <button id="uploadBtn" onclick="uploadPost()" class="btn-upload" disabled>
+                    نشر الصورة في المعرض 🚀
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- الصور -->
+    <div class="container">
+        <div id="loading" style="text-align:center; padding:20px; color:var(--text-muted);">جاري التحميل...</div>
+        <div id="galleryGrid" class="gallery-grid" style="display: none;"></div>
+        <div id="emptyState" style="display:none; text-align:center; padding:50px; color:var(--text-muted);">لا توجد صور</div>
+    </div>
+
+    <!-- نافذة الدخول -->
+    <div id="loginModal">
+        <div class="login-box">
+            <h3>دخول المشرف</h3>
+            <input type="text" id="loginUser" class="login-input" placeholder="اسم المستخدم">
+            <input type="password" id="loginPass" class="login-input" placeholder="كلمة المرور">
+            <button onclick="attemptLogin()" class="btn-action">دخول</button>
+            <button onclick="closeLoginModal()" style="background:transparent; border:none; color:#888; margin-top:10px; cursor:pointer;">إلغاء</button>
+        </div>
+    </div>
+
+    <!-- نافذة تكبير الصورة -->
+    <div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+        <div class="close-lb" onclick="forceCloseLightbox()">&times;</div>
+        <img id="lbImg" src="">
+        <div class="lightbox-details">
+            <h3 id="lbSender"></h3>
+            <p id="lbMsg"></p>
+        </div>
+    </div>
+
+    <script>
+        // إعدادات Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBojsAZ73wpf-4cD8TviULncyxIIOUO2qY",
+            authDomain: "brak-nagaf.firebaseapp.com",
+            projectId: "brak-nagaf",
+            storageBucket: "brak-nagaf.firebasestorage.app",
+            messagingSenderId: "149166416863",
+            appId: "1:149166416863:web:e94fe392f868da07bbda6a",
+            databaseURL: "https://brak-nagaf-default-rtdb.firebaseio.com/"
+        };
+
+        // إعدادات Cloudinary
+        const CLOUD_NAME = "dr2ekwtae";
+        const UPLOAD_PRESET = "my_preset";
+
+        // تهيئة Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let currentUser = null;
+        const MANAGERS = ['mahmoud', 'abutamim', 'ahmed'];
+
+        // --- دوال الرفع (Cloudinary) ---
+        async function uploadToCloudinary(file) {
+            if (!file) return null;
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("upload_preset", UPLOAD_PRESET);
+
+            try {
+                const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
+                    method: "POST", body: formData
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error.message);
+                return data.secure_url;
+            } catch (error) {
+                console.error("Upload Error:", error);
+                alert("فشل رفع الصورة: " + error.message);
+                return null;
+            }
+        }
+
+        // --- دوال الواجهة (الرفع) ---
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('imgPreview').src = e.target.result;
+                    document.getElementById('uploadPlaceholder').style.display = 'none';
+                    document.getElementById('previewContainer').style.display = 'block';
+                    document.getElementById('uploadBtn').disabled = false;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function clearImage() {
+            document.getElementById('imgInput').value = '';
+            document.getElementById('imgPreview').src = '';
+            document.getElementById('uploadPlaceholder').style.display = 'block';
+            document.getElementById('previewContainer').style.display = 'none';
+            document.getElementById('uploadBtn').disabled = true;
+        }
+
+        async function uploadPost() {
+            const fileInput = document.getElementById('imgInput');
+            const messageInput = document.getElementById('uploadMessage');
+            const uploadBtn = document.getElementById('uploadBtn');
+
+            if (!fileInput.files[0]) return alert("اختر صورة أولاً");
+            
+            uploadBtn.disabled = true;
+            uploadBtn.innerText = "جاري الرفع إلى السحابة...";
+
+            try {
+                const imageUrl = await uploadToCloudinary(fileInput.files[0]);
+                
+                if (imageUrl) {
+                    await db.ref('broadcasts').push({
+                        message: messageInput.value.trim() || "صورة مميزة جديدة",
+                        image: imageUrl,
+                        timestamp: Date.now(),
+                        sender: currentUser.realName || currentUser.username,
+                        target: "all",
+                        galleryHidden: false
+                    });
+                    
+                    alert("تم النشر بنجاح في المعرض! ✅");
+                    messageInput.value = '';
+                    clearImage();
+                }
+            } catch (error) {
+                alert("حدث خطأ أثناء النشر: " + error.message);
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.innerText = "نشر الصورة في المعرض 🚀";
+            }
+        }
+
+        // --- تسجيل الدخول ---
+        function openLoginModal() { document.getElementById('loginModal').style.display = 'flex'; }
+        function closeLoginModal() { document.getElementById('loginModal').style.display = 'none'; }
+
+        async function attemptLogin() {
+            const u = document.getElementById('loginUser').value.trim().toLowerCase();
+            const p = document.getElementById('loginPass').value.trim();
+
+            if(!u || !p) return alert("اكتب البيانات");
+
+            const snapshot = await db.ref('users/' + u).once('value');
+            const userData = snapshot.val();
+
+            if(userData && userData.password === p) {
+                currentUser = userData;
+                currentUser.username = u;
+                updateAuthUI();
+                closeLoginModal();
+                loadGallery();
+                alert("مرحباً بك يا " + userData.realName);
+            } else {
+                alert("بيانات خاطئة");
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            updateAuthUI();
+            loadGallery();
+        }
+
+        function updateAuthUI() {
+            const loginBtn = document.getElementById('loginBtn');
+            const userInfo = document.getElementById('userInfo');
+            const userNameDisplay = document.getElementById('userNameDisplay');
+            const uploadSection = document.getElementById('adminUploadSection');
+
+            if(currentUser && MANAGERS.includes(currentUser.username)) {
+                loginBtn.style.display = 'none';
+                userInfo.style.display = 'flex';
+                userNameDisplay.innerText = currentUser.realName;
+                uploadSection.style.display = 'block';
+            } else {
+                loginBtn.style.display = 'flex';
+                userInfo.style.display = 'none';
+                uploadSection.style.display = 'none';
+            }
+        }
+
+        // --- تحميل المعرض ---
+        function loadGallery() {
+            const grid = document.getElementById('galleryGrid');
+            const loading = document.getElementById('loading');
+            const empty = document.getElementById('emptyState');
+
+            loading.style.display = 'block';
+            grid.style.display = 'none';
+            empty.style.display = 'none';
+
+            db.ref('broadcasts').on('value', (snap) => {
+                loading.style.display = 'none';
+                const data = snap.val();
+
+                if(!data) { empty.style.display = 'block'; return; }
+
+                const entries = Object.entries(data).sort((a, b) => b[1].timestamp - a[1].timestamp);
+                grid.innerHTML = '';
+                let count = 0;
+
+                entries.forEach(([key, item]) => {
+                    // الفلترة: لو زائر والصورة مخفية، نتخطاها
+                    if (!currentUser && item.galleryHidden) {
+                        return; 
+                    }
+
+                    if(item.image && (item.image.includes('cloudinary') || item.image.includes('http'))) {
+                        count++;
+                        const card = document.createElement('div');
+                        
+                        card.className = 'card';
+                        if(item.galleryHidden) card.classList.add('hidden-card');
+
+                        card.onclick = (e) => {
+                            if(e.target.closest('.action-btn')) return;
+                            openLightbox(item);
+                        };
+
+                        // منطق الأزرار (تظهر للأدمن)
+                        let actionsHTML = '';
+                        if(currentUser && MANAGERS.includes(currentUser.username)) {
+                            if(item.galleryHidden) {
+                                actionsHTML = `<button onclick="restoreImage('${key}')" class="action-btn btn-restore" title="إعادة للمعرض"><i class="fas fa-eye"></i></button>`;
+                            } else {
+                                actionsHTML = `<button onclick="deleteImage('${key}')" class="action-btn btn-delete" title="إخفاء من المعرض"><i class="fas fa-trash"></i></button>`;
+                            }
+                        }
+
+                        const date = new Date(item.timestamp).toLocaleDateString('ar-EG');
+
+                        card.innerHTML = `
+                            <div class="card-actions">
+                                ${actionsHTML}
+                            </div>
+                            <img src="${item.image}" class="card-image" loading="lazy">
+                            <div class="card-info">
+                                <div class="card-sender"><i class="fas fa-user"></i> ${item.sender || 'Admin'}</div>
+                                <div class="card-date">${date}</div>
+                                ${item.message ? `<div class="card-msg">${item.message}</div>` : ''}
+                            </div>
+                        `;
+                        grid.appendChild(card);
+                    }
+                });
+
+                if(count === 0) empty.style.display = 'block';
+                else grid.style.display = 'grid';
+            });
+        }
+
+        // --- دوال التحكم ---
+        function deleteImage(key) {
+            if(!confirm("هل تريد إخفاء هذه الصورة من المعرض العام؟\n\n(الصورة ستختفي من المعرض هنا، لكنها ستبقى موجودة في لوحة التحكم الرئيسية)")) return;
+
+            db.ref('broadcasts/' + key).update({
+                galleryHidden: true,
+                hiddenBy: currentUser.username
+            }).then(() => {
+                alert("تم إخفاء الصورة من المعرض ✅");
+            });
+        }
+
+        function restoreImage(key) {
+            if(!confirm("هل تريد إعادة هذه الصورة للظهور في المعرض العام؟")) return;
+
+            db.ref('broadcasts/' + key).update({
+                galleryHidden: false
+            }).then(() => {
+                alert("تمت إعادة الصورة للمعرض بنجاح ✅");
+            });
+        }
+
+        // --- Lightbox ---
+        function openLightbox(item) {
+            const lb = document.getElementById('lightbox');
+            document.getElementById('lbImg').src = item.image;
+            document.getElementById('lbSender').innerText = item.sender;
+            document.getElementById('lbMsg').innerText = item.message;
+            lb.classList.add('active');
+        }
+        function closeLightbox(e) { if(e.target.id === 'lightbox') forceCloseLightbox(); }
+        function forceCloseLightbox() { document.getElementById('lightbox').classList.remove('active'); }
+
+        // التشغيل
+        window.onload = loadGallery;
+    </script>
+</body>
+</html>
