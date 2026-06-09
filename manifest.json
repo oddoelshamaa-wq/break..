@@ -1,0 +1,19 @@
+{
+  "name": "ELSHAMAA - Web Development",
+  "short_name": "ELSHAMAA",
+  "description": "نظام الإدارة الذكي لإدارة الحضور والبريك",
+  "start_url": "/break-./index.html",
+  "scope": "/break-./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f172a",
+  "theme_color": "#6366f1",
+  "icons": [
+    {
+      "src": "https://z-cdn-media.chatglm.cn/files/deb74341-7358-4ff7-a96d-ca88f88b91c8.jpg?auth_key=1880940682-495a764656ff485397f43bdf284ebf17-0-4425eec7b3991134d63aa06ac2c6062f",
+      "sizes": "512x512",
+      "type": "image/jpg",
+      "purpose": "any"
+    }
+  ]
+}
