@@ -3,7 +3,7 @@
   "short_name": "ELSHAMAA",
   "description": "نظام الإدارة الذكي لإدارة الحضور والبريك",
   "start_url": "/break-./index.html",
-  "scope": "/break-./",
+  "scope": "/break..",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#0f172a",
