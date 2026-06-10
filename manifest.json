@@ -2,16 +2,16 @@
   "name": "ELSHAMAA",
   "short_name": "ELSHAMAA",
   "description": "نظام الإدارة الذكي",
-  "start_url": "./index.html",
-  "scope": "./",
+  "start_url": "/break../index.html",
+  "scope": "/break../",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#0f172a",
   "theme_color": "#6366f1",
   "icons": [
     {
-      "src": "https://z-cdn-media.chatglm.cn/files/a4fb266f-8730-45d3-89d4-92cfc8931f49.png?auth_key=1881085039-4055ca787c9b4bfc8b0ea1b602fb4584-0-271911f8071f0873ba6bfba20f2c3ca7?v=2",
-      "sizes": "512x512",
+      "src": "https://z-cdn-media.chatglm.cn/files/a4fb266f-8730-45d3-89d4-92cfc8931f49.png?auth_key=1881085039-4055ca787c9b4bfc8b0ea1b602fb4584-0271911f8071f0873ba6bfba20f2c3ca7?v=2",
+      "scope": "512x512",
       "type": "image/png",
       "purpose": "any"
     }
