@@ -1,9 +1,9 @@
 {
-  "name": "ELSHAMAA ",
+  "name": "ELSHAMAA",
   "short_name": "ELSHAMAA",
-  "description": "نظام الإدارة الذكي لإدارة الحضور والبريك",
-  "start_url": "/break.../index.html",
-  "scope": "/break..",
+  "description": "نظام الإدارة الذكي",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#0f172a",
