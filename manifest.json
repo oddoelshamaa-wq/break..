@@ -10,10 +10,16 @@
   "theme_color": "#6366f1",
   "icons": [
     {
-      "src": "https://z-cdn-media.chatglm.cn/files/a4fb266f-8730-45d3-89d4-92cfc8931f49.png?auth_key=1881085039-4055ca787c9b4bfc8b0ea1b602fb4584-0271911f8071f0873ba6bfba20f2c3ca7?v=2",
-      "scope": "512x512",
-      "type": "image/png",
+      "src": "https://z-cdn-media.chatglm.cn/files/7d4d1edb-d8aa-482e-840e-0492871f2bdf.jpg?auth_key=1881098147-176910170c5241b9b6f31936865757ae-0-e94dd5a43309ee23faa863616eaf3400",
+      "sizes": "512x512",
+      "type": "image/jpeg",
       "purpose": "any"
+    },
+    {
+      "src": "https://z-cdn-media.chatglm.cn/files/7d4d1edb-d8aa-482e-840e-0492871f2bdf.jpg?auth_key=1881098147-176910170c5241b9b6f31936865757ae-0-e94dd5a43309ee23faa863616eaf3400",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "maskable"
     }
   ]
 }
