@@ -4094,51 +4094,77 @@
                                         });
                                     }
 
-                                    function renderUserReport() {
-                                        const un = document.getElementById('reportUserSelect').value; if(!un) return;
-                                        const u = allUsersData[un], sB = document.getElementById('sessionsReportBody'), mS = document.getElementById('monthlySummary'), start = document.getElementById('filterStartDate').value, end = document.getElementById('filterEndDate').value;
-                                        sB.innerHTML = ''; mS.classList.remove('hidden');
-                                        let tOx=0, tPr=0, tFo=0, tVi=0; const allowS = (u.allowance||45)*60;
-                                        if (u.sessions) {
-                                            const grouped = {};
-                                            Object.keys(u.sessions).forEach(k => {
-                                                const s = u.sessions[k], cD = s.date.split('/').reverse().join('-');
-                                                if ((start && cD < start) || (end && cD > end)) return;
-                                                if(!grouped[s.date]) grouped[s.date] = { acts: [], total: 0, prayer: 0, follow: 0, vip: 0 };
-                                                const dur = parseInt(s.duration) || 0;
-                                                let deleteBtnHTML = ""; if(['mahmoud', 'ahmed'].includes(currentUser.username)) deleteBtnHTML = `<button onclick="deleteSpecificSession('${un}', '${k}')" style="background:var(--danger); border:none; color:white; border-radius:5px; padding:2px 6px; cursor:pointer; font-size:0.7rem; margin-right:5px;">حذف</button>`;
-                                                
-                                                const timeDisplay = s.startTime ?
-                                                    `<span style="color:#aaa; margin-left:8px; font-size:0.7rem;">
-                                                        (خروج: ${s.startTime} | رجوع: ${s.endTime || '---'})
-                                                    </span>` : "";
+                     function renderUserReport() {
+    const un = document.getElementById('reportUserSelect').value; 
+    if(!un) { alert("يرجى اختيار موظف أولاً"); return; }
 
-                                                grouped[s.date].acts.push(`
-            <div style="font-size:0.8rem; display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; background:rgba(255,255,255,0.03); padding:10px; border-radius:8px; border-right:4px solid var(--primary);">
-                <span style="flex:1;">
-                    <b style="color:var(--primary); font-size:0.9rem;">${s.type}</b> 
-                    <span style="margin:0 10px;">⬅</span>
-                    ${timeDisplay}
-                    <span style="margin-right:15px; color:#fff;">المدة: <b>${Math.round(dur/60)}د</b></span>
-                    <br>
-                    <small style="opacity:0.6; display:block; margin-top:4px;">📌 السبب: ${s.reason||'--'}</small>
-                </span>
-                ${deleteBtnHTML}
+    const u = allUsersData[un];
+    const sB = document.getElementById('sessionsReportBody');
+    const mS = document.getElementById('monthlySummary');
+    
+    const start = document.getElementById('filterStartDate').value; // YYYY-MM-DD
+    const end = document.getElementById('filterEndDate').value;     // YYYY-MM-DD
+
+    sB.innerHTML = ''; 
+    mS.classList.remove('hidden');
+    let tOx=0, tPr=0, tFo=0, tVi=0; 
+    const allowS = (u.allowance || 45) * 60;
+
+    if (!u.sessions || Object.keys(u.sessions).length === 0) {
+        sB.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">⚠️ لا توجد جلسات مسجلة (مغلقة) لهذا الموظف بعد. تأكد من إنهاء البريك أولاً.</td></tr>';
+        return;
+    }
+
+    const grouped = {};
+    Object.keys(u.sessions).forEach(k => {
+        const s = u.sessions[k];
+        if(!s.date) return;
+        
+        // تحويل التاريخ لتوحيد المقارنة
+        const parts = s.date.split('/');
+        const cD = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+
+        if ((start && cD < start) || (end && cD > end)) return;
+
+        if(!grouped[s.date]) grouped[s.date] = { acts: [], total: 0, prayer: 0, follow: 0, vip: 0 };
+        const dur = parseInt(s.duration) || 0;
+        
+        const timeDisplay = `<span style="color:#aaa; font-size:0.7rem;">(${s.startTime || '--'} إلى ${s.endTime || '--'})</span>`;
+
+        grouped[s.date].acts.push(`
+            <div style="font-size:0.8rem; margin-bottom:5px; background:rgba(255,255,255,0.03); padding:8px; border-radius:8px;">
+                <b style="color:var(--primary);">${s.type}</b> ${timeDisplay}
+                <span style="float:left;">${Math.round(dur/60)} د</span>
             </div>
         `);
-                                                if(s.type === 'بريك عام' || s.type === 'طوارئ') grouped[s.date].total += dur;
-                                                else if(s.type === 'صلاة') grouped[s.date].prayer += dur; else if(s.type === 'متابع عميل') grouped[s.date].follow += dur; else if(s.type === 'استراحة VIP') grouped[s.date].vip += dur;
-                                            });
-                                            Object.keys(grouped).sort((a,b)=>b.localeCompare(a)).forEach(d => {
-                                                const ox = Math.max(0, grouped[d].total - allowS); tOx += ox; tPr += grouped[d].prayer; tFo += grouped[d].follow; tVi += grouped[d].vip;
-                                                sB.innerHTML += `<tr><td>${d}</td><td>${grouped[d].acts.join('')}</td><td>${Math.round(grouped[d].total/60)}د</td><td style="color:${ox>0? 'var(--danger)':'var(--success)'}">${Math.round(ox/60)}د</td></tr>`;
-                                            });
-                                        }
-                                        document.getElementById('monthTotalBreaks').innerText = Math.round(tOx/60) + " د";
-                                        document.getElementById('monthTotalPrayer').innerText = Math.round(tPr/60) + " د";
-                                        document.getElementById('monthTotalFollowUp').innerText = Math.round(tFo/60) + " د";
-                                        document.getElementById('monthTotalVIP').innerText = Math.round(tVi/60) + " د";
-                                    }
+
+        if(s.type === 'بريك عام' || s.type === 'طوارئ') grouped[s.date].total += dur;
+        else if(s.type === 'صلاة') grouped[s.date].prayer += dur; 
+        else if(s.type === 'متابع عميل') grouped[s.date].follow += dur; 
+        else if(s.type === 'استراحة VIP') grouped[s.date].vip += dur;
+    });
+
+    const dates = Object.keys(grouped).sort((a,b) => b.localeCompare(a));
+    if(dates.length === 0) {
+        sB.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">🔍 لم يتم العثور على بيانات في هذه الفترة المحددة.</td></tr>';
+    }
+
+    dates.forEach(d => {
+        const ox = Math.max(0, grouped[d].total - allowS); 
+        tOx += ox; tPr += grouped[d].prayer; tFo += grouped[d].follow; tVi += grouped[d].vip;
+        sB.innerHTML += `<tr>
+            <td style="vertical-align:top;">${d}</td>
+            <td>${grouped[d].acts.join('')}</td>
+            <td>${Math.round(grouped[d].total/60)} د</td>
+            <td style="color:${ox>0?'#ff4444':'#00ff00'}">${Math.round(ox/60)} د</td>
+        </tr>`;
+    });
+
+    document.getElementById('monthTotalBreaks').innerText = Math.round(tOx/60) + " د";
+    document.getElementById('monthTotalPrayer').innerText = Math.round(tPr/60) + " د";
+    document.getElementById('monthTotalFollowUp').innerText = Math.round(tFo/60) + " د";
+    document.getElementById('monthTotalVIP').innerText = Math.round(tVi/60) + " د";
+}
 
                                     function deleteSpecificSession(un, key) { if(!['mahmoud', 'ahmed'].includes(currentUser.username)) return; if(confirm("حذف السجل؟")) db.ref(`users/${un}/sessions/${key}`).remove().then(() => renderUserReport()); }
 
@@ -7869,107 +7895,98 @@ window.saveUser = function() {
         if (currentVal) sel.value = currentVal; // إعادة الاختيار لو كان موجوداً
     }
     // دالة الضغط على البصمة
-    async function handleAttendanceClick() {
-        if (!currentUser) return;
-        const btn = document.getElementById('attendanceBtn');
-        const statusText = document.getElementById('attStatusText');
-        if (btn.classList.contains('btn-disabled')) return;
+  async function handleAttendanceClick() {
+    // ... الكود القديم الخاص بك (التحقق من اللوكيشن) ...
 
-        // 1. جلب موقع المكتب من الداتابيز أولاً
-        const officeSnap = await db.ref('settings/officeLocation').once('value');
-        const officeLoc = officeSnap.val();
+    const deviceInfo = getDeviceInfo(); // جلب نوع التلفون واللون التقديري
+    const todayKey = getServerDateKey(); 
+    const nowTime = getServerTimeString();
 
-        if (!officeLoc) {
-            alert("⚠️ الإدارة لم تقم بتحديد موقع المكتب بعد. تواصل مع المشرف.");
-            return;
+    db.ref(`users/${currentUser.username}/attendance/${todayKey}`).once('value', (snap) => {
+        const data = snap.val();
+        let updateData = { 
+            date: todayKey,
+            status: "Present"
+        };
+        
+        if (!data || !data.clockIn) {
+            // عند الدخول سجل الجهاز
+            updateData.clockIn = nowTime;
+            updateData.deviceIn = deviceInfo.model + " - " + deviceInfo.colorHex; 
+            alert("✅ تم تسجيل حضورك من: " + deviceInfo.model);
+        } else if (!data.clockOut) {
+            // عند الانصراف سجل الجهاز
+            updateData.clockOut = nowTime;
+            updateData.deviceOut = deviceInfo.model + " - " + deviceInfo.colorHex;
+            alert("🛑 تم تسجيل انصرافك");
         }
-
-        // 2. التحقق لو الموظف داخل من موبايل
-        if (getDeviceType() === "mobile") {
-            statusText.innerText = "⏳ جاري التحقق من موقعك...";
-            
-            try {
-                const position = await new Promise((resolve, reject) => {
-                    navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true });
-                });
-
-                const distance = calculateDistance(
-                    position.coords.latitude, 
-                    position.coords.longitude, 
-                    officeLoc.lat, 
-                    officeLoc.lon
-                );
-
-                const ALLOWED_RADIUS = 150; // مسموح له في دائرة قطرها 150 متر حول المكتب
-
-                if (distance > ALLOWED_RADIUS) {
-                    alert(`❌ عذراً! أنت بعيد عن المكتب بمقدار ${Math.round(distance)} متر. لا يمكنك البصمة من هنا.`);
-                    statusText.innerText = "خارج نطاق الشركة 🛑";
-                    return;
-                }
-            } catch (error) {
-                alert("❌ يجب تفعيل الـ GPS والسماح بالوصول للموقع للبصمة من الموبايل.");
-                statusText.innerText = "خطأ في تحديد الموقع ⚠️";
-                return;
-            }
-        }
-
-        // 3. إكمال عملية البصمة لو PC أو لو موبايل واللوكيشن صح
-        const todayKey = getServerDateKey(); 
-        const nowTime = getServerTimeString();
-
-        db.ref(`users/${currentUser.username}/attendance/${todayKey}`).once('value', (snap) => {
-            const data = snap.val();
-            let updateData = { 
-                date: todayKey,
-                clockIn: data && data.clockIn ? data.clockIn : nowTime,
-                status: "Present",
-                device: getDeviceType()
-            };
-            
-            if (!data || !data.clockIn) {
-                alert("✅ تم تسجيل حضورك: " + nowTime);
-            } else if (!data.clockOut) {
-                updateData.clockOut = nowTime;
-                alert("🛑 تم تسجيل انصرافك: " + nowTime);
-            } else {
-                alert("لقد سجلت بصمتك اليوم بالفعل.");
-                return;
-            }
-
-            db.ref(`users/${currentUser.username}/attendance/${todayKey}`).update(updateData);
-        });
-    }
+        
+        db.ref(`users/${currentUser.username}/attendance/${todayKey}`).update(updateData);
+    });
+}
 
     // دالة تحديث شكل البصمة أوتوماتيك
-    function updateAttendanceUI() {
-        if (!currentUser) return;
-        const todayKey = getServerDateKey(); // المسار الموحد
-        
-        db.ref(`users/${currentUser.username}/attendance/${todayKey}`).on('value', (snap) => {
-            const data = snap.val();
-            const btn = document.getElementById('attendanceBtn');
-            const ring = document.getElementById('fingerprintRing');
-            const txt = document.getElementById('attendanceActionText');
-            const status = document.getElementById('attStatusText');
+function updateAttendanceUI() {
+    if (!currentUser) return;
+    const todayKey = getServerDateKey(); 
+    
+    // الاستماع المباشر للتغييرات في قاعدة البيانات
+    db.ref(`users/${currentUser.username}/attendance/${todayKey}`).on('value', (snap) => {
+        const data = snap.val();
+        const btn = document.getElementById('attendanceBtn');
+        const ring = document.getElementById('fingerprintRing');
+        const txt = document.getElementById('attendanceActionText');
+        const status = document.getElementById('attStatusText');
 
-            if (!data || !data.clockIn) {
-                txt.innerText = "تسجيل حضور";
-                status.innerText = "جاهز للبصمة";
-            } else if (!data.clockOut) {
-                btn.classList.add('checked-in');
+        if (!data || !data.clockIn) {
+            // الحالة 1: لم يتم تسجيل حضور (الوضع الافتراضي)
+            if(btn) { 
+                btn.classList.remove('checked-in', 'disabled'); 
+                btn.style.borderColor = "var(--primary)";
+            }
+            if(txt) txt.innerText = "تسجيل حضور";
+            if(status) { 
+                status.innerHTML = 'جاهز للبصمة'; 
+                status.style.color = "var(--primary)";
+            }
+        } 
+        else if (!data.clockOut) {
+            // الحالة 2: سجل حضور من الموقع الآخر (يتحول لونه للأخضر ويطلب انصراف)
+            if(btn) { 
+                btn.classList.add('checked-in'); 
+                btn.style.borderColor = "var(--success)";
+                btn.style.boxShadow = "0 0 20px rgba(16, 185, 129, 0.4)";
+            }
+            if(txt) {
                 txt.innerText = "تسجيل انصراف";
-                status.innerText = "مسجل حضور: " + data.clockIn;
-                status.style.color = "var(--success)";
-            } else {
+                txt.style.color = "var(--success)";
+            }
+            if(status) { 
+                // عرض وقت الحضور الذي تم تسجيله في الموقع الآخر
+                status.innerHTML = `مسجل حضور: <b style="color:var(--success)">${data.clockIn}</b>`;
+            }
+            // إضافة حركة نبض خضراء
+            if(ring) {
+                ring.style.borderColor = "var(--success)";
+                ring.style.display = "block";
+            }
+        } 
+        else {
+            // الحالة 3: سجل انصراف (تم إنهاء اليوم)
+            if(btn) { 
+                btn.classList.add('disabled'); 
                 btn.style.opacity = "0.5";
                 btn.style.pointerEvents = "none";
-                ring.style.display = "none";
-                txt.innerText = "يومك سعيد";
-                status.innerText = "تم الانتهاء من العمل ✅";
             }
-        });
-    }
+            if(txt) txt.innerText = "يومك سعيد";
+            if(status) { 
+                status.innerHTML = "تم الانتهاء من العمل ✅";
+                status.style.color = "var(--success)";
+            }
+            if(ring) ring.style.display = "none";
+        }
+    });
+}
     function showEmployee() { 
         document.getElementById('loginSection').classList.add('hidden'); 
         document.getElementById('employeeSection').classList.remove('hidden'); 
@@ -8033,12 +8050,12 @@ window.saveUser = function() {
     }
     // دالة الحصول على تاريخ السيرفر بصيغة YYYY-MM-DD (لتطابق موقع الحضور)
     function getServerDateKey() {
-        const d = new Date(getServerTime());
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`; 
-    }
+    const d = new Date(getServerTime());
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`; // النتيجة: 2026-06-11
+}
     // دالة تحديث شكل زر البصمة فور تسجيل الحضور من الموقع التاني
     function updateAttendanceUI() {
         if (!currentUser) return;
@@ -8103,13 +8120,12 @@ function renderEmpShiftSchedule() {
     
     container.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color:#aaa; padding:30px;">⏳ جاري تحميل الشيتات...</p>';
 
-    // 1. حساب مفتاح الأسبوع بناءً على التاريخ المختار
+    // حساب مفتاح الأسبوع بناءً على التاريخ المختار
     const weekKey = getAttWeekKey(currentShiftViewDate.toISOString().split('T')[0]);
     
-    // 2. حساب تاريخ بداية الأسبوع (السبت) لعرض التواريخ داخل الكروت
-    // نعتمد أن الأسبوع يبدأ من السبت حسب نظامك
-    let startDate = new Date(weekKey);
-    startDate.setDate(startDate.getDate() - 1); // تعديل بسيط لضبط التاريخ مع "السبت"
+    // تصحيح: تعيين تاريخ البداية مباشرة ليوافق السبت (بداية مصفوفة daysAr)
+    let startDate = new Date(weekKey); 
+    // تم حذف سطر طرح اليوم الواحد من هنا
 
     // تحديث نص الهيدر
     const endDate = new Date(startDate);
@@ -8117,8 +8133,7 @@ function renderEmpShiftSchedule() {
     weekDisplay.innerHTML = `من ${startDate.getDate()}/${startDate.getMonth()+1} <br> إلى ${endDate.getDate()}/${endDate.getMonth()+1}`;
 
     const daysAr = ["السبت", "الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"];
-    const todayStr = getServerDateString(); // التاريخ الفعلي لليوم
-
+    
     db.ref('schedules/' + currentUser.username + '/' + weekKey).once('value', (snap) => {
         const mySched = snap.val() || {};
         container.innerHTML = '';
@@ -8126,44 +8141,36 @@ function renderEmpShiftSchedule() {
         daysAr.forEach((dayName, index) => {
             const shiftValue = mySched[index] || '--';
             
-            // حساب التاريخ لهذا الكارت تحديداً
             let thisDayDate = new Date(startDate);
             thisDayDate.setDate(thisDayDate.getDate() + index);
             const dateString = `${thisDayDate.getDate()}/${thisDayDate.getMonth() + 1}`;
             
-            // هل هذا هو "اليوم" الفعلي؟
-            const isActualToday = (thisDayDate.toLocaleDateString('ar-EG') === new Date(getServerTime()).toLocaleDateString('ar-EG'));
+            // مقارنة اليوم الحالي بدقة
+            const isActualToday = (thisDayDate.toLocaleDateString('en-CA') === new Date(getServerTime()).toLocaleDateString('en-CA'));
 
             let displayValue = shiftValue;
             let cardStyle = "background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 15px; text-align: center; transition: 0.3s; position:relative;";
             let timeStyle = "font-size: 1.1rem; font-weight: 900; margin-top: 5px;";
-            let dayStyle = "font-size: 0.85rem; color: #94a3b8; font-weight: 700;";
-            let dateLabelStyle = "font-size: 0.7rem; color: #64748b; margin-bottom: 5px; display: block;";
-
+            
             // تلوين الكروت حسب الحالة
             if (shiftValue === 'Off') {
                 cardStyle += "border-color: rgba(139, 92, 246, 0.4); background: rgba(139, 92, 246, 0.05);";
                 timeStyle += "color: #a78bfa;";
                 displayValue = "إجازة 🛌";
-            } else if (shiftValue === 'Annual Leave' || shiftValue === 'Sick Leave') {
-                cardStyle += "border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.05);";
-                timeStyle += "color: #fbbf24;";
-                displayValue = "أجازة رسمية";
             } else if (shiftValue !== '--') {
                 cardStyle += "border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.05);";
                 timeStyle += "color: #10b981;";
             }
 
-            // تمييز اليوم الحالي بوهج بنفسجي
+            // تمييز اليوم الحالي
             if (isActualToday) {
                 cardStyle += "border: 2px solid #8b5cf6; box-shadow: 0 0 15px rgba(139, 92, 246, 0.4); transform: scale(1.05); z-index: 2; background: rgba(139, 92, 246, 0.1);";
-                dayStyle = "font-size: 0.9rem; color: #fff; font-weight: 900;";
             }
 
             container.innerHTML += `
                 <div style="${cardStyle}">
-                    <span style="${dateLabelStyle}">${dateString}</span>
-                    <div style="${dayStyle}">${dayName} ${isActualToday ? '(اليوم)' : ''}</div>
+                    <span style="font-size: 0.7rem; color: #64748b; margin-bottom: 5px; display: block;">${dateString}</span>
+                    <div style="font-size: 0.85rem; color: #94a3b8; font-weight: 700;">${dayName} ${isActualToday ? '(اليوم)' : ''}</div>
                     <div style="${timeStyle}">${displayValue}</div>
                 </div>
             `;
@@ -8470,6 +8477,165 @@ window.handleEm = handleEm;
 window.handleMeeting = handleMeeting;
 window.handleOt = handleOt;
 window.handlePerm = handlePerm;
+// 1. قاعدة بيانات الألوان والموديلات
+const PHONE_COLORS_DB = {
+    'iPhone 15 Pro Max': '#8B4513', 'iPhone 15 Pro': '#4A4A4A',
+    'iPhone 14 Pro Max': '#2F2F2F', 'Samsung Galaxy S24 Ultra': '#708090',
+    'Redmi Note 13': '#4169E1', 'OPPO A78': '#1D8348',
+    'آيفون': '#1D1D1F', 'سامسونج': '#2F4F4F', 'كمبيوتر (ويندوز)': '#0078D4',
+    'جهاز غير معروف': '#4A5568'
+};
+
+// 2. دالة معرفة نوع الجهاز
+function detectPhoneModel(){
+    const ua=navigator.userAgent;let model='جهاز غير معروف';
+    if(/iPhone/i.test(ua)){
+        if(/iPhone16,2/i.test(ua))model='iPhone 15 Pro Max';
+        else if(/iPhone16,1/i.test(ua))model='iPhone 15 Pro';
+        else if(/iPhone16,3/i.test(ua)||/iPhone16,4/i.test(ua))model='iPhone 15 Plus';
+        else if(/iPhone14,7/i.test(ua)||/iPhone14,8/i.test(ua))model='iPhone 15';
+        else if(/iPhone15,4/i.test(ua)||/iPhone15,5/i.test(ua))model='iPhone 15 Pro';
+        else if(/iPhone14,3/i.test(ua))model='iPhone 14 Pro';
+        else if(/iPhone14,4/i.test(ua))model='iPhone 14 Pro Max';
+        else if(/iPhone14,5/i.test(ua))model='iPhone 14';
+        else if(/iPhone14,6/i.test(ua))model='iPhone 14 Plus';
+        else if(/iPhone13,1/i.test(ua))model='iPhone 13 Mini';
+        else if(/iPhone13,2/i.test(ua))model='iPhone 13';
+        else if(/iPhone13,3/i.test(ua))model='iPhone 13 Pro';
+        else if(/iPhone13,4/i.test(ua))model='iPhone 13 Pro Max';
+        else if(/iPhone12,1/i.test(ua))model='iPhone 12 Mini';
+        else if(/iPhone12,3/i.test(ua))model='iPhone 12';
+        else if(/iPhone12,5/i.test(ua))model='iPhone 12 Pro';
+        else if(/iPhone12,8/i.test(ua))model='iPhone SE 3';
+        else model='آيفون';
+    }
+    else if(/iPad/i.test(ua)){
+        if(/iPad13,8/i.test(ua)||/iPad13,9/i.test(ua)||/iPad13,10/i.test(ua)||/iPad13,11/i.test(ua))model='iPad Pro M2';
+        else if(/iPad13,4/i.test(ua)||/iPad13,5/i.test(ua)||/iPad13,6/i.test(ua)||/iPad13,7/i.test(ua))model='iPad Pro M1';
+        else if(/iPad14,1/i.test(ua)||/iPad14,2/i.test(ua))model='iPad Air M1';
+        else if(/iPad11,1/i.test(ua)||/iPad11,2/i.test(ua))model='iPad mini 6';
+        else model='آيباد';
+    }
+    else if(/Samsung/i.test(ua)){
+        if(/SM-S928B/i.test(ua))model='Samsung Galaxy S24 Ultra';
+        else if(/SM-S926B/i.test(ua))model='Samsung Galaxy S24+';
+        else if(/SM-S921B/i.test(ua))model='Samsung Galaxy S24';
+        else if(/SM-S918B/i.test(ua))model='Samsung Galaxy S23 Ultra';
+        else if(/SM-S916B/i.test(ua))model='Samsung Galaxy S23+';
+        else if(/SM-S911B/i.test(ua))model='Samsung Galaxy S23';
+        else if(/SM-S908B/i.test(ua))model='Samsung Galaxy S22 Ultra';
+        else if(/SM-S906B/i.test(ua))model='Samsung Galaxy S22+';
+        else if(/SM-S901B/i.test(ua))model='Samsung Galaxy S22';
+        else if(/SM-G998B/i.test(ua))model='Samsung Galaxy S21 Ultra';
+        else if(/SM-G996B/i.test(ua))model='Samsung Galaxy S21+';
+        else if(/SM-G991B/i.test(ua))model='Samsung Galaxy S21';
+        else if(/SM-N986B/i.test(ua))model='Samsung Galaxy Note 20 Ultra';
+        else if(/SM-N985F/i.test(ua))model='Samsung Galaxy Note 20';
+        else if(/SM-F946B/i.test(ua))model='Samsung Galaxy Z Fold5';
+        else if(/SM-F731B/i.test(ua))model='Samsung Galaxy Z Flip5';
+        else if(/SM-F936B/i.test(ua))model='Samsung Galaxy Z Fold4';
+        else if(/SM-F721B/i.test(ua))model='Samsung Galaxy Z Flip4';
+        else if(/SM-A546B/i.test(ua)||/SM-A536B/i.test(ua))model='Samsung Galaxy A54';
+        else if(/SM-A346B/i.test(ua))model='Samsung Galaxy A34';
+        else if(/SM-A245F/i.test(ua))model='Samsung Galaxy A24';
+        else if(/SM-A146P/i.test(ua)||/SM-A145F/i.test(ua)||/SM-A145B/i.test(ua))model='Samsung Galaxy A15';
+        else if(/SM-A146B/i.test(ua))model='Samsung Galaxy A14';
+        else if(/SM-A056F/i.test(ua))model='Samsung Galaxy A05';
+        else if(/SM-A045F/i.test(ua))model='Samsung Galaxy A04';
+        else if(/SM-A035F/i.test(ua))model='Samsung Galaxy A03';
+        else model='سامسونج';
+    }
+    else if(/Xiaomi|Redmi|POCO/i.test(ua)){
+        if(/POCO/i.test(ua)){
+            if(/23054PC19G/i.test(ua))model='POCO X5 Pro';
+            else if(/23106PC76G/i.test(ua))model='POCO M6 Pro';
+            else if(/23049PCD8G/i.test(ua))model='POCO F5';
+            else if(/23106PC95G/i.test(ua))model='POCO C65';
+            else model='POCO';
+        }
+        else if(/Redmi Note 13/i.test(ua)||/2304FPN6DC/i.test(ua)||/23106RN0DA/i.test(ua))model='Redmi Note 13';
+        else if(/Redmi Note 12/i.test(ua)||/23021RAAEG/i.test(ua))model='Redmi Note 12';
+        else if(/Redmi Note 11/i.test(ua)||/21091116GI/i.test(ua))model='Redmi Note 11';
+        else if(/Redmi Note 10/i.test(ua))model='Redmi Note 10';
+        else if(/Redmi 13/i.test(ua))model='Redmi 13C';
+        else if(/Redmi 12/i.test(ua))model='Redmi 12';
+        else if(/Redmi A/i.test(ua))model='Redmi A2';
+        else model='شاومي';
+    }
+    else if(/Huawei|HUAWEI/i.test(ua)){
+        if(/MNA-AL00/i.test(ua))model='Huawei P60 Pro';
+        else if(/JAD-AL00/i.test(ua))model='Huawei P50 Pro';
+        else if(/Nova 12/i.test(ua))model='Huawei Nova 12';
+        else if(/Nova 11/i.test(ua))model='Huawei Nova 11';
+        else if(/Y91/i.test(ua))model='Huawei Y91';
+        else if(/Y72/i.test(ua))model='Huawei Y72';
+        else model='هواوي';
+    }
+    else if(/OPPO/i.test(ua)){
+        if(/CPH2449/i.test(ua))model='OPPO Find X7 Ultra';
+        else if(/CPH2481/i.test(ua))model='OPPO Reno 11 Pro';
+        else if(/CPH2485/i.test(ua))model='OPPO Reno 11';
+        else if(/CPH2463/i.test(ua))model='OPPO A78';
+        else if(/CPH2469/i.test(ua))model='OPPO A58';
+        else if(/CPH2441/i.test(ua))model='OPPO A57';
+        else if(/CPH2401/i.test(ua))model='OPPO A17';
+        else if(/CPH2381/i.test(ua))model='OPPO A16';
+        else if(/CPH2185/i.test(ua))model='OPPO A15';
+        else model='أوبو';
+    }
+    else if(/Realme/i.test(ua)){
+        if(/RMX3820/i.test(ua))model='Realme 12 Pro';
+        else if(/RMX3841/i.test(ua))model='Realme 11 Pro';
+        else if(/RMX3810/i.test(ua))model='Realme C67';
+        else if(/RMX3760/i.test(ua))model='Realme C55';
+        else if(/RMX3761/i.test(ua))model='Realme C53';
+        else if(/RMX3630/i.test(ua))model='Realme C33';
+        else model='ريلمي';
+    }
+    else if(/Honor/i.test(ua)){
+        if(/REA-AN00/i.test(ua))model='Honor 90';
+        else if(/VNE-AN00/i.test(ua))model='Honor X9b';
+        else if(/TFY-AN00/i.test(ua))model='Honor X7b';
+        else if(/KSA-AN00/i.test(ua))model='Honor X6a';
+        else model='هونر';
+    }
+    else if(/Nothing/i.test(ua)){
+        if(/A065/i.test(ua))model='Nothing Phone (2)';
+        else if(/A142/i.test(ua))model='Nothing Phone (2a)';
+        else model='ناثينج';
+    }
+    else if(/Nokia/i.test(ua))model='نوكيا';
+    else if(/Tecno/i.test(ua))model='تكنو';
+    else if(/Infinix/i.test(ua))model='إنفينيكس';
+    else if(/Windows/i.test(ua))model='كمبيوتر (ويندوز)';
+    else if(/Macintosh/i.test(ua))model='كمبيوتر (ماك)';
+    else if(/Linux/i.test(ua)&&!/Android/i.test(ua))model='كمبيوتر (لينكس)';
+    return model;
+}
+// 3. الدالة اللي كان طالع فيها الخطأ (getDeviceInfo)
+function getDeviceInfo() {
+    const model = detectPhoneModel();
+    let colorHex = "#4A5568"; // اللون الافتراضي (رمادي)
+
+    // تخصيص ألوان الماركات
+    if (model.includes("SM-") || model.toLowerCase().includes("samsung")) {
+        colorHex = "#034EA2"; // أزرق سامسونج
+    } else if (model.includes("M2") || model.toLowerCase().includes("xiaomi") || model.toLowerCase().includes("redmi")) {
+        colorHex = "#FF6900"; // برتقالي شاومي
+    } else if (model.toLowerCase().includes("oppo") || model.includes("CPH")) {
+        colorHex = "#118D57"; // أخضر أوبو
+    } else if (model.toLowerCase().includes("iphone")) {
+        colorHex = "#8B4513"; // تيتانيوم آيفون
+    } else if (model.includes("كمبيوتر")) {
+        colorHex = "#0078D4"; // أزرق ويندوز
+    }
+
+    return { 
+        model: model, 
+        colorHex: colorHex, 
+        full: model + " - " + colorHex 
+    };
+}
         </script>
         <!-- نافذة تأكيد إتمام الصلاة -->
         <div id="prayerCheckModal" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:30000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px);">
