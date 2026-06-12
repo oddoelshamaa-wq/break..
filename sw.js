@@ -1,4 +1,5 @@
-const CACHE_NAME = 'elshamaa-pwa-v9'; // غيرت رقم الإصدار عشان يحذف الكاش القديم
+const CACHE_NAME = 'elshamaa-pwa-v10'; // (1) قم برفع رقم الإصدار لكل تحديث جديد
+
 const urlsToCache = [
   '/break-./',
   '/break-./index.html',
@@ -10,7 +11,7 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(urlsToCache))
   );
-  self.skipWaiting();
+  self.skipWaiting(); // (2) مهم جداً: يأمر العامل الجديد بتركيب نفسه فوراً بدلاً من الانتظار
 });
 
 self.addEventListener('activate', event => {
@@ -23,7 +24,9 @@ self.addEventListener('activate', event => {
       );
     })
   );
-  self.clients.claim();
+  
+  // (3) السحر كله هنا: يطلب من العميل (الصفحة) استخدام النسخة الجديدة فوراً
+  return self.clients.claim(); 
 });
 
 self.addEventListener('fetch', event => {
