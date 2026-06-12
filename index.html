@@ -8831,4 +8831,14 @@ function getDeviceInfo() {
                 console.log('PWA was installed');
             });
         </script>
+        <script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('controllerchange', function() {
+    // هذا الكود يعمل فقط عندما يحدث تحديث ويتم تبديل الـ controller
+    console.log('تم اكتشاف تحديث جديد، جاري تحديث الصفحة...');
+    window.location.reload();
+  });
+}
+</script>
+        </body>
         </html>
