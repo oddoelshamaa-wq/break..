@@ -981,16 +981,52 @@ function timeDiffMinutes(t1,t2){if(!t1||!t2)return 0;const[h1,m1]=t1.split(':').
 function initReportDates(type){const now=new Date();let f,t;if(type==='thisWeek'){const d=(now.getDay()+1)%7;f=new Date(now);f.setDate(now.getDate()-d);t=new Date(f);t.setDate(f.getDate()+6);}else if(type==='lastWeek'){const d=(now.getDay()+1)%7;f=new Date(now);f.setDate(now.getDate()-d-7);t=new Date(f);t.setDate(f.getDate()+6);}else if(type==='thisMonth'){f=new Date(now.getFullYear(),now.getMonth(),1);t=new Date(now.getFullYear(),now.getMonth()+1,0);}else if(type==='lastMonth'){f=new Date(now.getFullYear(),now.getMonth()-1,1);t=new Date(now.getFullYear(),now.getMonth(),0);}document.getElementById('repFrom').value=f.toISOString().split('T')[0];document.getElementById('repTo').value=t.toISOString().split('T')[0];}
 function setReportQuick(type,btn){document.querySelectorAll('.quick-btn').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');initReportDates(type);}
 
-function generateShiftReport(from,to,ef){
-    const rep={};const s=new Date(from),e=new Date(to);
-    Object.keys(allUsers).forEach(u=>{if(ADMINS.includes(u))return;if(ef&&ef!=='all'&&ef!==u)return;
-    rep[u]={name:allUsers[u].realName||u,absentInShift:0,cameOnOff:0,shiftChange:0,details:{absent:[],offDay:[],changed:[]}};
-    const atts=allUsers[u].attendance||{};
-    for(let d=new Date(s);d<=e;d.setDate(d.getDate()+1)){const ds=d.toISOString().split('T')[0],di=(d.getDay()+1)%7,wk=weekKey(ds);
-    let sv=allSched[u]?.[wk]?.[di];const isOff=!sv||sv==='Off'||sv==='Annual Leave'||sv==='Sick Leave'||sv==='--'||sv==='';
-    const st=isOff?null:parseShiftTime(sv);const att=atts[ds];const ci=att&&att.clockIn;
-    if(isOff){if(ci){rep[u].cameOnOff++;rep[u].details.offDay.push({date:ds,scheduled:sv||'إجازة',clockIn:att.clockIn});}}
-    else if(st){if(!ci){rep[u].absentInShift++;rep[u].details.absent.push({date:ds,scheduled:sv});}else{const df=timeDiffMinutes(st.start,att.clockIn);if(df>30){rep[u].shiftChange++;rep[u].details.changed.push({date:ds,scheduledStart:st.start,scheduledEnd:st.end,actualIn:att.clockIn,diffMinutes:df});}}}}});
+function generateShiftReport(from, to, ef) {
+    const rep = {}; const s = new Date(from), e = new Date(to);
+    Object.keys(allUsers).forEach(u => {
+        if (ADMINS.includes(u)) return;
+        if (ef && ef !== 'all' && ef !== u) return;
+        
+        rep[u] = { name: allUsers[u].realName || u, absentInShift: 0, cameOnOff: 0, shiftChange: 0, details: { absent: [], offDay: [], changed: [] } };
+        const atts = allUsers[u].attendance || {};
+        
+        for (let d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) {
+            const ds = d.toISOString().split('T')[0], di = (d.getDay() + 1) % 7, wk = weekKey(ds);
+            let sv = allSched[u]?.[wk]?.[di];
+            const isOff = !sv || sv === 'Off' || sv === 'Annual Leave' || sv === 'Sick Leave' || sv === '--' || sv === '';
+            const st = isOff ? null : parseShiftTime(sv);
+            const att = atts[ds];
+            const ci = att && att.clockIn;
+
+            if (isOff) {
+                if (ci) { rep[u].cameOnOff++; rep[u].details.offDay.push({ date: ds, scheduled: sv || 'إجازة', clockIn: att.clockIn }); }
+            } else if (st) {
+                if (!ci) {
+                    rep[u].absentInShift++; rep[u].details.absent.push({ date: ds, scheduled: sv });
+                } else {
+                    // حساب وقت الوردية ووقت الحضور بالدقائق من بداية اليوم
+                    const [sh, sm] = st.start.split(':').map(Number);
+                    const [ah, am] = att.clockIn.split(':').map(Number);
+                    const schedTotalMins = sh * 60 + sm;
+                    const actualTotalMins = ah * 60 + am;
+                    
+                    const delay = actualTotalMins - schedTotalMins; // الفرق الصافي
+
+                    // لو الفرق موجب (يعني متأخر) وأكبر من 45 دقيقة
+                    if (delay > 45) {
+                        rep[u].shiftChange++;
+                        rep[u].details.changed.push({
+                            date: ds,
+                            scheduledStart: st.start,
+                            scheduledEnd: st.end,
+                            actualIn: att.clockIn,
+                            diffMinutes: delay
+                        });
+                    }
+                }
+            }
+        }
+    });
     return rep;
 }
 function runShiftReport(){
@@ -1004,11 +1040,48 @@ function runShiftReport(){
     tb.innerHTML+=`<tr><td style="text-align:right;font-weight:700;">${r.name}</td><td>${r.absentInShift>0?`<span class="badge badge-no">${r.absentInShift}</span>`:'0'}</td><td>${r.cameOnOff>0?`<span class="badge badge-wait">${r.cameOnOff}</span>`:'0'}</td><td>${r.shiftChange>0?`<span class="badge badge-info">${r.shiftChange}</span>`:'0'}</td><td style="font-weight:900;color:${total>0?'var(--danger)':'var(--success)'};">${total}</td><td>${total>0?`<button class="edit-btn" onclick="openShiftDetail('${u}')"><i class="fa-solid fa-eye"></i></button>`:'--'}</td></tr>`;});
     document.getElementById('shiftReportTable').classList.remove('hidden');
 }
-function openShiftDetail(u){if(!lastShiftReport||!lastShiftReport[u])return;const r=lastShiftReport[u];document.getElementById('shiftDetailTitle').innerHTML=`<i class="fa-solid fa-clipboard-list"></i> تفاصيل: ${r.name}`;let h='';
-    if(r.details.absent.length){h+=`<div style="margin-bottom:16px;"><div style="font-weight:700;color:var(--danger);margin-bottom:8px;">غياب في وردية</div>`;r.details.absent.forEach(i=>{h+=`<div class="detail-row"><span class="detail-date">${i.date}</span><span class="detail-actual absent">غائب</span></div>`;});h+='</div>';}
-    if(r.details.offDay.length){h+=`<div style="margin-bottom:16px;"><div style="font-weight:700;color:var(--accent);margin-bottom:8px;">نزل في إجازة</div>`;r.details.offDay.forEach(i=>{h+=`<div class="detail-row"><span class="detail-date">${i.date}</span><span class="detail-actual offday">دخل ${i.clockIn}</span></div>`;});h+='</div>';}
-    if(r.details.changed.length){h+=`<div style="margin-bottom:16px;"><div style="font-weight:700;color:var(--primary);margin-bottom:8px;">تأخير</div>`;r.details.changed.forEach(i=>{h+=`<div class="detail-row"><span class="detail-date">${i.date}</span><span class="detail-actual late">جي ${i.actualIn} (${i.diffMinutes} د)</span></div>`;});h+='</div>';}
-    document.getElementById('shiftDetailContent').innerHTML=h;document.getElementById('shiftDetailModal').classList.add('open');}
+function openShiftDetail(u){
+    if(!lastShiftReport || !lastShiftReport[u]) return;
+    const r = lastShiftReport[u];
+    document.getElementById('shiftDetailTitle').innerHTML = `<i class="fa-solid fa-clipboard-list"></i> تفاصيل: ${r.name}`;
+    let h = '';
+
+    // 1. عرض أيام الغياب
+    if(r.details.absent.length){
+        h += `<div style="margin-bottom:16px;"><div style="font-weight:700;color:var(--danger);margin-bottom:8px;">غياب في وردية</div>`;
+        r.details.absent.forEach(i => {
+            h += `<div class="detail-row"><span class="detail-date">${i.date}</span><span class="detail-actual absent">الوردية كانت: ${i.scheduled} | غائب</span></div>`;
+        });
+        h += '</div>';
+    }
+
+    // 2. عرض أيام الحضور في الإجازة
+    if(r.details.offDay.length){
+        h += `<div style="margin-bottom:16px;"><div style="font-weight:700;color:var(--accent);margin-bottom:8px;">نزل في إجازة</div>`;
+        r.details.offDay.forEach(i => {
+            h += `<div class="detail-row"><span class="detail-date">${i.date}</span><span class="detail-actual offday">دخل ${i.clockIn} (كان يوم إجازة)</span></div>`;
+        });
+        h += '</div>';
+    }
+
+    // 3. عرض أيام التأخير (تعديل السطر ده هو اللي محتاجه)
+    if(r.details.changed.length){
+        h += `<div style="margin-bottom:16px;"><div style="font-weight:700;color:var(--primary);margin-bottom:8px;">تأخير</div>`;
+        r.details.changed.forEach(i => {
+            // التعديل هنا: هيعرض وقت الوردية ووقت الحضور والفرق
+            h += `<div class="detail-row">
+                    <span class="detail-date">${i.date}</span>
+                    <span class="detail-actual late">
+                        الوردية: ${i.scheduledStart} | جيه: ${i.actualIn} (${i.diffMinutes} د)
+                    </span>
+                  </div>`;
+        });
+        h += '</div>';
+    }
+
+    document.getElementById('shiftDetailContent').innerHTML = h;
+    document.getElementById('shiftDetailModal').classList.add('open');
+}
 function closeShiftDetail(){document.getElementById('shiftDetailModal').classList.remove('open');}
 
 function xlShiftReport(){if(!lastShiftReport){toast('شغّل التقرير أولاً','warn');return;}const wb=XLSX.utils.book_new();const rows=[];Object.keys(lastShiftReport).forEach(u=>{const r=lastShiftReport[u];rows.push({'الموظف':r.name,'غياب في وردية':r.absentInShift,'نزل في إجازة':r.cameOnOff,'تغيير شيفت':r.shiftChange,'إجمالي':r.absentInShift+r.cameOnOff+r.shiftChange});});const ws=XLSX.utils.json_to_sheet(rows);ws['!dir']="rtl";XLSX.utils.book_append_sheet(wb,ws,'تقرير');XLSX.writeFile(wb,`تقرير_${TODAY}.xlsx`);toast('تم التصدير','success');}
