@@ -5,8 +5,7 @@
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <!-- تم تحديث هذا السطر للسماح بعمل المكتبات -->
-            <meta http-equiv="Content-Security-Policy" content="default-src * data: blob: filesystem: about: ws: wss: 'unsafe-inline' 'unsafe-eval'; script-src * data: blob: 'unsafe-inline' 'unsafe-eval'; connect-src * data: blob: 'unsafe-inline'; img-src * data: blob: 'unsafe-inline'; frame-src * data: blob: ; style-src * data: blob: 'unsafe-inline'; font-src * data: blob: 'unsafe-inline';">
-            <title>ELSHAMAA | إدارة البريك</title>
+<meta http-equiv="Content-Security-Policy" content="default-src * data: blob: filesystem: about: ws: wss: 'unsafe-inline' 'unsafe-eval'; script-src * data: blob: 'unsafe-inline' 'unsafe-eval'; connect-src * data: blob: 'unsafe-inline'; img-src * data: blob: 'unsafe-inline'; frame-src * data: blob: ; style-src * data: blob: 'unsafe-inline'; font-src * data: blob: 'unsafe-inline'; media-src * blob: data:;">            <title>ELSHAMAA | إدارة البريك</title>
         <!-- كود تحويل الموقع لتطبيق (PWA) -->
         <link rel="manifest" href="/break../manifest.json">
         <meta name="theme-color" content="#6366f1">
@@ -1353,6 +1352,19 @@
         border: 1px solid var(--glass-border);
         margin-top: 10px;
     }
+    /* تحسين قراءة النصوص الطويلة في الجداول */
+td {
+    line-height: 1.6;
+    vertical-align: top !important; /* لجعل النص يبدأ من الأعلى */
+}
+
+/* منع الكلمات من التقطع بشكل سيء */
+[style*="white-space: pre-wrap"] {
+    word-break: break-word;
+    overflow-wrap: break-word;
+    text-align: justify; /* لتنسيق السطور بشكل متساوي */
+    text-justify: inter-word;
+}
 
                                     </style>
                                 </head>
@@ -2216,6 +2228,7 @@
 
                                         <!-- الزر الجديد الذي طلبته هنا -->
                                         <button onclick="document.getElementById('weeklyScheduleModal').classList.remove('hidden')" class="btn btn-dark btn-sm" style="margin-top:8px; border:1px solid #10b981; color:#10b981;">
+                                            
                                             🗓️ جدول الترتيب الأسبوعي
                                         </button>
 
@@ -2224,6 +2237,7 @@
                                         <!-- زر الانتقال لنظام الشيفات والحضور -->
                                         <!-- زرار فتح جدول الشيتات للموظف -->
     <button onclick="document.getElementById('empShiftModal').classList.remove('hidden'); renderEmpShiftSchedule();" class="btn btn-dark btn-sm" style="margin-top:8px; border:1px solid #8b5cf6; color:#8b5cf6;">
+        
         📅 جدول  الحضور والانصرف
     </button>
                                     
@@ -2807,8 +2821,9 @@
                         <td style="text-align:right;">
                             ${typeBadge} <span style="font-weight:bold; color:white;">${c.title}</span>
                         </td>
-                        <td style="font-size:0.85rem; color:#ccc; max-width:200px; white-space:pre-wrap;">${c.details}</td>
-                        <td style="text-align:center;">${displayAmount}</td>
+<td style="font-size: 0.9rem; color: #eee; max-width: 400px; min-width: 250px; white-space: pre-wrap; text-align: right; line-height: 1.6; padding: 12px; background: rgba(255,255,255,0.02);">
+    ${c.details}
+</td>                        <td style="text-align:center;">${displayAmount}</td>
                         <td>${proofCell}</td>
                         <td style="font-size:0.85rem; color:#aaa;">${c.admin || 'الإدارة'}</td>
                         <td style="text-align:center;">${actionCell}</td>
@@ -5627,8 +5642,25 @@ window.saveUser = function() {
 
                 // المرفقات
                 const evidenceBtn = c.evidence ? `<button onclick="showZoomImage('${c.evidence}')" class="btn btn-primary btn-sm">📷</button>` : '';
-                const audioPlayer = c.audioRecord ? `<div style="margin-top:5px;"><audio controls src="${c.audioRecord}" style="height:25px; width:150px;"></audio></div>` : '';
-                const proofCell = (evidenceBtn || audioPlayer) ? `<div>${evidenceBtn} ${audioPlayer}</div>` : '-';
+// ابحث عن هذا الجزء داخل renderComplaintsHistory
+// البحث عن هذا السطر واستبداله:
+const audioPlayer = c.audioRecord ? `
+    <div class="audio-wrapper" style="margin-top:10px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); width: 260px;">
+        <audio src="${c.audioRecord}" controls style="width: 100%; height: 45px;"></audio>
+        <div style="display: flex; justify-content: center; gap: 15px; margin-top: 8px;">
+            <button onclick="skipAudio(this, -10)" class="btn btn-dark" style="padding: 5px 12px; font-size: 0.8rem;" title="تأخير 10 ثوانٍ">
+                <i class="fa-solid fa-backward"></i> -10s
+            </button>
+            <button onclick="skipAudio(this, 10)" class="btn btn-dark" style="padding: 5px 12px; font-size: 0.8rem;" title="تقديم 10 ثوانٍ">
+                +10s <i class="fa-solid fa-forward"></i>
+            </button>
+        </div>
+        <div style="text-align: center; margin-top: 8px;">
+            <a href="${c.audioRecord}" download target="_blank" style="color: var(--accent); font-size: 0.75rem; text-decoration: none;">
+                <i class="fa-solid fa-download"></i> تحميل المقطع
+            </a>
+        </div>
+    </div>` : '';          const proofCell = (evidenceBtn || audioPlayer) ? `<div>${evidenceBtn} ${audioPlayer}</div>` : '-';
 
                 tbody.innerHTML += `
                     <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
@@ -5636,8 +5668,9 @@ window.saveUser = function() {
                         <td style="text-align:right;">
                             ${typeBadge} <span style="font-weight:bold; color:white;">${c.title}</span>
                         </td>
-                        <td style="font-size:0.85rem; color:#ccc; max-width:200px; white-space:pre-wrap;">${c.details}</td>
-                        <td style="text-align:center;">${displayAmount}</td>
+<td style="font-size: 0.9rem; color: #eee; max-width: 400px; min-width: 250px; white-space: pre-wrap; text-align: right; line-height: 1.6; padding: 12px; background: rgba(255,255,255,0.02);">
+    ${c.details}
+</td>                        <td style="text-align:center;">${displayAmount}</td>
                         <td>${proofCell}</td>
                         <td style="font-size:0.85rem; color:#aaa;">${c.admin || 'الإدارة'}</td>
                         <td style="text-align:center;">${actionCell}</td>
@@ -7593,7 +7626,7 @@ window.saveUser = function() {
                 date: getServerDateString(),
                 time: getServerTimeString(),
                 title: `شكوى عميل: ${clientPhone}`,
-                details: `الموظف المعني: ${empName} \n\nشكوى العميل: ${clientNote} \n\nرأي خدمة العملاء: ${agentNote}`,
+                details: `شكوى العميل: ${clientNote}`,
                 audioRecord: audioUrl,
                 evidence: imageUrl,
                 type: destType === 'manager' ? "إدارة - تقرير سري" : "مخالفة سلوكية",
@@ -7856,8 +7889,14 @@ window.saveUser = function() {
                         
                         if(!c.seen && !c.acknowledged) unreadCount++;
 
-                        const audioHtml = c.audioRecord ? `<audio src="${c.audioRecord}" controls style="width:150px; height:25px;"></audio>` : '';
-                        const imageHtml = c.evidence ? `<button onclick="showZoomImage('${c.evidence}')" class="btn btn-primary btn-sm">🖼️</button>` : '';
+// ابحث عن هذا السطر داخل renderAdminCsReports
+const audioHtml = c.audioRecord ? `
+    <div style="display:flex; flex-direction:column; align-items:center; gap:5px;">
+        <audio src="${c.audioRecord}" controls style="width:180px; height:35px;"></audio>
+        <a href="${c.audioRecord}" download target="_blank" style="color:#ec4899; font-size:0.7rem; text-decoration:none; font-weight:bold;">
+            <i class="fa-solid fa-cloud-arrow-down"></i> تحميل الملف
+        </a>
+    </div>` : '';                        const imageHtml = c.evidence ? `<button onclick="showZoomImage('${c.evidence}')" class="btn btn-primary btn-sm">🖼️</button>` : '';
 
                         tbody.innerHTML += `
                             <tr style="background:${c.seen ? 'transparent' : 'rgba(236, 72, 153, 0.05)'}">
@@ -7865,8 +7904,12 @@ window.saveUser = function() {
                                 <td style="font-weight:bold; color:var(--accent);">${c.uploader || 'غير معروف'}</td>
                                 <td style="font-weight:bold;">${u.realName || userId}</td>
                                 <td><span style="background:#ec4899; color:white; padding:2px 6px; border-radius:6px; font-size:0.7rem;">${c.type}</span></td>
-                                <td style="max-width:300px; font-size:0.85rem; text-align:right; white-space:pre-wrap;"><b>${c.title}</b>\n${c.details}</td>
-                                <td>${audioHtml} ${imageHtml}</td>
+<td style="max-width: 500px; min-width: 300px; font-size: 0.95rem; text-align: right; white-space: pre-wrap; line-height: 1.7; padding: 15px; color: #fff;">
+    <b style="color: var(--accent); font-size: 1rem; border-bottom: 1px solid #444; display: block; margin-bottom: 8px; padding-bottom: 5px;">
+        ${c.title}
+    </b>
+    ${c.details}
+</td>                                <td>${audioHtml} ${imageHtml}</td>
                                 <td>
                                     <button onclick="openUserProfile('${userId}')" class="btn btn-dark btn-sm">فتح الملف</button>
                                     ${!c.seen ? `<button onclick="markCsReportSeen('${userId}', '${key}')" class="btn btn-success btn-sm">تمت الرؤية</button>` : ''}
@@ -8133,11 +8176,29 @@ function updateAttendanceUI() {
 
 let currentShiftViewDate = new Date(); // التاريخ المرجعي للأسبوع الذي نشاهده حالياً
 
-function changeShiftWeek(direction) {
-    // إضافة أو طرح 7 أيام من التاريخ الحالي للمشاهدة
-    currentShiftViewDate.setDate(currentShiftViewDate.getDate() + (direction * 7));
-    renderEmpShiftSchedule();
-}
+    function changeShiftWeek(direction) {
+        // إذا كان الموظف يحاول الضغط على "الأسبوع التالي"
+        if (direction === 1) {
+            let today = new Date();
+            // الحصول على مفتاح الأسبوع الحالي الفعلي
+            let currentRealWeekKey = getAttWeekKey(today.toISOString().split('T')[0]);
+
+            // حساب التاريخ الذي سيذهب إليه الموظف
+            let nextDate = new Date(currentShiftViewDate);
+            nextDate.setDate(nextDate.getDate() + 7);
+            let nextWeekKey = getAttWeekKey(nextDate.toISOString().split('T')[0]);
+
+            // منع الانتقال إذا كان الأسبوع القادم أكبر من الأسبوع الحالي
+            if (nextWeekKey > currentRealWeekKey) {
+                alert("🛑 عذراً يا بطل.. لا يمكنك رؤية جدول الأسبوع القادم إلا عند بدايته (يوم السبت).");
+                return; // توقف هنا ولا تنفذ الانتقال
+            }
+        }
+
+        // إذا كان الموظف يرجع للخلف (الأسبوع السابق) أو لم يتجاوز الوقت الحالي
+        currentShiftViewDate.setDate(currentShiftViewDate.getDate() + (direction * 7));
+        renderEmpShiftSchedule();
+    }
 
 function renderEmpShiftSchedule() {
     if (!currentUser || currentUser.role === 'admin') return;
@@ -8658,6 +8719,211 @@ function getDeviceInfo() {
         full: model + " - " + colorHex 
     };
 }
+// 1. دالة فتح النافذة وملء البيانات
+function openSwapModal() {
+    const modal = document.getElementById('swapRequestModal');
+    modal.classList.remove('hidden');
+    
+    // ملء الأيام
+    const days = ["السبت", "الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"];
+    let daysHtml = '';
+    days.forEach((d, i) => { daysHtml += `<option value="${i}">${d}</option>`; });
+    document.getElementById('swapMyDay').innerHTML = daysHtml;
+
+    // ملء قائمة الزملاء (كل الموظفين ما عدا أنا والمديرين)
+    let colleaguesHtml = '<option value="">-- اختر زميلك --</option>';
+    Object.values(allUsersData).forEach(u => {
+        if(u.username && u.username !== currentUser.username && !MANAGERS.includes(u.username)) {
+            colleaguesHtml += `<option value="${u.username}">${u.realName || u.username}</option>`;
+        }
+    });
+    document.getElementById('swapColleague').innerHTML = colleaguesHtml;
+}
+
+// 2. دالة إرسال الطلب الفعلي
+function submitSwapRequest() {
+    const dayIdx = document.getElementById('swapMyDay').value;
+    const colleague = document.getElementById('swapColleague').value;
+
+    if(!colleague) return alert("لازم تختار زميل يا بطل!");
+
+    // استخدام التاريخ المختار حالياً في الجدول (من المتغير الموجود فعلاً في الكود عندك)
+    const weekKey = getAttWeekKey(currentShiftViewDate.toISOString().split('T')[0]);
+
+    // جلب شفتاتي وشفتات زميلي عشان نسجلهم في الطلب للوضوح
+    const refFrom = db.ref(`schedules/${currentUser.username}/${weekKey}/${dayIdx}`);
+    const refTo = db.ref(`schedules/${colleague}/${weekKey}/${dayIdx}`);
+
+    Promise.all([refFrom.once('value'), refTo.once('value')]).then((snaps) => {
+        const fromShiftVal = snaps[0].val() || "--";
+        const toShiftVal = snaps[1].val() || "--";
+
+        const requestData = {
+            fromUser: currentUser.username,
+            fromUserName: currentUser.realName || currentUser.username,
+            fromShift: fromShiftVal,
+            toUser: colleague,
+            toUserName: allUsersData[colleague].realName || colleague,
+            toShift: toShiftVal,
+            dayIndex: dayIdx,
+            dayName: ["السبت", "الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"][dayIdx],
+            weekKey: weekKey,
+            status: "waiting_colleague",
+            timestamp: Date.now()
+        };
+
+        db.ref('swapRequests').push(requestData).then(() => {
+            alert("✅ تم إرسال الطلب لزميلك بنجاح!");
+            document.getElementById('swapRequestModal').classList.add('hidden');
+        });
+    });
+}
+// 1. تعديل دالة الإرسال (الحالة تبدأ بـ waiting_colleague)
+function submitSwapRequest() {
+    const dayIdx = document.getElementById('swapMyDay').value;
+    const colleague = document.getElementById('swapColleague').value;
+    if(!colleague) return alert("لازم تختار زميل!");
+
+    const weekKey = getAttWeekKey(currentShiftViewDate.toISOString().split('T')[0]);
+
+    // جلب الشفتات الحالية من قاعدة البيانات قبل الإرسال
+    const refFrom = db.ref(`schedules/${currentUser.username}/${weekKey}/${dayIdx}`);
+    const refTo = db.ref(`schedules/${colleague}/${weekKey}/${dayIdx}`);
+
+    Promise.all([refFrom.once('value'), refTo.once('value')]).then((snaps) => {
+        const fromShiftVal = snaps[0].val() || "--";
+        const toShiftVal = snaps[1].val() || "--";
+
+        const requestData = {
+            fromUser: currentUser.username,
+            fromUserName: currentUser.realName || currentUser.username,
+            fromShift: fromShiftVal, // شفت الموظف اللي باعت
+            toUser: colleague,
+            toUserName: allUsersData[colleague].realName || colleague,
+            toShift: toShiftVal,   // شفت الزميل المبعوت له
+            dayIndex: dayIdx,
+            dayName: ["السبت", "الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"][dayIdx],
+            weekKey: weekKey,
+            status: "waiting_colleague",
+            timestamp: Date.now()
+        };
+
+        db.ref('swapRequests').push(requestData).then(() => {
+            alert("تم إرسال الطلب.. في انتظار موافقة زميله ✅");
+            document.getElementById('swapRequestModal').classList.add('hidden');
+        });
+    });
+}
+
+// 2. كود الاستماع للطلبات الواردة للموظف (ب)
+// البحث عن كود الاستماع لـ swapRequests وتعديل الجزء بتاع list.innerHTML
+// كود مراقبة طلبات التبديل الواردة - يوضع داخل وسم <script>
+db.ref('swapRequests').on('value', (snap) => {
+    // التأكد أولاً أن الموظف مسجل دخول
+    if (!currentUser || !currentUser.username) return;
+
+    const swaps = snap.val();
+    const area = document.getElementById('incomingSwapsArea');
+    const list = document.getElementById('incomingSwapsList');
+
+    if (!area || !list) return; // تأمين لو العناصر مش موجودة
+
+    list.innerHTML = ''; // تصفير القائمة
+    let hasIncoming = false;
+
+    if (swaps) {
+        Object.entries(swaps).forEach(([key, s]) => {
+            // الشرط: الطلب مبعوت لي أنا (toUser) وحالته لسه (waiting_colleague)
+            if (s.toUser === currentUser.username && s.status === "waiting_colleague") {
+                hasIncoming = true;
+                
+                const hisShift = s.fromShift === 'Off' ? 'إجازة 🛌' : s.fromShift;
+                const yourShift = s.toShift === 'Off' ? 'إجازة 🛌' : s.toShift;
+
+                list.innerHTML += `
+                    <div style="background: rgba(0,0,0,0.5); padding: 15px; border-radius: 18px; margin-bottom: 10px; border: 1px solid #8b5cf6; border-left: 5px solid #fbbf24; animation: pulse 2s infinite;">
+                        <p style="font-size: 0.9rem; margin: 0 0 10px 0; color: #fff; text-align:right;">
+                            الزميل <b style="color:#a78bfa;">${s.fromUserName}</b> محتاج يبدل معاك يوم <b style="color:#fbbf24;">${s.dayName}</b>:
+                        </p>
+                        
+                        <div style="display: flex; justify-content: space-around; background: rgba(255,255,255,0.05); padding: 8px; border-radius: 12px; margin-bottom: 12px; text-align: center;">
+                            <div>
+                                <small style="display:block; color:#aaa; font-size:0.65rem;">شيفته (اللي هتاخده)</small>
+                                <b style="color:#10b981; font-size:0.85rem;">${hisShift}</b>
+                            </div>
+                            <div style="align-self: center; color:#8b5cf6;"><i class="fa-solid fa-right-left"></i></div>
+                            <div>
+                                <small style="display:block; color:#aaa; font-size:0.65rem;">شفتك (اللي هياخده)</small>
+                                <b style="color:#f43f5e; font-size:0.85rem;">${yourShift}</b>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 8px;">
+                            <button onclick="colleagueAction('${key}', 'approve')" class="btn btn-success" style="flex: 1; font-size: 0.85rem; padding: 8px;">موافقة</button>
+                            <button onclick="colleagueAction('${key}', 'rejected')" class="btn btn-danger" style="flex: 1; font-size: 0.85rem; padding: 8px;">رفض</button>
+                        </div>
+                    </div>`;
+            }
+        });
+    }
+
+    // إظهار أو إخفاء القسم بالكامل بناءً على وجود طلبات
+    if (hasIncoming) {
+        area.classList.remove('hidden');
+    } else {
+        area.classList.add('hidden');
+    }
+});
+// دالة رد الموظف (ب)
+// دالة رد الموظف (ب) - التبديل التلقائي
+function colleagueAction(requestId, action) {
+    if (action === 'rejected') {
+        db.ref('swapRequests/' + requestId).update({ status: "rejected" });
+        alert("تم رفض الطلب 🛑");
+        return;
+    }
+
+    // لو وافق (Approved) -> تنفيذ التبديل فوراً
+    db.ref('swapRequests/' + requestId).once('value', (snap) => {
+        const s = snap.val();
+        
+        // 1. جلب شفتات الاثنين من قاعدة البيانات
+        const refA = db.ref(`schedules/${s.fromUser}/${s.weekKey}/${s.dayIndex}`);
+        const refB = db.ref(`schedules/${s.toUser}/${s.weekKey}/${s.dayIndex}`);
+
+        Promise.all([refA.once('value'), refB.once('value')]).then((results) => {
+            const valA = results[0].val() || "--"; // شفت الموظف اللي طلب
+            const valB = results[1].val() || "--"; // شفت الزميل اللي وافق
+
+            // 2. عملية التبديل الفوري (المقص)
+            const updates = {};
+            updates[`schedules/${s.fromUser}/${s.weekKey}/${s.dayIndex}`] = valB;
+            updates[`schedules/${s.toUser}/${s.weekKey}/${s.dayIndex}`] = valA;
+            
+            // 3. تحديث حالة الطلب لـ "تمت العملية" عشان الأدمن يشوفها كمعلومة
+            updates[`swapRequests/${requestId}/status`] = "completed";
+
+            db.ref().update(updates).then(() => {
+                alert("تم تبديل الشفتات بنجاح وسُجلت عند الإدارة ✅");
+            });
+        });
+    });
+}
+function skipTime(btn, seconds) {
+    const audio = btn.parentElement.parentElement.querySelector('audio');
+    if (audio) {
+        audio.currentTime += seconds;
+    }
+}
+// دالة التحكم في وقت المشغل (تقديم وتأخير)
+function skipAudio(btn, seconds) {
+    // البحث عن أقرب عنصر audio موجود في نفس الحاوية
+    const container = btn.closest('.audio-wrapper');
+    const audio = container.querySelector('audio');
+    if (audio) {
+        audio.currentTime += seconds;
+    }
+}   
         </script>
         <!-- نافذة تأكيد إتمام الصلاة -->
         <div id="prayerCheckModal" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:30000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px);">
@@ -8758,11 +9024,12 @@ function getDeviceInfo() {
         </div>
     <!-- نافذة جدول الشيتات للموظف -->
 <!-- نافذة جدول الشيتات المطور -->
+    <!-- نافذة جدول الشيتات المطور -->
 <div id="empShiftModal" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:25000; padding:20px; overflow-y:auto; backdrop-filter: blur(15px);">
     <div style="max-width:700px; margin:20px auto; background:#0f172a; border:2px solid #8b5cf6; border-radius:35px; padding:30px; box-shadow: 0 0 50px rgba(139, 92, 246, 0.2);">
 
         <!-- هيدر النافذة -->
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom:15px;">
             <div style="display:flex; align-items:center; gap:15px;">
                 <span style="font-size:2rem; background:#8b5cf6; color:#fff; padding:10px; border-radius:15px;">📅</span>
                 <div>
@@ -8773,17 +9040,30 @@ function getDeviceInfo() {
             <button onclick="document.getElementById('empShiftModal').classList.add('hidden')" class="btn btn-danger" style="border-radius:15px; padding:10px 20px;">إغلاق ×</button>
         </div>
 
-        <!-- شريط التنقل بين الأسابيع الجديد -->
+        <!-- شريط التنقل بين الأسابيع -->
         <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); padding:10px 20px; border-radius:20px; margin-bottom:20px; border:1px solid rgba(139, 92, 246, 0.3);">
             <button onclick="changeShiftWeek(-1)" class="btn btn-dark" style="padding:5px 15px;">◀ الأسبوع السابق</button>
             <div id="currentWeekDisplay" style="font-weight:bold; color:#fff; font-size:0.9rem; text-align:center;"></div>
             <button onclick="changeShiftWeek(1)" class="btn btn-dark" style="padding:5px 15px;">الأسبوع التالي ▶</button>
         </div>
 
-        <!-- محتوى الجدول -->
-        <div id="empShiftContent" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-            <!-- البيانات تظهر هنا -->
+        <!-- المنطقة الجديدة: طلبات التبديل الواردة (تظهر هنا داخل الجدول) -->
+        <div id="incomingSwapsArea" class="hidden" style="background: rgba(139, 92, 246, 0.1); border: 2px solid #8b5cf6; padding: 15px; border-radius: 20px; margin-bottom: 20px; animation: screenIn 0.4s ease;">
+            <h4 style="color: #a78bfa; margin: 0 0 10px 0; text-align: center; font-size: 1rem;">🔔 طلبات تبديل واردة</h4>
+            <div id="incomingSwapsList"></div>
         </div>
+
+        <!-- محتوى الجدول (الأيام) -->
+        <div id="empShiftContent" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+            <!-- الأيام بتنزل هنا -->
+        </div>
+
+        <!-- زرار فتح طلب تبديل جديد -->
+        <button onclick="openSwapModal()" class="btn" style="width: 100%; padding: 18px; background: #e68a00; color: white; font-weight: 900; border-radius: 20px; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(230, 138, 0, 0.3);">
+            🔄 طلب تبديل شفت مع زميل
+        </button>
+    </div>
+</div>
     </div>
 </div>
         </body>
@@ -8840,5 +9120,30 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
+<!-- ... أكواد المودالز القديمة ... -->
+    </div> <!-- نهاية container -->
+
+    <!-- ضيف الكود بتاعك هنا بالظبط -->
+    <!-- نافذة اختيار تفاصيل التبديل -->
+    <div id="swapRequestModal" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:40000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px);">
+        <div style="background:#1e293b; border:2px solid #fbbf24; border-radius:25px; padding:30px; width:90%; max-width:450px; box-shadow: 0 0 30px rgba(251, 191, 36, 0.2);">
+            <h3 style="color:#fbbf24; text-align:center; margin-top:0;">🔄 إنشاء طلب تبديل</h3>
+            
+            <label style="display:block; color:#aaa; margin-top:15px; font-size:0.9rem;">اختر اليوم اللي عاوز تبدله:</label>
+            <select id="swapMyDay" class="form-control-glass" style="width:100%; margin-top:5px; background:rgba(0,0,0,0.3); border:1px solid #444; color:white; padding:10px; border-radius:12px;"></select>
+
+            <label style="display:block; color:#aaa; margin-top:15px; font-size:0.9rem;">اختر الزميل المبدل معه:</label>
+            <select id="swapColleague" class="form-control-glass" style="width:100%; margin-top:5px; background:rgba(0,0,0,0.3); border:1px solid #444; color:white; padding:10px; border-radius:12px;"></select>
+
+            <div style="display:flex; gap:10px; margin-top:25px;">
+                <button onclick="submitSwapRequest()" class="btn btn-success" style="flex:2; padding:12px; font-weight:bold;">إرسال الطلب</button>
+                <button onclick="document.getElementById('swapRequestModal').classList.add('hidden')" class="btn btn-dark" style="flex:1; padding:12px;">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- تأكد إن ده هو آخر سطر في الملف -->
+</body>
+</html>
         </body>
         </html>
