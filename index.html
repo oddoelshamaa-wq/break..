@@ -8176,29 +8176,11 @@ function updateAttendanceUI() {
 
 let currentShiftViewDate = new Date(); // التاريخ المرجعي للأسبوع الذي نشاهده حالياً
 
-    function changeShiftWeek(direction) {
-        // إذا كان الموظف يحاول الضغط على "الأسبوع التالي"
-        if (direction === 1) {
-            let today = new Date();
-            // الحصول على مفتاح الأسبوع الحالي الفعلي
-            let currentRealWeekKey = getAttWeekKey(today.toISOString().split('T')[0]);
-
-            // حساب التاريخ الذي سيذهب إليه الموظف
-            let nextDate = new Date(currentShiftViewDate);
-            nextDate.setDate(nextDate.getDate() + 7);
-            let nextWeekKey = getAttWeekKey(nextDate.toISOString().split('T')[0]);
-
-            // منع الانتقال إذا كان الأسبوع القادم أكبر من الأسبوع الحالي
-            if (nextWeekKey > currentRealWeekKey) {
-                alert("🛑 عذراً يا بطل.. لا يمكنك رؤية جدول الأسبوع القادم إلا عند بدايته (يوم السبت).");
-                return; // توقف هنا ولا تنفذ الانتقال
-            }
-        }
-
-        // إذا كان الموظف يرجع للخلف (الأسبوع السابق) أو لم يتجاوز الوقت الحالي
-        currentShiftViewDate.setDate(currentShiftViewDate.getDate() + (direction * 7));
-        renderEmpShiftSchedule();
-    }
+  function changeShiftWeek(direction) {
+    // تم إلغاء شرط "يوم السبت" للسماح بالتنقل الحر
+    currentShiftViewDate.setDate(currentShiftViewDate.getDate() + (direction * 7));
+    renderEmpShiftSchedule();
+}
 
 function renderEmpShiftSchedule() {
     if (!currentUser || currentUser.role === 'admin') return;
@@ -8207,41 +8189,46 @@ function renderEmpShiftSchedule() {
     const weekDisplay = document.getElementById('currentWeekDisplay');
     if (!container || !weekDisplay) return;
     
-    container.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color:#aaa; padding:30px;">⏳ جاري تحميل الشيتات...</p>';
+    container.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color:#aaa; padding:30px;">⏳ جاري فحص الجدول...</p>';
 
-    // حساب مفتاح الأسبوع بناءً على التاريخ المختار
     const weekKey = getAttWeekKey(currentShiftViewDate.toISOString().split('T')[0]);
-    
-    // تصحيح: تعيين تاريخ البداية مباشرة ليوافق السبت (بداية مصفوفة daysAr)
     let startDate = new Date(weekKey); 
-    // تم حذف سطر طرح اليوم الواحد من هنا
 
-    // تحديث نص الهيدر
     const endDate = new Date(startDate);
     endDate.setDate(endDate.getDate() + 6);
     weekDisplay.innerHTML = `من ${startDate.getDate()}/${startDate.getMonth()+1} <br> إلى ${endDate.getDate()}/${endDate.getMonth()+1}`;
 
     const daysAr = ["السبت", "الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"];
     
+    // جلب البيانات
     db.ref('schedules/' + currentUser.username + '/' + weekKey).once('value', (snap) => {
-        const mySched = snap.val() || {};
+        const mySched = snap.val();
         container.innerHTML = '';
 
+        // --- التعديل الجديد هنا ---
+        // إذا لم تكن هناك بيانات (المدير لم يرفع الجدول بعد)
+        if (!mySched) {
+            container.innerHTML = `
+                <div style="grid-column: 1/-1; text-align:center; padding:40px; background:rgba(255,255,255,0.02); border-radius:20px; border:1px dashed rgba(139, 92, 246, 0.3);">
+                    <i class="fa-solid fa- calendar-xmark" style="font-size:3rem; color:var(--text-dim); margin-bottom:15px; display:block;"></i>
+                    <p style="color:#aaa; font-weight:bold;">عذراً يا بطل.. الإدارة لم تقم برفع جدول هذا الأسبوع بعد ⏳</p>
+                    <small style="color:var(--text-dim); font-size:0.7rem;">سيظهر الجدول هنا تلقائياً بمجرد اعتماده</small>
+                </div>`;
+            return; // توقف هنا ولا ترسم الجدول الفارغ
+        }
+
+        // إذا وجدت بيانات، ارسم الجدول بشكل طبيعي
         daysAr.forEach((dayName, index) => {
             const shiftValue = mySched[index] || '--';
-            
             let thisDayDate = new Date(startDate);
             thisDayDate.setDate(thisDayDate.getDate() + index);
             const dateString = `${thisDayDate.getDate()}/${thisDayDate.getMonth() + 1}`;
-            
-            // مقارنة اليوم الحالي بدقة
             const isActualToday = (thisDayDate.toLocaleDateString('en-CA') === new Date(getServerTime()).toLocaleDateString('en-CA'));
 
             let displayValue = shiftValue;
             let cardStyle = "background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 15px; text-align: center; transition: 0.3s; position:relative;";
             let timeStyle = "font-size: 1.1rem; font-weight: 900; margin-top: 5px;";
             
-            // تلوين الكروت حسب الحالة
             if (shiftValue === 'Off') {
                 cardStyle += "border-color: rgba(139, 92, 246, 0.4); background: rgba(139, 92, 246, 0.05);";
                 timeStyle += "color: #a78bfa;";
@@ -8251,7 +8238,6 @@ function renderEmpShiftSchedule() {
                 timeStyle += "color: #10b981;";
             }
 
-            // تمييز اليوم الحالي
             if (isActualToday) {
                 cardStyle += "border: 2px solid #8b5cf6; box-shadow: 0 0 15px rgba(139, 92, 246, 0.4); transform: scale(1.05); z-index: 2; background: rgba(139, 92, 246, 0.1);";
             }
