@@ -3351,27 +3351,32 @@ function setPrayerWindow(status) {
                                             triggerGlobalRefresh(); // تحديث الشاشة
                                         });
                                     }
-        function showBroadcastOverlay(data) {
-            const overlay = document.getElementById('broadcastOverlay');
-            const msgText = document.getElementById('broadcastMsgText');
-            const sound = document.getElementById('broadcastSound');
+    function showBroadcastOverlay(data) {
+    const overlay = document.getElementById('broadcastOverlay');
+    const msgText = document.getElementById('broadcastMsgText');
+    const sound = document.getElementById('broadcastSound');
 
-            // بناء المحتوى: صورة + نص
-            let contentHtml = "";
-            if (data.image) {
-                contentHtml += `<img src="${data.image}" style="max-width:100%; border-radius:20px; margin-bottom:20px; border:3px solid #6366f1; box-shadow:0 0 30px rgba(99, 102, 241, 0.5); cursor:pointer;" onclick="showZoomImage('${data.image}')">`;
-            }
-            contentHtml += `<h2 style="color:white; margin-bottom:10px;">${data.message || 'تنبيه إداري جديد'}</h2>`;
-            contentHtml += `<p style="color:#06b6d4; font-size:0.9rem;">بواسطة: ${data.sender || 'الإدارة'}</p>`;
+    // بناء المحتوى: صورة + نص
+    let contentHtml = "";
+    if (data.image) {
+        contentHtml += `<img src="${data.image}" style="max-width:100%; border-radius:20px; margin-bottom:20px; border:3px solid #6366f1; box-shadow:0 0 30px rgba(99, 102, 241, 0.5); cursor:pointer;" onclick="showZoomImage('${data.image}')">`;
+    }
+    contentHtml += `<h2 style="color:white; margin-bottom:10px;">${data.message || 'تنبيه إداري جديد'}</h2>`;
+    contentHtml += `<p style="color:#06b6d4; font-size:0.9rem;">بواسطة: ${data.sender || 'الإدارة'}</p>`;
 
-            msgText.innerHTML = contentHtml;
-            overlay.style.display = 'flex';
+    msgText.innerHTML = contentHtml;
+    overlay.style.display = 'flex';
 
-            if (soundActive && sound) {
-                sound.currentTime = 0;
-                sound.play().catch(e => console.log("Sound blocked"));
-            }
-        }
+    // --- التعديل المطور لإيقاف الصوت عن رسائل فتح وإغلاق الصلاة معاً ---
+    const msg = data.message || "";
+    const isSilentPrayerMsg = msg.includes("تم إيقاف مؤقت الصلاة") || msg.includes("تم استئناف وقت الصلاة");
+
+    // تشغيل الصوت فقط إذا لم تكن الرسالة من رسائل الصلاة الصامتة
+    if (soundActive && sound && !isSilentPrayerMsg) {
+        sound.currentTime = 0;
+        sound.play().catch(e => console.log("Sound blocked"));
+    }
+}
                                     function acknowledgeBroadcast() { document.getElementById('broadcastOverlay').style.display = 'none'; const s = document.getElementById('broadcastSound'); s.pause(); s.currentTime = 0; }
 
                                     // 1. معاينة الصورة
@@ -3917,35 +3922,44 @@ function startGlobalTimer() {
 
             if (currentUser) {
                 if (currentUser.role === 'admin') {
-                    // تحديث ساعة الآدمن
                     if(document.getElementById('adminServerTime')) document.getElementById('adminServerTime').innerText = timeStr;
                     if(document.getElementById('adminServerDate')) document.getElementById('adminServerDate').innerText = dateStr;
 
                     updateMonitorValuesOnly();
 
-                    // تحديث العداد عند الآدمن (حساب فقط بدون تحديث قاعدة البيانات)
+                    // --- التعديل هنا لإيقاف العد عند إغلاق نافذة الصلاة ---
                     const queueTimerEl = document.getElementById('adminQueueTimer');
                     if (queueTimerEl && turnTimerStartTime > 0) {
-                        const diff = Math.floor((getServerTime() - turnTimerStartTime) / 1000);
-                        const rem = 600 - diff;
-                        if (rem >= 0) {
-                            queueTimerEl.innerText = formatTime(rem);
-                            queueTimerEl.style.color = rem < 60 ? "#ff4444" : "#fbbf24";
+                        if (isPrayerWindowOpen) {
+                            // العد التنازلي يعمل فقط إذا كانت النافذة مفتوحة
+                            const diff = Math.floor((getServerTime() - turnTimerStartTime) / 1000);
+                            const rem = 600 - diff;
+                            if (rem >= 0) {
+                                queueTimerEl.innerText = formatTime(rem);
+                                queueTimerEl.style.color = rem < 60 ? "#ff4444" : "#fbbf24";
+                            } else {
+                                queueTimerEl.innerText = "00:00";
+                                autoSkipUser(); 
+                            }
                         } else {
-                            queueTimerEl.innerText = "00:00";
-                            autoSkipUser(); // النقل التلقائي
+                            // إذا كانت مغلقة، نظهر الوقت "مجمد" ولا نستدعي autoSkipUser
+                            db.ref('settings/turnTimer/pausedElapsed').once('value', (snap) => {
+                                const pausedElapsed = snap.val() || 0;
+                                const remainingWhenPaused = 600 - pausedElapsed;
+                                queueTimerEl.innerText = formatTime(remainingWhenPaused > 0 ? remainingWhenPaused : 0);
+                                queueTimerEl.style.color = "#ff4444"; // لون أحمر للدلالة على التوقف
+                            });
                         }
                     }
                 } else {
-                    // تحديث ساعة الموظف
+                    // تحديث ساعة الموظف وباقي العمليات
                     if(document.getElementById('userServerTime')) document.getElementById('userServerTime').innerText = timeStr;
                     if(document.getElementById('userServerDate')) document.getElementById('userServerDate').innerText = dateStr;
-
                     updateUserUI();
                     watchPrayerTurnTimer();
                 }
             }
-        } catch (e) { console.  error(e); }
+        } catch (e) { console.error(e); }
     }, 1000);
 }
         function renderMonitorTable() {
