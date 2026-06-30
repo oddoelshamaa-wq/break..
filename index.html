@@ -2378,6 +2378,15 @@ td {
             </button>
         </div>
     </div>
+    <!-- صندوق تنبيه دور الصلاة - يظهر فقط لمن عليه الدور -->
+<div id="prayerTurnAlert" class="hidden" style="background: linear-gradient(135deg, #e67e22, #d35400); border: 2px solid #fff; border-radius: 20px; padding: 20px; margin: 15px auto; text-align: center; max-width: 600px; box-shadow: 0 10px 30px rgba(230, 126, 34, 0.4); animation: pulse 2s infinite;">
+    <h4 style="color: white; margin: 0 0 10px 0; font-weight: 900; font-size: 1.2rem;">⚠️ دورك في الصلاة بدأ الآن!</h4>
+    <p style="color: #f1c40f; margin-bottom: 15px; font-weight: bold;">قدامك 10 دقائق تطلع فيها صلاة أو تطلب تأجيل:</p>
+    <div id="turnTimerDisplay" style="font-size: 3rem; font-family: monospace; font-weight: 900; color: white; background: rgba(0,0,0,0.3); border-radius: 15px; padding: 10px; margin-bottom: 20px; letter-spacing: 5px;">10:00</div>
+    <button onclick="requestWCDelay()" class="btn" style="background: #2c3e50; color: white; width: 100%; padding: 15px; border-radius: 15px; font-weight: bold; border: 1px solid #fff;">
+        🚾 الحمام مشغول (تأجيل دوري 10 دقائق)
+    </button>
+</div>
                                             <!-- الأزرار العادية للموظف -->
                                             <div id="controlsArea">
                                                 <input type="text" id="breakReason" placeholder="اكتب سبب النشاط هنا..." class="form-control-glass" style="text-align: center; font-size: 1.1rem;">
@@ -2396,7 +2405,7 @@ td {
                                                     <div style="border:1px solid var(--danger); padding:8px; border-radius:15px;"><h4>🚨 طوارئ</h4><div id="emStatusArea"><button onclick="sendEmRequest()" class="btn btn-danger" style="width:100%">طلب</button></div></div>
                                                 </div>
 
-                                
+
 
                                             <!-- كارت البصمة الذكي -->
     <div class="attendance-card">
@@ -3254,15 +3263,45 @@ td {
                                             sendBtn.innerHTML = "إرسال التنبيه الآن 🚀";
                                         }
                                     }
+function setPrayerWindow(status) {
+    db.ref('settings/prayerOpen').set(status).then(() => {
+        const now = getServerTime();
+        
+        if (status === false) {
+            // الحالة: إغلاق النافذة -> نحسب كم ثانية مرت من الـ 10 دقائق ونحفظها
+            db.ref('settings/turnTimer').once('value', (snap) => {
+                const data = snap.val() || {};
+                const startTime = data.startTime || now;
+                const elapsedSoFar = Math.floor((now - startTime) / 1000);
+                
+                // حفظ الثواني المنقضية لكي لا تضيع
+                db.ref('settings/turnTimer/pausedElapsed').set(elapsedSoFar);
+            });
 
-                                    function setPrayerWindow(status) {
-            // تحديث حالة الفتح والغلق في قاعدة البيانات فقط
-            // تم إزالة تصفير العدادات وتم إزالة إرسال البرودكاست (التنبيه الصارخ)
-            db.ref('settings/prayerOpen').set(status).then(() => {
-                const msg = status ? "تم إتاحة زر الصلاة للموظفين ✅" : "تم حجب زر الصلاة عن الموظفين 🛑";
-                alert(msg); // التنبيه يظهر للمدير فقط للتأكيد
+            db.ref('broadcasts').push({
+                message: "🛑 تم إيقاف مؤقت الصلاة (النافذة مغلقة).",
+                timestamp: now,
+                sender: "النظام 🤖",
+                target: ""
+            });
+        } else {
+            // الحالة: فتح النافذة -> نعيد ضبط وقت البداية بناءً على الثواني المخزنة سابقاً
+            db.ref('settings/turnTimer/pausedElapsed').once('value', (snap) => {
+                const pausedElapsed = snap.val() || 0;
+                // المعادلة: وقت البداية الجديد = (الآن - الوقت اللي ضاع)
+                // دي بتخلي العداد يكمل من نفس النقطة
+                db.ref('settings/turnTimer/startTime').set(now - (pausedElapsed * 1000));
+            });
+
+            db.ref('broadcasts').push({
+                message: "🕌 تم استئناف وقت الصلاة.. العداد يعمل الآن.",
+                timestamp: now,
+                sender: "النظام 🤖",
+                target: ""
             });
         }
+    });
+}
 
                                 function addPrayerTimeGlobal() {
         if(!confirm("توزيع 15 دقيقة صلاة للكل؟")) return;
@@ -3868,64 +3907,47 @@ td {
             });
         });
     }
-        function startGlobalTimer() {
-            if(timerInterval) clearInterval(timerInterval);
-            
-            // تحديث الساعة والتاريخ فوراً قبل بدء الـ Interval
+function startGlobalTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    
+    timerInterval = setInterval(() => {
+        try {
             const timeStr = getServerTimeString();
             const dateStr = getServerDateString();
-            
-            // تحديث الساعة في لوحة الموظف
-            const timeEl = document.getElementById('userServerTime');
-            const dateEl = document.getElementById('userServerDate');
-            if(timeEl) timeEl.innerText = timeStr;
-            if(dateEl) dateEl.innerText = dateStr;
 
-            // تحديث الساعة والتاريخ في لوحة الأدمن لو موجودة
-            const adminTimeEl = document.getElementById('adminServerTime');
-            const adminDateEl = document.getElementById('adminServerDate');
-            if(adminTimeEl) adminTimeEl.innerText = timeStr;
-            if(adminDateEl) adminDateEl.innerText = dateStr;
-            
-            // تحديث الموظف فوراً أيضاً
-            if(currentUser && currentUser.role !== 'admin') {
-                updateUserUI();
-            }
-            
-            timerInterval = setInterval(() => {
-                try {
-                    const timeStr = getServerTimeString();
-                    const dateStr = getServerDateString();
+            if (currentUser) {
+                if (currentUser.role === 'admin') {
+                    // تحديث ساعة الآدمن
+                    if(document.getElementById('adminServerTime')) document.getElementById('adminServerTime').innerText = timeStr;
+                    if(document.getElementById('adminServerDate')) document.getElementById('adminServerDate').innerText = dateStr;
 
-                    // تحديث الساعة في لوحة الموظف
-                    const timeEl = document.getElementById('userServerTime');
-                    const dateEl = document.getElementById('userServerDate');
-                    if(timeEl) timeEl.innerText = timeStr;
-                    if(dateEl) dateEl.innerText = dateStr;
+                    updateMonitorValuesOnly();
 
-                    // تحديث الساعة والتاريخ في لوحة الأدمن لو موجودة
-                    const adminTimeEl = document.getElementById('adminServerTime');
-                    const adminDateEl = document.getElementById('adminServerDate');
-                    if(adminTimeEl) adminTimeEl.innerText = timeStr;
-                    if(adminDateEl) adminDateEl.innerText = dateStr;
-
-                    // أضف هذا السطر هنا 👇
-                    if (currentUser && currentUser.role === 'admin') {
-                        checkAutoPrayerDistribution();
+                    // تحديث العداد عند الآدمن (حساب فقط بدون تحديث قاعدة البيانات)
+                    const queueTimerEl = document.getElementById('adminQueueTimer');
+                    if (queueTimerEl && turnTimerStartTime > 0) {
+                        const diff = Math.floor((getServerTime() - turnTimerStartTime) / 1000);
+                        const rem = 600 - diff;
+                        if (rem >= 0) {
+                            queueTimerEl.innerText = formatTime(rem);
+                            queueTimerEl.style.color = rem < 60 ? "#ff4444" : "#fbbf24";
+                        } else {
+                            queueTimerEl.innerText = "00:00";
+                            autoSkipUser(); // النقل التلقائي
+                        }
                     }
+                } else {
+                    // تحديث ساعة الموظف
+                    if(document.getElementById('userServerTime')) document.getElementById('userServerTime').innerText = timeStr;
+                    if(document.getElementById('userServerDate')) document.getElementById('userServerDate').innerText = dateStr;
 
-                    // باقي منطق التايمر (البريك والأكسدة)
-                    if(currentUser && currentUser.role !== 'admin') {
-                        updateUserUI();
-                    } else if (currentUser && currentUser.role === 'admin') {
-                        updateMonitorValuesOnly();
-                    }
-                } catch (e) {
-                    console.error("Timer Error: ", e);
+                    updateUserUI();
+                    watchPrayerTurnTimer();
                 }
-            }, 1000);
-        }
-
+            }
+        } catch (e) { console.  error(e); }
+    }, 1000);
+}
         function renderMonitorTable() {
             const tbody = document.getElementById('monitorBody');
             if(!tbody) return; // تأكد من وجود الـ tbody
@@ -4219,38 +4241,46 @@ td {
             alert("فشل البدء: " + error.message);
         });
     };
-        window.adminStop = (un) => {
-            const u = allUsersData[un], d = Math.floor((getServerTime() - u.lastStartTime)/1000);
-            db.ref('users/'+un+'/sessions').push({
-                date: getServerDateString(),
-                type: u.breakType,
-                reason: u.lastReason || 'إيقاف إداري',
-                duration: d,
-                startTime: new Date(u.lastStartTime).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'}),
-                // أضف هذا السطر الجديد بالأسفل
-                endTime: getServerTimeString()
-            });
-            const up = { isOnBreak: false, lastStartTime: null, lastEndedTime: getServerTime(), lastEndedType: u.breakType };
-            if(u.breakType==='بريك عام' || u.breakType==='طوارئ') { up.usedSeconds = (u.usedSeconds||0)+d; if(u.breakType==='طوارئ') up.emRequest = null; }
-            else if(u.breakType==='صلاة') up.prayerSeconds = (u.prayerSeconds||0)+d;
-            else if(u.breakType==='ميتنج') { up.meetingSeconds = (u.meetingSeconds||0)+d; up.meetingRequest = null; }
-            else if(u.breakType==='متابع عميل') up.followUpSeconds = (u.followUpSeconds||0)+d;
-            else if(u.breakType==='استراحة VIP') up.vipSeconds = (u.vipSeconds||0)+d;
-            db.ref('users/'+un).update(up).then(() => {
-                // إزالة الموظف من الطابور إذا كان في صلاة وهو الأول
-                if(u.breakType === 'صلاة') {
-                    db.ref('settings/prayerQueue').once('value', (snap) => {
-                        let queue = snap.val() || [];
-                        // إذا كان الموظف الذي أوقفه المشرف هو الأول في الطابور
-                        if (queue[0] === un) {
-                            queue.shift();
-                            db.ref('settings/prayerQueue').set(queue);
-                        }
-                    });
-                }
-                triggerGlobalRefresh();
-            });
+     window.adminStop = (un) => {
+    db.ref('users/' + un).once('value', (snap) => {
+        const u = snap.val();
+        if (!u || !u.lastStartTime) return;
+
+        const duration = Math.floor((getServerTime() - u.lastStartTime) / 1000);
+        const startTimeStr = new Date(u.lastStartTime).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
+
+        // سجل في الأرشيف
+        db.ref('users/' + un + '/sessions').push({
+            date: getServerDateString(),
+            type: u.breakType,
+            reason: u.lastReason || 'إيقاف إداري بواسطة المشرف',
+            duration: duration,
+            startTime: startTimeStr,
+            endTime: getServerTimeString()
+        });
+
+        const updates = {
+            isOnBreak: false,
+            lastStartTime: null,
+            lastEndedTime: getServerTime(),
+            lastEndedType: u.breakType,
+            // التعديل السحري هنا:
+            emRequest: null // مسح طلب الطوارئ تماماً لضمان عدم الخروج مرة أخرى بدون إذن
         };
+
+        if (u.breakType === 'بريك عام' || u.breakType === 'طوارئ') updates.usedSeconds = (u.usedSeconds || 0) + duration;
+        else if (u.breakType === 'صلاة') updates.prayerSeconds = (u.prayerSeconds || 0) + duration;
+        else if (u.breakType === 'ميتنج') { updates.meetingSeconds = (u.meetingSeconds || 0) + duration; updates.meetingRequest = null; }
+        else if (u.breakType === 'متابع عميل') updates.followUpSeconds = (u.followUpSeconds || 0) + duration;
+        else if (u.breakType === 'استراحة VIP') updates.vipSeconds = (u.vipSeconds || 0) + duration;
+
+        db.ref('users/' + un).update(updates).then(() => {
+            if (u.breakType === 'صلاة') removeFromQueueByUsername(un);
+            triggerGlobalRefresh();
+            alert("تم إيقاف النشاط للموظف ومسح تصريح الطوارئ بنجاح ✅");
+        });
+    });
+};
 
         function openPrayerHistory() {
             document.getElementById('prayerHistoryModal').classList.remove('hidden');
@@ -4392,81 +4422,39 @@ td {
             }
         }
 
-        function startMyBreak(t) {
+  function startMyBreak(t) {
             if (currentUser.isOnBreak) return;
 
-            // --- الجزء الجديد: فحص إجبارية السبب ---
+            // --- حماية نافذة الصلاة ---
+            if (t === 'صلاة') {
+                if (!isPrayerWindowOpen) {
+                    alert("🛑 عذراً.. نافذة الصلاة مغلقة حالياً من قبل الإدارة. لا يمكنك البدء.");
+                    return;
+                }
+                const myIndex = (currentQueue || []).indexOf(currentUser.username);
+                if (myIndex === -1 || myIndex >= maxPrayersAllowed) {
+                    alert("⏳ لم يحن دورك بعد في الطابور!");
+                    return;
+                }
+            }
+
             const reasonInput = document.getElementById('breakReason');
             const reasonValue = reasonInput.value.trim();
 
-            if (reasonValue === "") {
-                alert("⚠️ عذراً.. يجب كتابة سبب النشاط أولاً قبل البدء!");
-                reasonInput.focus(); // وضع المؤشر داخل الخانة تلقائياً
-                reasonInput.style.border = "2px solid #ef4444"; // تلوين الخانة بالأحمر للتنبيه
-                return; // الخروج من الدالة ومنع بدء البريك
-            } else {
-                reasonInput.style.border = "1px solid var(--glass-border)"; // إعادة اللون الطبيعي إذا كتب
-            }
-            // ---------------------------------------
-
-            // --- 1. منطق الصلاة (طابور + حد عددي) ---
-            if (t === 'صلاة') {
-                const myIndex = (currentQueue || []).indexOf(currentUser.username);
-                if (myIndex === -1) {
-                    alert("🛑 اسمك غير موجود في طابور الصلاة حالياً!");
-                    return;
-                }
-                if (myIndex >= maxPrayersAllowed) {
-                    alert(`⏳ لم يحن دورك بعد! أنت رقم (${myIndex + 1}) والمدير يسمح بخروج أول (${maxPrayersAllowed}) فقط.`);
-                    return;
-                }
-                const activePrayers = Object.values(allUsersData).filter(u => u.isOnBreak && u.breakType === 'صلاة').length;
-                if (activePrayers >= maxPrayersAllowed) {
-                    alert(`🛑 عذراً.. الحد المسموح به حالياً هو (${maxPrayersAllowed}) موظف، وهناك بالفعل ${activePrayers} بالخارج.`);
-                    return;
-                }
+            if (reasonValue === "" && t !== 'صلاة') {
+                alert("⚠️ يرجى كتابة سبب النشاط");
+                reasonInput.focus();
+                return;
             }
 
-            // --- 2. منطق البريك العام (استقلال المجموعات عن الحد العام) ---
-            if (t === 'بريك عام' || t === 'طوارئ') {
-                if (currentUser.groupName && currentUser.groupName !== "") {
-                    // لو الموظف في ج
-                    const inMyGroupOnBreak = Object.values(allUsersData).filter(u =>
-                        u.groupName === currentUser.groupName &&
-                        u.isOnBreak &&
-                        (u.breakType === 'بريك عام' || u.breakType === 'طوارئ')
-                    );
-                    if (inMyGroupOnBreak.length >= 1) {
-                        alert(`🛑 مجموعتك (${currentUser.groupName}) فيها زميل بالخارج فعلاً. لا يمكن خروج اثنين من نفس المجموعة.`);
-                        return;
-                    }
-                    // ملاحظة: هنا تجاهلنا تماماً الـ maxBreaksAllowed لأن الموظف في مجموعة مستقلة
-                } else {
-                    // لو الموظف مستقل (بدون جروب): يخضع للحد العام المحسوب على المستقلين فقط
-                    const soloUsersOnBreak = Object.values(allUsersData).filter(u =>
-                        (!u.groupName || u.groupName === "") &&
-                        u.isOnBreak &&
-                        (u.breakType === 'بريك عام' || u.breakType === 'طوارئ')
-                    ).length;
-
-                    if (soloUsersOnBreak >= maxBreaksAllowed) {
-                        alert(`🛑 حد البريك للموظفين المستقلين ممتلئ حالياً (${maxBreaksAllowed}/${maxBreaksAllowed}).`);
-                        return;
-                    }
-                }
-            }
-
-            // --- 3. التنفيذ الفعلي ---
-            let reason = document.getElementById('breakReason').value.trim() || t;
             db.ref('users/' + currentUser.username).update({
                 isOnBreak: true,
                 breakType: t,
                 lastStartTime: getServerTime(),
-                lastReason: reason
+                lastReason: reasonValue || t
             }).then(() => {
-                if (t === 'صلاة' && (!currentUser.prayerLimit || currentUser.prayerLimit === 0)) {
-                    db.ref('users/' + currentUser.username).update({ prayerLimit: 900 });
-                }
+                // إذا بدأ صلاة، نصفر عداد الـ 10 دقائق للي بعده في الطابور
+                if(t === 'صلاة') db.ref('settings/currentTurnStartTime').set(getServerTime());
             });
         }
 
@@ -4503,13 +4491,12 @@ td {
     }
 function finalizeStopBreak(didFinishPrayer) {
     const u = currentUser;
-    if (!u.lastStartTime) return; // تأمين في حالة عدم وجود وقت بدء
+    if (!u.lastStartTime) return;
 
-    const d = Math.floor((getServerTime() - u.lastStartTime) / 1000); // حساب المدة بالثواني
+    const d = Math.floor((getServerTime() - u.lastStartTime) / 1000);
     const startTimeStr = new Date(u.lastStartTime).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
     const endTimeStr = getServerTimeString();
 
-    // --- 1. الجزء المسؤول عن تسجيل "الجلسة" في التقارير (الأرشيف) ---
     db.ref('users/' + u.username + '/sessions').push({
         date: getServerDateString(),
         type: u.breakType,
@@ -4519,18 +4506,19 @@ function finalizeStopBreak(didFinishPrayer) {
         endTime: endTimeStr
     });
 
-    // --- 2. تحديث العدادات والحالة الحالية ---
     const updates = {
         isOnBreak: false,
         lastStartTime: null,
         lastEndedTime: getServerTime(),
-        lastEndedType: u.breakType
+        lastEndedType: u.breakType,
+        // مسح طلبات الطوارئ والاجتماعات لضمان طلب إذن جديد في المرة القادمة
+        emRequest: null,
+        meetingRequest: null 
     };
 
     if (u.breakType === 'صلاة') {
         updates.prayerSeconds = (u.prayerSeconds || 0) + d;
         updates.prayerCountToday = (u.prayerCountToday || 0) + 1;
-        // حذف الموظف من طابور الصلاة
         removeFromQueueByUsername(u.username);
     } 
     else if (u.breakType === 'بريك عام' || u.breakType === 'طوارئ') {
@@ -4538,7 +4526,6 @@ function finalizeStopBreak(didFinishPrayer) {
     }
     else if (u.breakType === 'ميتنج') {
         updates.meetingSeconds = (u.meetingSeconds || 0) + d;
-        updates.meetingRequest = null; // إنهاء طلب الاجتماع
     }
     else if (u.breakType === 'متابع عميل') {
         updates.followUpSeconds = (u.followUpSeconds || 0) + d;
@@ -4547,13 +4534,9 @@ function finalizeStopBreak(didFinishPrayer) {
         updates.vipSeconds = (u.vipSeconds || 0) + d;
     }
 
-    // إرسال التحديثات لقاعدة البيانات
     db.ref('users/' + u.username).update(updates).then(() => {
-        document.getElementById('breakReason').value = ""; // تصفير خانة السبب
-        document.getElementById('prayerCheckModal').classList.add('hidden'); // إخفاء نافذة تأكيد الصلاة
-        
-        // تنبيه بسيط للتأكيد
-        console.log("Activity logged successfully in sessions.");
+        document.getElementById('breakReason').value = "";
+        if(document.getElementById('prayerCheckModal')) document.getElementById('prayerCheckModal').classList.add('hidden');
     });
 }
                                     // دالة التعامل مع ضغطة الزر في نافذة الصلاة
@@ -7706,28 +7689,47 @@ const audioPlayer = c.audioRecord ? `
             });
         }
 
-        function renderPrayerQueue() {
-            const display = document.getElementById('queueDisplay');
-            db.ref('settings/prayerQueue').once('value', (snap) => {
-                const queue = snap.val() || [];
-                display.innerHTML = '';
-                queue.forEach((username, index) => {
-                    const u = allUsersData[username];
-                    if (u) {
-                        const card = document.createElement('div');
-                        card.style.cssText = 'background: rgba(99, 102, 241, 0.2); border: 1px solid var(--primary); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; align-items: center; min-width: 80px;';
-                        card.innerHTML = `
-                            <img src="${u.profilePic || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'}" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--primary);">
-                            <div style="font-size: 0.8rem; text-align: center; margin-top: 5px;">${u.realName || u.username}</div>
-                            <div style="font-size: 0.7rem; color: var(--accent);">#${index + 1}</div>
-                            <button onclick="removeFromQueue(${index})" style="background: var(--danger); border: none; color: white; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; font-size: 0.7rem; margin-top: 5px;">×</button>
-                        `;
-                        display.appendChild(card);
-                    }
-                });
+    function renderPrayerQueue() {
+    const display = document.getElementById('queueDisplay');
+    if (!display) return;
+
+    db.ref('settings/prayerQueue').once('value', (snap) => {
+        const queue = snap.val() || [];
+        display.innerHTML = '';
+
+        // إذا كان هناك شخص في المركز الأول والتايمر لم يبدأ، المشرف يبدأه
+        if (queue.length > 0 && (!turnTimerStartTime || turnTimerStartTime === 0)) {
+            const now = getServerTime();
+            db.ref('settings/turnTimer').update({
+                startTime: now,
+                activeUser: queue[0]
             });
         }
 
+        queue.forEach((username, index) => {
+            const u = allUsersData[username];
+            if (u) {
+                const card = document.createElement('div');
+                card.style.cssText = 'background: rgba(99, 102, 241, 0.2); border: 1px solid var(--primary); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; align-items: center; min-width: 100px; position: relative;';
+                
+                let timerHtml = '';
+                if (index === 0) {
+                    // العداد سيظهر هنا بدلاً من الشرطات
+                    timerHtml = `<div id="adminQueueTimer" style="font-size: 0.9rem; color: #fbbf24; font-weight: 900; margin-top: 5px; background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 5px;">10:00</div>`;
+                }
+
+                card.innerHTML = `
+                    <img src="${u.profilePic || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'}" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--primary);">
+                    <div style="font-size: 0.85rem; text-align: center; margin-top: 5px; font-weight: bold;">${u.realName || u.username}</div>
+                    <div style="font-size: 0.75rem; color: var(--accent);">#${index + 1}</div>
+                    ${timerHtml}
+                    <button onclick="removeFromQueue(${index})" style="background: var(--danger); border: none; color: white; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; font-size: 0.7rem; margin-top: 5px;">×</button>
+                `;
+                display.appendChild(card);
+            }
+        });
+    });
+}
         function removeFromQueue(index) {
             db.ref('settings/prayerQueue').once('value', (snap) => {
                 let queue = snap.val() || [];
@@ -7744,12 +7746,23 @@ const audioPlayer = c.audioRecord ? `
         });
 
         // الاستماع لتغييرات الطابور وتحديث المتغير العالمي
-        db.ref('settings/prayerQueue').on('value', (snap) => {
-            currentQueue = snap.val() || [];
-            if (currentUser && currentUser.role !== 'admin') {
-                updateUserUI(); // تحديث أزرار وحالة الموظف فوراً
+       // البحث عن هذا الجزء وتحديثه
+db.ref('settings/prayerQueue').on('value', (snap) => {
+    const newQueue = snap.val() || [];
+    if (newQueue.length > 0) {
+        db.ref('settings/turnTimer/activeUser').once('value', (userSnap) => {
+            if (userSnap.val() !== newQueue[0]) {
+                // الشخص الأول اتغير -> نبدأ عداد جديد تماماً
+                db.ref('settings/turnTimer').update({
+                    startTime: getServerTime(),
+                    activeUser: newQueue[0],
+                    pausedElapsed: 0 // تصفير وقت التوقف للشخص الجديد
+                });
             }
         });
+    }
+    currentQueue = newQueue;
+});
 
         // 3. دالة بناء الجدول (الخوارزمية)
         function renderRotationTable() {
@@ -8337,7 +8350,7 @@ window.adminStop = (un) => {
         const duration = Math.floor((getServerTime() - u.lastStartTime) / 1000);
         const startTimeStr = new Date(u.lastStartTime).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
 
-        // تسجيل في الأرشيف
+        // سجل في الأرشيف
         db.ref('users/' + un + '/sessions').push({
             date: getServerDateString(),
             type: u.breakType,
@@ -8351,7 +8364,9 @@ window.adminStop = (un) => {
             isOnBreak: false,
             lastStartTime: null,
             lastEndedTime: getServerTime(),
-            lastEndedType: u.breakType
+            lastEndedType: u.breakType,
+            // التعديل السحري هنا:
+            emRequest: null // مسح طلب الطوارئ تماماً لضمان عدم الخروج مرة أخرى بدون إذن
         };
 
         if (u.breakType === 'بريك عام' || u.breakType === 'طوارئ') updates.usedSeconds = (u.usedSeconds || 0) + duration;
@@ -8363,7 +8378,7 @@ window.adminStop = (un) => {
         db.ref('users/' + un).update(updates).then(() => {
             if (u.breakType === 'صلاة') removeFromQueueByUsername(un);
             triggerGlobalRefresh();
-            alert("تم إيقاف البريك للموظف وتسجيله في تقريره.");
+            alert("تم إيقاف النشاط للموظف ومسح تصريح الطوارئ بنجاح ✅");
         });
     });
 };
@@ -8910,6 +8925,117 @@ function skipAudio(btn, seconds) {
         audio.currentTime += seconds;
     }
 }   
+// ==========================================
+// نظام الـ 10 دقائق الموحد (النسخة النهائية)
+// ==========================================
+
+let turnTimerStartTime = 0; // متغير عالمي لحفظ وقت بداية الدور
+
+// 1. مستمع لجلب وقت بداية العداد من Firebase
+db.ref('settings/turnTimer/startTime').on('value', (snap) => {
+    turnTimerStartTime = snap.val() || 0;
+});
+
+// 2. الدالة الرئيسية لتحديث العداد في الشاشة
+function watchPrayerTurnTimer() {
+    const alertBox = document.getElementById('prayerTurnAlert');
+    const timerDisp = document.getElementById('turnTimerDisplay');
+    
+    if (!alertBox || !currentUser) return;
+
+    // فحص هل الموظف هو الأول في الطابور ولم يبدأ الصلاة بعد
+    const isMyTurn = (currentQueue && currentQueue.length > 0 && currentQueue[0] === currentUser.username);
+    
+    if (isMyTurn && !currentUser.isOnBreak) {
+        alertBox.classList.remove('hidden');
+
+        if (isPrayerWindowOpen) {
+            // النافذة مفتوحة: العداد يطرح الوقت الحقيقي
+            const now = getServerTime();
+            const diffSeconds = Math.floor((now - turnTimerStartTime) / 1000);
+            const remainingSeconds = 600 - diffSeconds;
+
+            if (remainingSeconds > 0) {
+                timerDisp.innerText = formatTime(remainingSeconds);
+                timerDisp.style.color = "white";
+            } else {
+                timerDisp.innerText = "00:00";
+                autoSkipUser(); // النقل التلقائي للآخر
+            }
+        } else {
+            // النافذة مغلقة: العداد يظهر الوقت متوقفاً (مجمد)
+            db.ref('settings/turnTimer/pausedElapsed').once('value', (snap) => {
+                const pausedElapsed = snap.val() || 0;
+                const remainingWhenPaused = 600 - pausedElapsed;
+                timerDisp.innerText = formatTime(remainingWhenPaused > 0 ? remainingWhenPaused : 0);
+                timerDisp.style.color = "#ff4444"; // لون أحمر للتنبيه
+            });
+        }
+    } else {
+        alertBox.classList.add('hidden');
+    }
+}
+// 3. دالة الحمام مشغول (تأجيل 10 دقائق)
+function requestWCDelay() {
+    // التأكد إذا كان الموظف استخدمها اليوم أم لا
+    if (currentUser.wcUsed === true) {
+        alert("⚠️ عذراً يا بطل.. مسموح لك باستخدام تأجيل الحمام مرة واحدة فقط في الوردية.");
+        return;
+    }
+
+    if (!confirm("هل تريد إبلاغ المدير بتأجيل دورك 10 دقائق؟ (متاحة مرة واحدة فقط)")) return;
+
+    const msg = `🚾 تنبيه: الموظف (${currentUser.realName || currentUser.username}) طلب تأجيل 10 دقائق (الحمام مشغول).`;
+    
+    // 1. إرسال الرسالة للمدير
+    db.ref('broadcasts').push({
+        message: msg,
+        timestamp: getServerTime(),
+        sender: "نظام الصلاة 🕌",
+        target: MANAGERS 
+    });
+
+    // 2. تحديث وقت العداد + تسجيل أن الموظف استهلك فرصه
+    const updates = {};
+    updates['settings/turnTimer/startTime'] = getServerTime();
+    updates[`users/${currentUser.username}/wcUsed`] = true; // تسجيل الاستهلاك
+
+    db.ref().update(updates).then(() => {
+        alert("تم التأجيل بنجاح.. تذكر أنها المرة الوحيدة المتاحة لك اليوم ✅");
+    });
+}
+
+function autoSkipUser() {
+    if (!currentQueue || currentQueue.length === 0) return;
+    updates['settings/turnTimer/pausedElapsed'] = 0;
+    // منع التكرار
+    turnTimerStartTime = 9999999999999; 
+
+    let newQueue = [...currentQueue];
+    const movedUser = newQueue.shift(); // الشخص اللي وقته خلص
+    newQueue.push(movedUser); // نقله للآخر
+    
+    const nextUser = newQueue[0]; // الشخص اللي عليه الدور الآن
+
+    const updates = {};
+    updates['settings/prayerQueue'] = newQueue;
+    updates['settings/turnTimer/startTime'] = getServerTime();
+    updates['settings/turnTimer/activeUser'] = nextUser;
+
+    db.ref().update(updates).then(() => {
+        // إرسال رسالة "واحدة" مستهدفة للشخصين فقط
+        db.ref('broadcasts').push({
+            message: `⏰ انتهت الـ 10 دقائق الخاصة بـ (${getRealName(movedUser)}) وتم نقله للآخر. الدور الآن على (${getRealName(nextUser)})`,
+            timestamp: getServerTime(),
+            sender: "نظام الصلاة 🕌",
+            target: [movedUser, nextUser] // مستهدف للموظفين المعنيين فقط
+        });
+    });
+}
+
+// 5. تصفير العداد فوراً عند تغير الشخص الأول في الطابور (للمدير)
+// مراقبة الطابور: لو الشخص اللي عليه الدور اتغير، نصفر العداد ونبدأ من جديد
+
         </script>
         <!-- نافذة تأكيد إتمام الصلاة -->
         <div id="prayerCheckModal" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:30000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px);">
