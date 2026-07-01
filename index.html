@@ -3274,7 +3274,7 @@ function setPrayerWindow(status) {
                 const startTime = data.startTime || now;
                 const elapsedSoFar = Math.floor((now - startTime) / 1000);
                 
-                // حفظ الثواني المنقضية لكي لا تضيع
+                // حفظ الثواني المنقضية لكي لا تضيع أثناء الإغلاق
                 db.ref('settings/turnTimer/pausedElapsed').set(elapsedSoFar);
             });
 
@@ -3285,11 +3285,10 @@ function setPrayerWindow(status) {
                 target: ""
             });
         } else {
-            // الحالة: فتح النافذة -> نعيد ضبط وقت البداية بناءً على الثواني المخزنة سابقاً
+            // الحالة: فتح النافذة -> نعيد ضبط وقت البداية ليعمل كأنه "Resume"
             db.ref('settings/turnTimer/pausedElapsed').once('value', (snap) => {
                 const pausedElapsed = snap.val() || 0;
-                // المعادلة: وقت البداية الجديد = (الآن - الوقت اللي ضاع)
-                // دي بتخلي العداد يكمل من نفس النقطة
+                // المعادلة: وقت البداية الجديد = (الآن - الوقت الذي انقضى سابقاً)
                 db.ref('settings/turnTimer/startTime').set(now - (pausedElapsed * 1000));
             });
 
@@ -3928,29 +3927,38 @@ function startGlobalTimer() {
                     updateMonitorValuesOnly();
 
                     // --- التعديل هنا لإيقاف العد عند إغلاق نافذة الصلاة ---
-                    const queueTimerEl = document.getElementById('adminQueueTimer');
-                    if (queueTimerEl && turnTimerStartTime > 0) {
-                        if (isPrayerWindowOpen) {
-                            // العد التنازلي يعمل فقط إذا كانت النافذة مفتوحة
-                            const diff = Math.floor((getServerTime() - turnTimerStartTime) / 1000);
-                            const rem = 600 - diff;
-                            if (rem >= 0) {
-                                queueTimerEl.innerText = formatTime(rem);
-                                queueTimerEl.style.color = rem < 60 ? "#ff4444" : "#fbbf24";
-                            } else {
-                                queueTimerEl.innerText = "00:00";
-                                autoSkipUser(); 
-                            }
-                        } else {
-                            // إذا كانت مغلقة، نظهر الوقت "مجمد" ولا نستدعي autoSkipUser
-                            db.ref('settings/turnTimer/pausedElapsed').once('value', (snap) => {
-                                const pausedElapsed = snap.val() || 0;
-                                const remainingWhenPaused = 600 - pausedElapsed;
-                                queueTimerEl.innerText = formatTime(remainingWhenPaused > 0 ? remainingWhenPaused : 0);
-                                queueTimerEl.style.color = "#ff4444"; // لون أحمر للدلالة على التوقف
-                            });
-                        }
-                    }
+                 // داخل دالة startGlobalTimer في جزء الأدمن
+const queueTimerEl = document.getElementById('adminQueueTimer');
+if (queueTimerEl && turnTimerStartTime > 0) {
+    const firstUser = currentQueue[0];
+    const u = allUsersData[firstUser];
+
+    // إذا بدأ الموظف الصلاة، العداد يتوقف ولا يقوم بعمل AutoSkip
+    if (u && u.isOnBreak && u.breakType === 'صلاة') {
+        return; // توقف عن تحديث النص وعن فحص الـ Skip
+    }
+
+    if (isPrayerWindowOpen) {
+        const diff = Math.floor((getServerTime() - turnTimerStartTime) / 1000);
+        const rem = 600 - diff;
+        if (rem >= 0) {
+            queueTimerEl.innerText = formatTime(rem);
+        } else {
+            queueTimerEl.innerText = "00:00";
+            autoSkipUser(); // النقل للآخر يحدث فقط لو الموظف مكسل يبدأ
+        }
+    }
+
+     else {
+        // النافذة مغلقة: جلب الوقت المحفوظ وإظهاره ثابتاً (Paused)
+        db.ref('settings/turnTimer/pausedElapsed').once('value', (snap) => {
+            const pausedElapsed = snap.val() || 0;
+            const remainingWhenPaused = 600 - pausedElapsed;
+            queueTimerEl.innerText = formatTime(remainingWhenPaused > 0 ? remainingWhenPaused : 0);
+            queueTimerEl.style.color = "#ff4444"; // لون أحمر للدلالة على التوقف
+        });
+    }
+}
                 } else {
                     // تحديث ساعة الموظف وباقي العمليات
                     if(document.getElementById('userServerTime')) document.getElementById('userServerTime').innerText = timeStr;
@@ -7703,7 +7711,7 @@ const audioPlayer = c.audioRecord ? `
             });
         }
 
-    function renderPrayerQueue() {
+   function renderPrayerQueue() {
     const display = document.getElementById('queueDisplay');
     if (!display) return;
 
@@ -7711,7 +7719,6 @@ const audioPlayer = c.audioRecord ? `
         const queue = snap.val() || [];
         display.innerHTML = '';
 
-        // إذا كان هناك شخص في المركز الأول والتايمر لم يبدأ، المشرف يبدأه
         if (queue.length > 0 && (!turnTimerStartTime || turnTimerStartTime === 0)) {
             const now = getServerTime();
             db.ref('settings/turnTimer').update({
@@ -7728,8 +7735,14 @@ const audioPlayer = c.audioRecord ? `
                 
                 let timerHtml = '';
                 if (index === 0) {
-                    // العداد سيظهر هنا بدلاً من الشرطات
-                    timerHtml = `<div id="adminQueueTimer" style="font-size: 0.9rem; color: #fbbf24; font-weight: 900; margin-top: 5px; background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 5px;">10:00</div>`;
+                    // --- التعديل الجوهري هنا ---
+                    // إذا كان الموظف بدأ الصلاة فعلياً، لا تظهر العداد واظهر كلمة "يصلي الآن"
+                    if (u.isOnBreak && u.breakType === 'صلاة') {
+                        timerHtml = `<div style="font-size: 0.8rem; color: #10b981; font-weight: bold; margin-top: 5px; background: rgba(16,185,129,0.1); padding: 2px 8px; border-radius: 5px; border: 1px solid #10b981;">يصلي الآن ✅</div>`;
+                    } else {
+                        // الموظف متأخر ولم يبدأ بعد، اظهر العداد الأصفر
+                        timerHtml = `<div id="adminQueueTimer" style="font-size: 0.9rem; color: #fbbf24; font-weight: 900; margin-top: 5px; background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 5px;">10:00</div>`;
+                    }
                 }
 
                 card.innerHTML = `
@@ -8953,40 +8966,16 @@ db.ref('settings/turnTimer/startTime').on('value', (snap) => {
 // 2. الدالة الرئيسية لتحديث العداد في الشاشة
 function watchPrayerTurnTimer() {
     const alertBox = document.getElementById('prayerTurnAlert');
-    const timerDisp = document.getElementById('turnTimerDisplay');
-    
     if (!alertBox || !currentUser) return;
 
-    // فحص هل الموظف هو الأول في الطابور ولم يبدأ الصلاة بعد
+    // الشرط هنا: أنا الأول في الدور + لست في وضع بريك حالياً
     const isMyTurn = (currentQueue && currentQueue.length > 0 && currentQueue[0] === currentUser.username);
     
     if (isMyTurn && !currentUser.isOnBreak) {
         alertBox.classList.remove('hidden');
-
-        if (isPrayerWindowOpen) {
-            // النافذة مفتوحة: العداد يطرح الوقت الحقيقي
-            const now = getServerTime();
-            const diffSeconds = Math.floor((now - turnTimerStartTime) / 1000);
-            const remainingSeconds = 600 - diffSeconds;
-
-            if (remainingSeconds > 0) {
-                timerDisp.innerText = formatTime(remainingSeconds);
-                timerDisp.style.color = "white";
-            } else {
-                timerDisp.innerText = "00:00";
-                autoSkipUser(); // النقل التلقائي للآخر
-            }
-        } else {
-            // النافذة مغلقة: العداد يظهر الوقت متوقفاً (مجمد)
-            db.ref('settings/turnTimer/pausedElapsed').once('value', (snap) => {
-                const pausedElapsed = snap.val() || 0;
-                const remainingWhenPaused = 600 - pausedElapsed;
-                timerDisp.innerText = formatTime(remainingWhenPaused > 0 ? remainingWhenPaused : 0);
-                timerDisp.style.color = "#ff4444"; // لون أحمر للتنبيه
-            });
-        }
+        // باقي كود العداد...
     } else {
-        alertBox.classList.add('hidden');
+        alertBox.classList.add('hidden'); // يختفي فوراً عند الضغط على "بدء الصلاة"
     }
 }
 // 3. دالة الحمام مشغول (تأجيل 10 دقائق)
