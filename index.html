@@ -9252,20 +9252,63 @@ function autoSkipUser() {
 </div>
     </div>
 </div>
+<!-- تنبيه وجود تحديث جديد -->
+<div id="update-banner" style="display:none; position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:#6366f1; color:white; padding:15px 25px; border-radius:15px; z-index:999999; box-shadow:0 10px 30px rgba(0,0,0,0.5); text-align:center; width:90%; max-width:400px; border:2px solid white;">
+    <div style="margin-bottom:10px; font-weight:bold;">🚀 تم إصدار تحديث جديد للنظام</div>
+    <button onclick="prepareUpdate()" style="background:white; color:#6366f1; border:none; padding:8px 20px; border-radius:10px; font-weight:bold; cursor:pointer; width:100%;">تحديث الآن</button>
+</div>
+
+<style>
+    @keyframes bounceIn {
+        0% { transform: translate(-50%, 100px); opacity: 0; }
+        100% { transform: translate(-50%, 0); opacity: 1; }
+    }
+    #update-banner { animation: bounceIn 0.5s ease-out forwards; }
+</style>
         </body>
             <script>
-            // ===== كود تفعيل الـ PWA وتثبيت التطبيق =====
-            if ('serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
-                    navigator.serviceWorker.register('./sw.js')
-                        .then(registration => {
-                            console.log('SW registered: ', registration);
-                        })
-                        .catch(registrationError => {
-                            console.log('SW registration failed: ', registrationError);
-                        });
-                });
-            }
+          let newWorker;
+
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+        // التحقق مما إذا كان هناك تحديث ينتظر بالفعل
+        if (reg.waiting) {
+            newWorker = reg.waiting;
+            showUpdateBanner();
+        }
+
+        // الاستماع لاكتشاف تحديث جديد أثناء فتح التطبيق
+        reg.addEventListener('updatefound', () => {
+            newWorker = reg.installing;
+            newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    showUpdateBanner();
+                }
+            });
+        });
+    });
+
+    // إعادة تحميل الصفحة فور تنشيط العامل الجديد
+    let refreshing;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) return;
+        window.location.reload();
+        refreshing = true;
+    });
+}
+
+function showUpdateBanner() {
+    document.getElementById('update-banner').style.display = 'block';
+}
+
+function prepareUpdate() {
+    if (newWorker) {
+        newWorker.postMessage({ action: 'skipWaiting' });
+    } else {
+        // حل احتياطي في حالة فشل الرسالة
+        window.location.reload();
+    }
+}
 
             // ===== كود نافذة التثبيت المخصصة (Install Prompt) =====
             let deferredPrompt;
@@ -9298,13 +9341,7 @@ function autoSkipUser() {
             });
         </script>
         <script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.addEventListener('controllerchange', function() {
-    // هذا الكود يعمل فقط عندما يحدث تحديث ويتم تبديل الـ controller
-    console.log('تم اكتشاف تحديث جديد، جاري تحديث الصفحة...');
-    window.location.reload();
-  });
-}
+
 </script>
 <!-- ... أكواد المودالز القديمة ... -->
     </div> <!-- نهاية container -->
