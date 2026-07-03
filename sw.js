@@ -1,17 +1,16 @@
-const CACHE_NAME = 'elshamaa-pwa-v10'; // (1) قم برفع رقم الإصدار لكل تحديث جديد
+const CACHE_NAME = 'elshamaa-pwa-v' + Date.now(); // استخدام Date.now يضمن تغيير الاسم عند كل تعديل
 
 const urlsToCache = [
-  '/break-./',
-  '/break-./index.html',
-  '/break-./manifest.json'
+  './',
+  './index.html',
+  './manifest.json'
 ];
 
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
   );
-  self.skipWaiting(); // (2) مهم جداً: يأمر العامل الجديد بتركيب نفسه فوراً بدلاً من الانتظار
+  self.skipWaiting(); // إجبار العامل الجديد على التنشيط فوراً
 });
 
 self.addEventListener('activate', event => {
@@ -19,19 +18,25 @@ self.addEventListener('activate', event => {
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) return caches.delete(cacheName);
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName); // مسح الكاش القديم
+          }
         })
       );
     })
   );
-  
-  // (3) السحر كله هنا: يطلب من العميل (الصفحة) استخدام النسخة الجديدة فوراً
   return self.clients.claim(); 
 });
 
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request))
+    caches.match(event.request).then(response => response || fetch(event.request))
   );
+});
+
+// الاستماع لرسالة التحديث من الواجهة
+self.addEventListener('message', (event) => {
+  if (event.data.action === 'skipWaiting') {
+    self.skipWaiting();
+  }
 });
