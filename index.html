@@ -3847,43 +3847,70 @@ function setPrayerWindow(status) {
 
 
 
-        function checkAutoPrayerDistribution() {
-        if (!prayerTimesData || currentUser.role !== 'admin') return;
+// دالة الفحص والتوزيع التلقائي لصلاة الظهر
+function checkAutoPrayerDistribution() {
+    // التأكد إننا معانا مواقيت الصلاة وإن المستخدم "أدمن" (عشان التوزيع يحصل مرة واحدة من جهاز الأدمن)
+    if (!prayerTimesData || !currentUser || currentUser.role !== 'admin') return;
 
-        const now = new Date(getServerTime());
-        const todayStr = getServerDateString();
+    const now = new Date(getServerTime());
+    const todayStr = getServerDateString(); // صيغة DD/MM/YYYY
 
-        // جلب بيانات آخر توزيع من قاعدة البيانات لمنع التكرار عند الريفريش
-        db.ref('settings/lastAutoPrayerTrigger').once('value', (snap) => {
-            const lastTriggers = snap.val() || {};
+    // جلب وقت صلاة الظهر من البيانات اللي راجعة من API
+    const dhuhrTimeStr = prayerTimesData['Dhuhr']; // مثال: "12:05"
+    if (!dhuhrTimeStr) return;
 
-            const targets = [
-                { key: 'Dhuhr', label: 'الظهر' },
-                { key: 'Asr', label: 'العصر' }
-            ];
+    const [h, m] = dhuhrTimeStr.split(':').map(Number);
+    const dhuhrDate = new Date(now);
+    dhuhrDate.setHours(h, m, 0, 0);
 
-            targets.forEach(p => {
-                // التحقق هل تم التوزيع لهذه الصلاة اليوم؟
-                if (lastTriggers[p.key] === todayStr) return; 
+    // وقت التفعيل (قبل الظهر بـ 10 دقائق)
+    const triggerTime = new Date(dhuhrDate.getTime() - (10 * 60 * 1000));
 
-                const timeStr = prayerTimesData[p.key]; 
-                if (!timeStr) return;
+    // فحص: هل الوقت الحالي كسر حاجز الـ 10 دقائق قبل الظهر؟ وهل مصلحناش النهاردة؟
+    db.ref('settings/lastAutoDhuhrTrigger').once('value', (snap) => {
+        const lastTriggerDate = snap.val();
 
-                const [h, m] = timeStr.split(':').map(Number);
-                const prayerDate = new Date(now);
-                prayerDate.setHours(h, m, 0, 0);
+        if (lastTriggerDate !== todayStr && now >= triggerTime && now < dhuhrDate) {
+            // تنفيذ التوزيع
+            console.log("🚀 جاري توزيع رصيد صلاة الظهر تلقائياً (قبل الموعد بـ 10 دقائق)...");
+            
+            // تحديث التاريخ في القاعدة فوراً لمنع التكرار
+            db.ref('settings/lastAutoDhuhrTrigger').set(todayStr);
 
-                // وقت التفعيل (10 دقائق قبل الصلاة)
-                const triggerDate = new Date(prayerDate.getTime() - (10 * 60 * 1000));
+            // استدعاء دالة التوزيع الجماعي (التي أضفتها أنت مسبقاً)
+            executeAutoPrayerDist();
+        }
+    });
+}
 
-                if (now >= triggerDate && now < prayerDate) {
-                    // حفظ التاريخ في قاعدة البيانات فوراً قبل التنفيذ لمنع التكرار
-                    db.ref('settings/lastAutoPrayerTrigger/' + p.key).set(todayStr);
-                    executeAutoPrayerDistribution(p.label);
-                }
+// دالة تنفيذ التوزيع الفعلي (نفس منطق addPrayerTimeGlobal بس بدون confirm)
+function executeAutoPrayerDist() {
+    db.ref('users').once('value', (snap) => {
+        const users = snap.val();
+        const updates = {};
+        const now = getServerTime();
+
+        Object.keys(users).forEach(un => {
+            if (!MANAGERS.includes(un)) {
+                updates[`users/${un}/prayerLimit`] = 900; // 15 دقيقة
+                updates[`users/${un}/prayerSeconds`] = 0;
+                updates[`users/${un}/prayerCountToday`] = 0;
+            }
+        });
+
+        updates['settings/prayerOpen'] = true; // فتح خانة الصلاة للموظفين
+
+        db.ref().update(updates).then(() => {
+            // إرسال تنبيه للكل إن الرصيد نزل
+            db.ref('broadcasts').push({
+                message: "🕌 تنبيه تلقائي: تم توزيع 15 دقيقة رصيد صلاة الظهر وفتح باب الصلاة للجميع.",
+                timestamp: now,
+                sender: "النظام الذكي 🤖",
+                target: "all"
             });
         });
-    }
+    });
+}
 
     function executeAutoPrayerDistribution(prayerName) {
         console.log(`🚀 جاري توزيع رصيد صلاة ${prayerName} تلقائياً...`);
@@ -3921,54 +3948,61 @@ function startGlobalTimer() {
 
             if (currentUser) {
                 if (currentUser.role === 'admin') {
+                    // 1. تحديث الساعة والتاريخ في لوحة المشرف
                     if(document.getElementById('adminServerTime')) document.getElementById('adminServerTime').innerText = timeStr;
                     if(document.getElementById('adminServerDate')) document.getElementById('adminServerDate').innerText = dateStr;
 
+                    // 2. تحديث عدادات الجدول (البريك المتبقي) لحظياً
                     updateMonitorValuesOnly();
 
-                    // --- التعديل هنا لإيقاف العد عند إغلاق نافذة الصلاة ---
-                 // داخل دالة startGlobalTimer في جزء الأدمن
-const queueTimerEl = document.getElementById('adminQueueTimer');
-if (queueTimerEl && turnTimerStartTime > 0) {
-    const firstUser = currentQueue[0];
-    const u = allUsersData[firstUser];
+                    // 3. 🚀 الفحص التلقائي لتوزيع رصيد الصلاة (قبل الظهر بـ 10 دقائق)
+                    checkAutoPrayerDistribution();
 
-    // إذا بدأ الموظف الصلاة، العداد يتوقف ولا يقوم بعمل AutoSkip
-    if (u && u.isOnBreak && u.breakType === 'صلاة') {
-        return; // توقف عن تحديث النص وعن فحص الـ Skip
-    }
+                    // 4. إدارة عداد الـ 10 دقائق الخاص بطابور الصلاة (للمشرف)
+                    const queueTimerEl = document.getElementById('adminQueueTimer');
+                    if (queueTimerEl && turnTimerStartTime > 0) {
+                        const firstUser = currentQueue[0];
+                        const u = allUsersData[firstUser];
 
-    if (isPrayerWindowOpen) {
-        const diff = Math.floor((getServerTime() - turnTimerStartTime) / 1000);
-        const rem = 600 - diff;
-        if (rem >= 0) {
-            queueTimerEl.innerText = formatTime(rem);
-        } else {
-            queueTimerEl.innerText = "00:00";
-            autoSkipUser(); // النقل للآخر يحدث فقط لو الموظف مكسل يبدأ
-        }
-    }
-
-     else {
-        // النافذة مغلقة: جلب الوقت المحفوظ وإظهاره ثابتاً (Paused)
-        db.ref('settings/turnTimer/pausedElapsed').once('value', (snap) => {
-            const pausedElapsed = snap.val() || 0;
-            const remainingWhenPaused = 600 - pausedElapsed;
-            queueTimerEl.innerText = formatTime(remainingWhenPaused > 0 ? remainingWhenPaused : 0);
-            queueTimerEl.style.color = "#ff4444"; // لون أحمر للدلالة على التوقف
-        });
-    }
-}
+                        // إذا بدأ الموظف الصلاة فعلياً، يتوقف العداد عن العد التنازلي
+                        if (u && u.isOnBreak && u.breakType === 'صلاة') {
+                            // لا نفعل شيئاً هنا، العداد يتوقف
+                        } else if (isPrayerWindowOpen) {
+                            // إذا كانت نافذة الصلاة مفتوحة، يبدأ العد التنازلي
+                            const diff = Math.floor((getServerTime() - turnTimerStartTime) / 1000);
+                            const rem = 600 - diff; // 600 ثانية = 10 دقائق
+                            if (rem >= 0) {
+                                queueTimerEl.innerText = formatTime(rem);
+                                queueTimerEl.style.color = "#fbbf24"; // اللون الأصفر الطبيعي
+                            } else {
+                                queueTimerEl.innerText = "00:00";
+                                autoSkipUser(); // نقل الموظف لآخر الطابور تلقائياً عند انتهاء الوقت
+                            }
+                        } else {
+                            // إذا أغلقت الإدارة نافذة الصلاة، يثبت العداد على الوقت الحالي (Paused)
+                            db.ref('settings/turnTimer/pausedElapsed').once('value', (snap) => {
+                                const pausedElapsed = snap.val() || 0;
+                                const remainingWhenPaused = 600 - pausedElapsed;
+                                queueTimerEl.innerText = formatTime(remainingWhenPaused > 0 ? remainingWhenPaused : 0);
+                                queueTimerEl.style.color = "#ff4444"; // اللون الأحمر للتنبيه بالتوقف
+                            });
+                        }
+                    }
                 } else {
-                    // تحديث ساعة الموظف وباقي العمليات
+                    // --- وظائف لوحة الموظف ---
+                    // تحديث الساعة والتاريخ عند الموظف
                     if(document.getElementById('userServerTime')) document.getElementById('userServerTime').innerText = timeStr;
                     if(document.getElementById('userServerDate')) document.getElementById('userServerDate').innerText = dateStr;
+                    
+                    // تحديث واجهة المستخدم (العداد الدائري، الحالة)
                     updateUserUI();
+                    
+                    // مراقبة تنبيه "دورك في الصلاة" والعداد الخاص بالموظف
                     watchPrayerTurnTimer();
                 }
             }
         } catch (e) { console.error(e); }
-    }, 1000);
+    }, 1000); // تحديث كل ثانية واحدة
 }
         function renderMonitorTable() {
             const tbody = document.getElementById('monitorBody');
@@ -8966,16 +9000,53 @@ db.ref('settings/turnTimer/startTime').on('value', (snap) => {
 // 2. الدالة الرئيسية لتحديث العداد في الشاشة
 function watchPrayerTurnTimer() {
     const alertBox = document.getElementById('prayerTurnAlert');
-    if (!alertBox || !currentUser) return;
+    const display = document.getElementById('turnTimerDisplay');
+    
+    // تأكد أن الموظف مسجل دخول والعناصر موجودة
+    if (!alertBox || !display || !currentUser) return;
 
-    // الشرط هنا: أنا الأول في الدور + لست في وضع بريك حالياً
+    // هل أنا الأول في الطابور ولست في وضع "صلاة" حالياً؟
     const isMyTurn = (currentQueue && currentQueue.length > 0 && currentQueue[0] === currentUser.username);
     
     if (isMyTurn && !currentUser.isOnBreak) {
         alertBox.classList.remove('hidden');
-        // باقي كود العداد...
+
+        // الحساب الفعلي بناءً على وقت السيرفر
+        if (turnTimerStartTime > 0) {
+            // إذا كانت الإدارة فاتحة وقت الصلاة
+            if (isPrayerWindowOpen) {
+                const now = getServerTime();
+                const diff = Math.floor((now - turnTimerStartTime) / 1000);
+                let remaining = 600 - diff; // الـ 10 دقائق (600 ثانية)
+
+                if (remaining < 0) {
+                    remaining = 0;
+                    // اختياري: يمكنك هنا استدعاء دالة النقل للآخر تلقائياً إذا أردت
+                }
+                
+                // تحديث النص في شاشة الموظف
+                display.innerText = formatTime(remaining);
+                
+                // إضافة وميض أحمر في آخر دقيقة
+                if (remaining < 60) {
+                    display.style.color = "#ff4444";
+                    display.style.animation = "pulse 1s infinite";
+                } else {
+                    display.style.color = "white";
+                    display.style.animation = "none";
+                }
+            } else {
+                // لو الإدارة قفلت وقت الصلاة، العداد يثبت على الوقت المحفوظ
+                db.ref('settings/turnTimer/pausedElapsed').once('value', (snap) => {
+                    const pausedSec = snap.val() || 0;
+                    display.innerText = formatTime(Math.max(0, 600 - pausedSec));
+                    display.style.color = "#aaa"; // لون رمادي للدلالة على التوقف
+                });
+            }
+        }
     } else {
-        alertBox.classList.add('hidden'); // يختفي فوراً عند الضغط على "بدء الصلاة"
+        // لو مفيش دور أو الموظف بدأ يصلي فعلاً، نخفي التنبيه
+        alertBox.classList.add('hidden');
     }
 }
 // 3. دالة الحمام مشغول (تأجيل 10 دقائق)
