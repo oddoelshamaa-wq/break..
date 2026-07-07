@@ -9080,30 +9080,40 @@ function requestWCDelay() {
 }
 
 function autoSkipUser() {
-    if (!currentQueue || currentQueue.length === 0) return;
-    updates['settings/turnTimer/pausedElapsed'] = 0;
-    // منع التكرار
-    turnTimerStartTime = 9999999999999; 
+    // 1. التأكد أن الطابور ليس فارغاً
+    if (!currentQueue || currentQueue.length <= 1) return;
+
+    // 2. قفل مؤقت لمنع تنفيذ الدالة أكثر من مرة في نفس الثانية
+    if (window.isSkipping) return;
+    window.isSkipping = true;
+
+    console.log("⏰ انتهى الوقت.. جاري نقل الموظف لآخر الطابور");
 
     let newQueue = [...currentQueue];
-    const movedUser = newQueue.shift(); // الشخص اللي وقته خلص
-    newQueue.push(movedUser); // نقله للآخر
+    const movedUser = newQueue.shift(); // إخراج الشخص الأول
+    newQueue.push(movedUser);           // إضافته في الآخر
     
-    const nextUser = newQueue[0]; // الشخص اللي عليه الدور الآن
+    const nextUser = newQueue[0];      // الشخص الجديد اللي عليه الدور
 
     const updates = {};
     updates['settings/prayerQueue'] = newQueue;
-    updates['settings/turnTimer/startTime'] = getServerTime();
+    updates['settings/turnTimer/startTime'] = getServerTime(); // إعادة تصفير الوقت للجديد
     updates['settings/turnTimer/activeUser'] = nextUser;
+    updates['settings/turnTimer/pausedElapsed'] = 0;
 
     db.ref().update(updates).then(() => {
-        // إرسال رسالة "واحدة" مستهدفة للشخصين فقط
+        // إرسال تنبيه
         db.ref('broadcasts').push({
-            message: `⏰ انتهت الـ 10 دقائق الخاصة بـ (${getRealName(movedUser)}) وتم نقله للآخر. الدور الآن على (${getRealName(nextUser)})`,
+            message: `⏰ انتهى وقت (${getRealName(movedUser)}) وتم نقله لآخر الطابور. الدور الآن على (${getRealName(nextUser)})`,
             timestamp: getServerTime(),
             sender: "نظام الصلاة 🕌",
-            target: [movedUser, nextUser] // مستهدف للموظفين المعنيين فقط
+            target: "all"
         });
+        
+        // فتح القفل بعد نجاح التحديث
+        setTimeout(() => { window.isSkipping = false; }, 2000);
+    }).catch(() => {
+        window.isSkipping = false;
     });
 }
 
