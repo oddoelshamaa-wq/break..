@@ -7807,27 +7807,45 @@
                     });
                 }
 
-                function addToQueue() {
-                    const select = document.getElementById('queueUserSelect');
-                    const username = select.value;
-                    if (!username) return alert('اختر موظف أولاً');
-                    db.ref('settings/prayerQueue').once('value', (snap) => {
-                        let queue = snap.val() || [];
-                        if (queue.includes(username)) return alert('الموظف موجود بالفعل في الدور');
-                        queue.push(username);
-                        db.ref('settings/prayerQueue').set(queue).then(() => {
-                            renderPrayerQueue();
-                            select.value = '';
-                        });
-                    });
-                }
+              function addToQueue() {
+    const select = document.getElementById('queueUserSelect');
+    const username = select.value;
+    if (!username) return alert('اختر موظف أولاً');
+    
+    db.ref('settings/prayerQueue').once('value', (snap) => {
+        let queue = snap.val() || [];
+        if (queue.includes(username)) return alert('الموظف موجود بالفعل في الدور');
+        
+        queue.push(username);
+        
+        // التعديل هنا: لو ده أول واحد يدخل الطابور، ابدأ له الـ 10 دقائق من دلوقتي
+        const updates = {};
+        updates['settings/prayerQueue'] = queue;
+        if (queue.length === 1) {
+            updates['settings/turnTimer/startTime'] = getServerTime();
+            updates['settings/turnTimer/activeUser'] = username;
+        }
 
-                function clearQueue() {
-                    if (!confirm('هل تريد تصفير الدور بالكامل؟')) return;
-                    db.ref('settings/prayerQueue').set([]).then(() => {
-                        renderPrayerQueue();
-                    });
-                }
+        db.ref().update(updates).then(() => {
+            renderPrayerQueue();
+            select.value = '';
+        });
+    });
+}
+
+              function clearQueue() {
+    if (!confirm('هل تريد تصفير الدور بالكامل؟')) return;
+    
+    const updates = {};
+    updates['settings/prayerQueue'] = [];
+    updates['settings/turnTimer/startTime'] = 0; // مسح التوقيت القديم
+    updates['settings/turnTimer/activeUser'] = null;
+    updates['settings/turnTimer/pausedElapsed'] = 0;
+
+    db.ref().update(updates).then(() => {
+        renderPrayerQueue();
+    });
+}
 
         function renderPrayerQueue() {
             const display = document.getElementById('queueDisplay');
@@ -9195,23 +9213,24 @@ function updateLockScreenTimer(secondsRemaining, statusType) {
     let timeStr = formatTime(secondsRemaining);
     let statusAr = "";
 
-    // تحديد نص الحالة
+    // تحديد المسمى العربي بناءً على النوع
     if (statusType === 'صلاة') statusAr = "🕌 متبقي على الصلاة";
     else if (statusType === 'بريك عام') statusAr = "🍔 متبقي للبريك";
     else if (statusType === 'طوارئ') statusAr = "🚨 بريك طوارئ";
+    else statusAr = statusType; // لأي نوع آخر
     
-    // في حالة الأكسدة (الرقم بالسالب)
+    // --- التعديل السحري للأكسدة هنا ---
     if (secondsRemaining < 0) {
-        statusAr = "⚠️ أكسدة الآن!";
+        statusAr = "⚠️ أكسدة الآن!"; // هنا هيتحول الاسم فوراً
         timeStr = "-" + formatTime(Math.abs(secondsRemaining));
     }
 
-    // 1. تحديث واجهة "مشغل الموسيقى" في شاشة القفل (MediaSession)
+    // تحديث واجهة شاشة القفل (MediaSession)
     if ('mediaSession' in navigator) {
         navigator.mediaSession.metadata = new MediaMetadata({
-            title: timeStr, // الرقم يظهر هنا بشكل كبير
-            artist: statusAr, // الحالة تظهر تحته
-            album: `الموظف: ${currentUser.realName || currentUser.username}`,
+            title: timeStr,            // الرقم (مثلاً -05:20)
+            artist: statusAr,          // الحالة (هتتحول لـ أكسدة الآن!)
+            album: `موظف: ${currentUser.realName || currentUser.username}`,
             artwork: [
                 { src: 'https://z-cdn-media.chatglm.cn/files/7d4d1edb-d8aa-482e-840e-0492871f2bdf.jpg', sizes: '512x512', type: 'image/jpeg' }
             ]
@@ -9219,9 +9238,8 @@ function updateLockScreenTimer(secondsRemaining, statusType) {
         navigator.mediaSession.playbackState = "playing";
     }
 
-    // 2. تحديث الإشعار المنسدل (System Notification)
-    // قمت بإزالة شرط (secondsRemaining % 30) لكي يقل الرقم كل ثانية أمام عينك
-    updateLiveNotification(secondsRemaining, statusType);
+    // إرسال البيانات المحدثة للإشعار المنسدل
+    updateLiveNotification(timeStr, statusAr);
 }
 
     // دالة لإرسال رسالة للـ Service Worker لتحديث الإشعار
