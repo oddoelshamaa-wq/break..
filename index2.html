@@ -9243,34 +9243,42 @@ function updateLockScreenTimer(secondsRemaining, statusType) {
 }
 
     // دالة لإرسال رسالة للـ Service Worker لتحديث الإشعار
+// متغير خارج الدالة لتخزين حالة الإرسال
+let notificationSentOnIOS = false;
+
 function updateLiveNotification(seconds, type) {
-    if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
-        
-        // --- التعديل هنا: نبعت إشعار فقط في الحالات دي ---
-        // 1. لما الوقت يخلص (صفر)
-        // 2. أو كل دقيقة كاملة (عشان ما يزعجش الموظف كل ثانية)
-        // 3. أو لو دخل في مرحلة الأكسدة (رقم سالب)
-        
-        const shouldNotify = (seconds === 0) || (seconds < 0 && seconds % 30 === 0) || (seconds > 0 && seconds % 60 === 0);
+    // التأكد من دعم الخدمة
+    if (!("serviceWorker" in navigator && navigator.serviceWorker.controller)) return;
 
-        if (shouldNotify) {
-            let timeStr = seconds >= 0 ? formatTime(seconds) : "انتهى الوقت! ⚠️";
-            if (seconds < 0) timeStr = "-" + formatTime(Math.abs(seconds));
+    // التحقق هل الجهاز أيفون
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-            navigator.serviceWorker.controller.postMessage({
-                type: 'SHOW_NOTIFICATION',
-                payload: {
-                    title: `تنبيه العداد: ${timeStr}`,
-                    body: `النشاط الحالي: ${type}`,
-                    tag: 'activity-timer', 
-                    renotify: false,       
-                    silent: true,          
-                    requireInteraction: false
-                }
-            });
+    // إذا كان أيفون وتم الإرسال مسبقاً، نوقف الدالة فوراً
+    if (isIOS && notificationSentOnIOS) {
+        return; 
+    }
+
+    let timeStr = seconds >= 0 ? formatTime(seconds) : "انتهى الوقت! ⚠️";
+    if (seconds < 0) timeStr = "-" + formatTime(Math.abs(seconds));
+
+    navigator.serviceWorker.controller.postMessage({
+        type: 'SHOW_NOTIFICATION',
+        payload: {
+            title: `العداد: ${timeStr}`,
+            body: `النشاط الحالي: ${type}`,
+            tag: 'activity-timer',
+            renotify: false,
+            silent: true,
+            requireInteraction: false
         }
+    });
+
+    // بمجرد الإرسال لأول مرة، نغير الحالة لـ true
+    if (isIOS) {
+        notificationSentOnIOS = true;
     }
 }
+
         // 5. تصفير العداد فوراً عند تغير الشخص الأول في الطابور (للمدير)
         // مراقبة الطابور: لو الشخص اللي عليه الدور اتغير، نصفر العداد ونبدأ من جديد
 
