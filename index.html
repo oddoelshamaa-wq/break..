@@ -2409,7 +2409,10 @@
                                                         </div>
 
                                                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; max-width: 800px; margin: 0 auto;">
-                                                            <div style="border:1px solid var(--success); padding:8px; border-radius:15px;"><h4>🍔 بريك</h4><button onclick="startMyBreak('بريك عام')" class="btn btn-success" style="width:100%">ابدأ</button></div>
+<div style="border:1px solid var(--success); padding:8px; border-radius:15px;">
+    <h4>🍔 بريك</h4>
+    <button onclick="document.getElementById('breakPickerModal').classList.remove('hidden')" class="btn btn-success" style="width:100%">ابدأ</button>
+</div>
                                                             <div style="border:1px solid var(--primary); padding:8px; border-radius:15px;"><h4>🕌 صلاة</h4><button onclick="startMyBreak('صلاة')" class="btn btn-primary" style="width:100%">ابدأ</button></div>
         <div id="prayerSwapArea" class="hidden" style="margin-top:10px;">
             <button onclick="openPrayerSwapModal()" class="btn btn-dark btn-sm" style="width:100%; border:1px dashed var(--accent);">
@@ -2503,6 +2506,29 @@
                 </div>
             </div>
         </div>
+        <!-- نافذة اختيار نوع البريك بالتفصيل -->
+<div id="breakPickerModal" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:60000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px);">
+    <div style="background:#1e293b; border:2px solid var(--primary); border-radius:30px; padding:25px; width:90%; max-width:400px; text-align:center; box-shadow: 0 0 30px rgba(99, 102, 241, 0.3);">
+        <h3 style="color:white; margin-bottom:20px;">حدد نشاطك الآن 🍔</h3>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <button onclick="confirmDetailedBreak('بريك عادي')" class="btn btn-primary" style="flex-direction:column; padding:20px; font-size:1rem;">
+                <span style="font-size:1.5rem;">🥗</span><br>بريك عادي
+            </button>
+            <button onclick="confirmDetailedBreak('مكالمة تليفونية')" class="btn btn-warning" style="flex-direction:column; padding:20px; font-size:1rem; color:white;">
+                <span style="font-size:1.5rem;">📞</span><br>مكالمة
+            </button>
+            <button onclick="confirmDetailedBreak('الحمام')" class="btn btn-dark" style="flex-direction:column; padding:20px; font-size:1rem; border:1px solid #444;">
+                <span style="font-size:1.5rem;">🚾</span><br>الحمام
+            </button>
+            <button onclick="confirmDetailedBreak('هيجيب حاجة من تحت')" class="btn btn-success" style="flex-direction:column; padding:20px; font-size:1rem;">
+                <span style="font-size:1.5rem;">🏃‍♂️</span><br>مشوار تحت
+            </button>
+        </div>
+
+        <button onclick="document.getElementById('breakPickerModal').classList.add('hidden')" class="btn" style="margin-top:20px; width:100%; background:#334155; color:#aaa;">إلغاء ✖</button>
+    </div>
+</div>
                                         <script>
                                             const APP_VERSION = "2.0.5"; // غير الرقم ده (مثلاً لـ 2.0.6) كل ما ترفع تحديث جديد
 
@@ -9243,22 +9269,39 @@ function updateLockScreenTimer(secondsRemaining, statusType) {
 }
 
     // دالة لإرسال رسالة للـ Service Worker لتحديث الإشعار
- function updateLiveNotification(seconds, type) {
-    if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
-        let timeStr = seconds >= 0 ? formatTime(seconds) : "انتهى الوقت! ⚠️";
-        if (seconds < 0) timeStr = "-" + formatTime(Math.abs(seconds));
+// متغير خارج الدالة لتخزين حالة الإرسال
+let notificationSentOnIOS = false;
 
-        navigator.serviceWorker.controller.postMessage({
-            type: 'SHOW_NOTIFICATION',
-            payload: {
-                title: `العداد: ${timeStr}`,
-                body: `النشاط الحالي: ${type}`,
-                tag: 'activity-timer', // تثبيت التاج مهم جداً لكي لا تتراكم الإشعارات
-                renotify: false,       // منع الموبايل من الاهتزاز أو الرنين كل ثانية
-                silent: true,          // تحديث صامت تماماً
-                requireInteraction: false
-            }
-        });
+function updateLiveNotification(seconds, type) {
+    // التأكد من دعم الخدمة
+    if (!("serviceWorker" in navigator && navigator.serviceWorker.controller)) return;
+
+    // التحقق هل الجهاز أيفون
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+    // إذا كان أيفون وتم الإرسال مسبقاً، نوقف الدالة فوراً
+    if (isIOS && notificationSentOnIOS) {
+        return; 
+    }
+
+    let timeStr = seconds >= 0 ? formatTime(seconds) : "انتهى الوقت! ⚠️";
+    if (seconds < 0) timeStr = "-" + formatTime(Math.abs(seconds));
+
+    navigator.serviceWorker.controller.postMessage({
+        type: 'SHOW_NOTIFICATION',
+        payload: {
+            title: `العداد: ${timeStr}`,
+            body: `النشاط الحالي: ${type}`,
+            tag: 'activity-timer',
+            renotify: false,
+            silent: true,
+            requireInteraction: false
+        }
+    });
+
+    // بمجرد الإرسال لأول مرة، نغير الحالة لـ true
+    if (isIOS) {
+        notificationSentOnIOS = true;
     }
 }
 
@@ -9796,7 +9839,21 @@ function updateLockScreenTimer(secondsRemaining, statusType) {
         }
     });
         // تنفيذ التبديل الفعلي في الطابور
+// دالة لتنفيذ بدء البريك بناءً على الاختيار التفصيلي
+function confirmDetailedBreak(detailedReason) {
+    // 1. إخفاء النافذة
+    document.getElementById('breakPickerModal').classList.add('hidden');
+    
+    // 2. وضع السبب المختار داخل خانة "سبب النشاط" المخفية أو الظاهرة
+    const reasonInput = document.getElementById('breakReason');
+    if(reasonInput) {
+        reasonInput.value = detailedReason;
+    }
 
+    // 3. استدعاء دالة بدء البريك الأصلية
+    // لاحظ أننا نرسل النوع "بريك عام" ليخصم من الـ 45 دقيقة، ولكن السيرفر سيسجل السبب المختار
+    startMyBreak('بريك عام');
+}
                 </script>
                 <script>
 
