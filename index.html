@@ -3814,57 +3814,58 @@
                                                 });
                                             }
 
-                function checkBreakLimit() {
-                    if(!currentUser || currentUser.role === 'admin') return;
-                    const box = document.getElementById('breakLimitAlert');
-                    const breakBtn = document.querySelector("button[onclick=\"startMyBreak('بريك عام')\"]");
+               function checkBreakLimit() {
+    if(!currentUser || currentUser.role === 'admin') return false; // الإدارة لا تطبق عليها القيود
+    
+    const box = document.getElementById('breakLimitAlert');
+    // استهداف الزرار اللي بيفتح نافذة اختيار البريك
+    const mainBreakBtn = document.querySelector("button[onclick*='breakPickerModal']");
 
-                    let isBlocked = false;
-                    let message = "";
+    let isBlocked = false;
+    let message = "";
 
-                    if (currentUser.groupName && currentUser.groupName !== "") {
-                        // فحص الجروب
-                        const inMyGroupOnBreak = Object.values(allUsersData).filter(u =>
-                            u.groupName === currentUser.groupName &&
-                            u.username !== currentUser.username &&
-                            u.isOnBreak && (u.breakType === 'بريك عام' || u.breakType === 'طوارئ')
-                        );
-                        if (inMyGroupOnBreak.length >= 1) {
-                            isBlocked = true;
-                            message = `يا بطل، زميلك في مجموعة (${currentUser.groupName}) في البريك حالياً. أول ما يرجع الطريق هيكون مفتوح ليك! 💪`;
-                        }
-                    } else {
-                        // فحص المستقلين (التعديل هنا)
-                        const soloUsersOnBreak = Object.values(allUsersData).filter(u =>
-                            (!u.groupName || u.groupName === "") &&
-                            u.isOnBreak && (u.breakType === 'بريك عام' || u.breakType === 'طوارئ')
-                        ).length;
+    // منطق فحص المجموعات
+    if (currentUser.groupName && currentUser.groupName !== "") {
+        const inMyGroupOnBreak = Object.values(allUsersData).filter(u =>
+            u.groupName === currentUser.groupName &&
+            u.username !== currentUser.username &&
+            u.isOnBreak && (u.breakType === 'بريك عام' || u.breakType === 'طوارئ')
+        );
+        if (inMyGroupOnBreak.length >= 1) {
+            isBlocked = true;
+            message = `يا بطل، زميلك في مجموعة (${currentUser.groupName}) في البريك حالياً. أول ما يرجع الطريق هيكون مفتوح ليك! 💪`;
+        }
+    } else {
+        // منطق الموظفين المستقلين
+        const soloUsersOnBreak = Object.values(allUsersData).filter(u =>
+            (!u.groupName || u.groupName === "") &&
+            u.isOnBreak && (u.breakType === 'بريك عام' || u.breakType === 'طوارئ')
+        ).length;
 
-                        if (soloUsersOnBreak >= maxBreaksAllowed) {
-                            isBlocked = true;
-                            // النص الجديد اللي إنت طلبته
-                            message = `يا بطل، زمايلك كلهم في البريك دلوقتي. استنى دقايق لحد ما حد يرجع عشان نفضل شغالين.. أول ما حد يرجع الطريق هيكون مفتوح ليك! 💪`;
-                        }
-                    }
+        if (soloUsersOnBreak >= maxBreaksAllowed) {
+            isBlocked = true;
+            message = `يا بطل، زمايلك كلهم في البريك دلوقتي. استنى حد يرجع عشان نفضل شغالين.. أول ما حد يرجع الطريق هيكون مفتوح ليك! 💪`;
+        }
+    }
 
-                    if (isBlocked) {
-                        box.style.display = 'block';
-                        box.innerHTML = message;
-                        if(breakBtn) {
-                            breakBtn.disabled = true;
-                            breakBtn.style.opacity = "0.5";
-                            breakBtn.style.cursor = "not-allowed";
-                        }
-                    } else {
-                        box.style.display = 'none';
-                        if(breakBtn) {
-                            breakBtn.disabled = false;
-                            breakBtn.style.opacity = "1";
-                            breakBtn.style.cursor = "pointer";
-                        }
-                    }
-                }
-
+    if (isBlocked) {
+        if(box) { box.style.display = 'block'; box.innerHTML = message; }
+        if(mainBreakBtn) {
+            mainBreakBtn.disabled = true;
+            mainBreakBtn.style.opacity = "0.5";
+            mainBreakBtn.style.cursor = "not-allowed";
+        }
+        return true; // تعني أن البريك ممتلئ
+    } else {
+        if(box) box.style.display = 'none';
+        if(mainBreakBtn) {
+            mainBreakBtn.disabled = false;
+            mainBreakBtn.style.opacity = "1";
+            mainBreakBtn.style.cursor = "pointer";
+        }
+        return false; // تعني أن المكان متاح
+    }
+}
         function checkSavedSession() { 
             const s = localStorage.getItem('break_sys_user'); 
             if (s && allUsersData[s]) { 
