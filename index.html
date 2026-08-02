@@ -4279,10 +4279,18 @@
 
                         // القيمة المحفوظة في القائمة المنسدلة
                         const savedS = adminSelectBuffer[u.username] || 'بريك عام';
+// الكود الجديد (يجلب الاختيار التفصيلي):
+// ابحث عن هذا الجزء داخل renderMonitorTable واستبدله
+let mainStatusText = u.breakType; 
 
-                        const statusCell = u.isOnBreak
-                            ? `<span style="color:var(--danger); font-weight:bold; animation: pulse 2s infinite;">${u.breakType}</span>`
-                            : '<span style="color:var(--success);">متاح ✅</span>';
+// إذا كان الموظف في بريك واختار سبب تفصيلي، نعرض السبب بدلاً من "بريك عام"
+if (u.isOnBreak && u.breakType === 'بريك عام' && u.lastReason) {
+    mainStatusText = u.lastReason; 
+}
+
+const statusCell = u.isOnBreak
+    ? `<span style="color:var(--danger); font-weight:900; animation: pulse 2s infinite;">${mainStatusText}</span>`
+    : '<span style="color:var(--success); font-weight:bold;">متاح للعمل ✅</span>';
 
                         const ctrl = u.isOnBreak
                             ? `<button onclick="adminStop('${u.username}')" class="btn btn-danger btn-sm">🛑 إيقاف</button> <button onclick="openUserProfile('${u.username}')" class="btn btn-dark btn-sm" title="الملف والشكاوى">📂</button>`
@@ -4315,7 +4323,7 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td>${statusCell}<br><small>${u.lastReason || ''}</small></td>
+<td>${statusCell}<br>${u.isOnBreak ? `<small style="color:#aaa; font-size:0.7rem;">(النوع: ${u.breakType})</small>` : ''}</td>
                                 <td><span id="rem_${u.username}" style="font-weight:bold; font-size:1.1rem; color:${rem>=0?'white':'var(--danger)'}">${rem>=0?formatTime(rem):'-'+formatTime(Math.abs(rem))}</span></td>
                                 <td><span id="pray_${u.username}">${formatTime(lp)}</span><br>${prayerCreditStatus}<small>متبع: <span id="follow_${u.username}">${formatTime(lf)}</span></small></td>
                                 <td><span id="meet_${u.username}">${formatTime(lm)}</span><br><small>VIP: <span id="vip_${u.username}">${formatTime(lv)}</span></small></td>
@@ -10169,9 +10177,33 @@ window.finalizeStopBreak = function(didFinishPrayer) {
 
 // 2. دوال الاختيار التفصيلي المعدلة
 window.confirmDetailedBreak = function(detailedReason) {
+    // 1. إذا كان الاختيار هو الحمام
+    if (detailedReason === 'الحمام') {
+        // البحث عن الموظف الموجود حالياً في الحمام
+        const occupyingUser = Object.values(allUsersData).find(u => 
+            u.isOnBreak && (u.lastReason === 'الحمام' || u.lastReason === 'حمام (VIP)')
+        );
+
+        if (occupyingUser) {
+            // جلب الاسم الحقيقي أو اسم المستخدم
+            const name = occupyingUser.realName || occupyingUser.username;
+            alert(`⚠️ عذراً يا بطل.. الحمام مشغول حالياً من قبل الموظف (${name}). يرجى الانتظار حتى يعود لضمان سير العمل.`);
+            return; // منع البدء
+        }
+    }
+
+    // 2. إخفاء النافذة وتكملة الإجراء الطبيعي
     document.getElementById('breakPickerModal').classList.add('hidden');
-    const rInput = document.getElementById('breakReason');
-    if(rInput) rInput.value = detailedReason;
+    
+    let reasonInput = document.getElementById('breakReason');
+    if(!reasonInput) {
+        reasonInput = document.createElement('input');
+        reasonInput.type = 'hidden';
+        reasonInput.id = 'breakReason';
+        document.body.appendChild(reasonInput);
+    }
+    
+    reasonInput.value = detailedReason; 
     startMyBreak('بريك عام');
 };
 
@@ -10183,6 +10215,19 @@ window.confirmSpecificPrayer = function(prayerName) {
 };
 
 window.confirmVIPAction = function(selectedType) {
+    // التحقق من الحمام في وضع الـ VIP
+    if (selectedType === 'حمام (VIP)') {
+        const occupyingUser = Object.values(allUsersData).find(u => 
+            u.isOnBreak && (u.lastReason === 'الحمام' || u.lastReason === 'حمام (VIP)')
+        );
+
+        if (occupyingUser) {
+            const name = occupyingUser.realName || occupyingUser.username;
+            alert(`⚠️ الحمام مشغول حالياً من قبل (${name}).. يرجى الانتظار.`);
+            return;
+        }
+    }
+
     document.getElementById('vipPickerModal').classList.add('hidden');
     const rInput = document.getElementById('breakReason');
     if(rInput) rInput.value = selectedType;
