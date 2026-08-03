@@ -3876,8 +3876,11 @@
                 manageSingleSession(s);
 
                 if (currentUser.role === 'admin') showAdmin(); 
+                
                 else { setupPresence(s); showEmployee(); } 
                 startGlobalTimer(); 
+                            listenForRemoteLogout(s); // إضافة السطر هنا
+
             } 
         }                                 
     function attemptLogin() { 
@@ -5292,43 +5295,48 @@ function updateEmStatus() {
                                                     c > 0 ? badge.classList.remove('hidden') : badge.classList.add('hidden');
                                                 }
                                             }
-                                            function endDay() {
-                    if (!MANAGERS.includes(currentUser.username)) {
-                        alert("⛔ عذراً، هذه الصلاحية خاصة بالمشرفين فقط.");
-                        return;
-                    }
+                        function endDay() {
+    if (!MANAGERS.includes(currentUser.username)) {
+        alert("⛔ عذراً، هذه الصلاحية خاصة بالمشرفين فقط.");
+        return;
+    }
 
-                    if(confirm("⚠️ هل أنت متأكد من تصفير العدادات (بما فيها الصلاة) وبدء يوم جديد؟")) {
-                        logDeletionAction("تصفير اليوم (End Day)", "الكل", "تم تصفير كافة العدادات بما فيها رصيد الصلاة");
+    if(confirm("⚠️ هل أنت متأكد من تصفير العدادات وتسجيل خروج الموظفين من أجهزة الكمبيوتر؟")) {
+        logDeletionAction("تصفير اليوم (End Day)", "الكل", "تم تصفير كافة العدادات وعمل Logout لأجهزة الـ PC");
 
-                        const updates = {};
-                        Object.keys(allUsersData).forEach(un => {
-                            if(!MANAGERS.includes(un)) {
-                                updates[`users/${un}/usedSeconds`] = 0;
-                                updates[`users/${un}/prayerSeconds`] = 0;
-                                updates[`users/${un}/prayerLimit`] = 0; // تصفير رصيد الصلاة
-                                updates[`users/${un}/prayerCountToday`] = 0; // تصفير عدد المرات
-                                updates[`users/${un}/meetingSeconds`] = 0;
-                                updates[`users/${un}/followUpSeconds`] = 0;
-                                updates[`users/${un}/vipSeconds`] = 0;
-                                updates[`users/${un}/isOnBreak`] = false;
-                                updates[`users/${un}/lastStartTime`] = null;
-                                updates[`users/${un}/otRequest`] = null;
-                                updates[`users/${un}/emRequest`] = null;
-                                updates[`users/${un}/meetingRequest`] = null;
-                                updates[`users/${un}/permRequest`] = null;
-                            }
-                        });
+        const updates = {};
+        const logoutTime = getServerTime(); // وقت الإشارة
 
-                        // إغلاق زر الصلاة تلقائياً عند تقفيل اليوم
-                        updates['settings/prayerOpen'] = false;
+        Object.keys(allUsersData).forEach(un => {
+            if(!MANAGERS.includes(un)) {
+                // تصفير العدادات العادية
+                updates[`users/${un}/usedSeconds`] = 0;
+                updates[`users/${un}/prayerSeconds`] = 0;
+                updates[`users/${un}/prayerLimit`] = 0;
+                updates[`users/${un}/prayerCountToday`] = 0;
+                updates[`users/${un}/meetingSeconds`] = 0;
+                updates[`users/${un}/followUpSeconds`] = 0;
+                updates[`users/${un}/vipSeconds`] = 0;
+                updates[`users/${un}/isOnBreak`] = false;
+                updates[`users/${un}/lastStartTime`] = null;
+                updates[`users/${un}/otRequest`] = null;
+                updates[`users/${un}/emRequest`] = null;
+                updates[`users/${un}/meetingRequest`] = null;
+                updates[`users/${un}/permRequest`] = null;
 
-                        db.ref().update(updates).then(() => {
-                            triggerGlobalRefresh();
-                            alert("✅ تم تصفير اليوم بالكامل وتصفير رصيد الصلاة للجميع.");
-                        });
-                    }
-                }
+                // --- السطر الجديد: إرسال إشارة تسجيل الخروج ---
+                updates[`users/${un}/logoutSignal`] = logoutTime; 
+            }
+        });
+
+        updates['settings/prayerOpen'] = false;
+
+        db.ref().update(updates).then(() => {
+            triggerGlobalRefresh();
+            alert("✅ تم تصفير اليوم وتسجيل خروج الموظفين من أجهزة الـ PC بنجاح.");
+        });
+    }
+}
                                             function forceResetPrayerOnly() {
                                                 if(!confirm("هل تريد تصفير بيانات الصلاة لجميع الموظفين؟ (يستخدم في حالة تعليق العدادات)")) return;
 
@@ -10343,6 +10351,37 @@ window.finalizeStopBreak = function(didFinishPrayer) {
         if (typeof triggerGlobalRefresh === "function") triggerGlobalRefresh();
     });
 };
+// مراقبة إشارة تسجيل الخروج الإجباري من الإدارة
+function listenForRemoteLogout(username) {
+    if (MANAGERS.includes(username)) return; // المشرفين مش هيخرجوا
+
+    const logoutRef = db.ref(`users/${username}/logoutSignal`);
+    
+    // حفظ وقت الدخول عشان الموظف ما يخرجش أول ما يفتح لو اليوم مقفول قديم
+    const loginTime = Date.now();
+
+    logoutRef.on('value', (snap) => {
+        const signalTime = snap.val();
+        
+        if (signalTime && signalTime > (loginTime - 10000)) { // لو الإشارة جديدة (بعد ما فتح بـ 10 ثواني)
+            const device = getDeviceType(); // جلب نوع الجهاز
+            
+            // الشرط: لو الجهاز مش موبايل ومش تابلت (يعني كمبيوتر فقط)
+            if (device !== "mobile" && device !== "tablet") {
+                console.log("🚨 تم استلام أمر تسجيل خروج إجباري للكمبيوتر...");
+                
+                // مسح الإشارة من الداتابيز عشان يعرف يدخل تاني
+                logoutRef.set(null); 
+                
+                // تنفيذ تسجيل الخروج
+                alert("⏰ تم إقفال اليوم من قبل الإدارة. سيتم تسجيل خروجك الآن.");
+                logout(); 
+            } else {
+                console.log("📱 الموظف فاتح من موبايل، لن يتم تسجيل الخروج.");
+            }
+        }
+    });
+}
                 </script>
                 <script>
 
