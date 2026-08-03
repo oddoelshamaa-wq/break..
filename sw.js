@@ -1,4 +1,4 @@
-const CACHE_NAME = 'elshamaa-pwa-v' + Date.now();
+const CACHE_NAME = 'elshamaa-v2.1.0'; // كل ما تعمل تحديث كبير غير الرقم ده (مثلا خليه v2.1.1)
 
 // الملفات الأساسية اللي لازم تتخزن أول مرة
 const CRITICAL_FILES = [
