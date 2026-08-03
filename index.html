@@ -9928,18 +9928,21 @@ function updateLiveNotification(seconds, type) {
             }, 1500);
         }
     });
-    function forceUpdateAllClients() {
-        if(!confirm("⚠️ تنبيه: سيتم إعادة تحميل النظام عند جميع الموظفين لتثبيت التحديثات الجديدة. هل تريد الاستمرار؟")) return;
-        
-        const updateTime = Date.now(); // توقيت اللحظة الحالية كرمز للتحديث
-        
-        db.ref('system_update').set({
-            timestamp: updateTime,
-            admin: currentUser.realName || currentUser.username
-        }).then(() => {
-            alert("✅ تم إرسال أمر التحديث لجميع الأجهزة بنجاح!");
-        });
+  async function forceUpdateAllClients() {
+    if(!confirm("⚠️ سيتم تحديث النظام عند الجميع ومسح الكاش القديم. استمرار؟")) return;
+    
+    // مسح الكاش من جهاز الأدمن أولاً (اختياري لكن مفيد)
+    if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map(name => caches.delete(name)));
     }
+
+    const updateTime = Date.now();
+    db.ref('system_update').set({
+        timestamp: updateTime,
+        admin: currentUser.realName || currentUser.username
+    });
+}
     // كود استقبال التحديث الإجباري من الأدمن (يوضع قبل إغلاق وسم <script>)
     db.ref('system_update').on('value', (snap) => {
         const data = snap.val();
@@ -9967,13 +9970,30 @@ function updateLiveNotification(seconds, type) {
             }
 
             // 3. تحديث الـ Service Worker
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.getRegistrations().then(registrations => {
-                    for (let reg of registrations) {
-                        reg.update(); // طلب البحث عن نسخة sw.js الجديدة
+           if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        // إضافة updateViaCache: 'none' بتجبر المتصفح يروح للسيرفر يتأكد من ملف sw.js
+        navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
+        .then(reg => {
+            console.log('Service Worker Registered');
+            
+            // فحص دوري للتحديثات كل ما المستخدم يفتح التطبيق
+            reg.update();
+
+            reg.onupdatefound = () => {
+                const installingWorker = reg.installing;
+                installingWorker.onstatechange = () => {
+                    if (installingWorker.state === 'installed') {
+                        if (navigator.serviceWorker.controller) {
+                            // لو في نسخة جديدة اتحملت، اظهر رسالة التحديث
+                            showUpdateBanner();
+                        }
                     }
-                });
-            }
+                };
+            };
+        });
+    });
+}
 
             // 4. إعادة تحميل الصفحة مع كسر الكاش تماماً بعد ثانية واحدة
             setTimeout(() => {
