@@ -10382,6 +10382,27 @@ function listenForRemoteLogout(username) {
         }
     });
 }
+// دالة تحديث قائمة الموظفين في لوحة التميز والبث
+function updateBroadcastTargets() {
+    const select = document.getElementById('broadcastTarget');
+    if (!select) return;
+
+    // حفظ الموظفين المختارين حالياً عشان ميروحوش مع التحديث
+    const selectedValues = Array.from(select.selectedOptions).map(option => option.value);
+
+    // البدء بخيار "للجميع"
+    let html = `<option value="all" ${selectedValues.includes('all') ? 'selected' : ''}>📣 للجميع</option>`;
+
+    // إضافة أسماء الموظفين من البيانات الموجودة
+    Object.values(allUsersData).forEach(u => {
+        if (u.username && !MANAGERS.includes(u.username)) {
+            const isSelected = selectedValues.includes(u.username) ? 'selected' : '';
+            html += `<option value="${u.username}" ${isSelected}>👤 ${u.realName || u.username}</option>`;
+        }
+    });
+
+    select.innerHTML = html;
+}
                 </script>
                 <script>
 
