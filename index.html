@@ -1365,7 +1365,457 @@
             text-align: justify; /* لتنسيق السطور بشكل متساوي */
             text-justify: inter-word;
         }
+        /* التصميم الجديد المطور للوجو ELSHAMAA */
+.logo-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* توسيط اللوجو */
+    justify-content: center;
+    padding: 20px;
+    margin-bottom: 10px;
+    perspective: 1000px;
+}
 
+.logo-text {
+    font-family: 'Montserrat', 'Cairo', sans-serif;
+    font-size: 3.5rem; /* تكبير الخط قليلاً */
+    font-weight: 900;
+    line-height: 1;
+    margin: 0;
+    position: relative;
+    letter-spacing: 5px; /* تباعد الحروف للفخامة */
+    
+    /* تدرج لوني انسيابي */
+    background: linear-gradient(to right, #6366f1, #06b6d4, #6366f1);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    
+    /* أنيميشن اللمعان والحركة */
+    animation: 
+        logo-shine 3s linear infinite,
+        logo-float 4s ease-in-out infinite;
+    
+    filter: drop-shadow(0 0 15px rgba(99, 102, 241, 0.4));
+}
+
+.logo-tagline {
+    font-size: 0.8rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 6px;
+    margin-top: 8px;
+    font-weight: 700;
+    opacity: 0.8;
+    animation: fadeIn 2s ease-in-out forwards;
+}
+
+/* حركة اللمعان (البرق) الذي يمر فوق النص */
+@keyframes logo-shine {
+    0% { background-position: 0% center; }
+    100% { background-position: 200% center; }
+}
+
+/* حركة عائمة تجعل اللوجو يبدو وكأنه يطير */
+@keyframes logo-float {
+    0%, 100% { transform: translateY(0) rotateX(0deg); }
+    50% { transform: translateY(-10px) rotateX(5deg); }
+}
+
+/* حركة ظهور تدريجي للتاج لاين */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 0.8; transform: translateY(0); }
+}
+
+/* استجابة الموبايل للوجو */
+@media (max-width: 768px) {
+    .logo-text {
+        font-size: 2.2rem;
+        letter-spacing: 3px;
+    }
+    .logo-tagline {
+        font-size: 0.6rem;
+        letter-spacing: 3px;
+    }
+}
+/* تنسيقات صفحة تسجيل الدخول الكسولة */
+.login-lazy-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+    perspective: 1000px;
+}
+
+.lazy-box {
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 40px;
+    border-radius: 40px;
+    width: 100%;
+    max-width: 450px;
+    text-align: center;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+    animation: lazy-float 6s ease-in-out infinite;
+}
+
+@keyframes lazy-float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-15px) rotate(1deg); }
+}
+
+.lazy-avatar-wrapper {
+    position: relative;
+    margin-bottom: 20px;
+    display: inline-block;
+}
+
+.lazy-avatar {
+    font-size: 80px;
+    transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
+}
+
+/* تأثير حرف الـ Z المتطاير */
+.zzz-container {
+    position: absolute;
+    top: -20px;
+    right: -20px;
+}
+
+.zzz {
+    position: absolute;
+    color: #38bdf8;
+    font-weight: bold;
+    font-size: 20px;
+    opacity: 0;
+    animation: fly-zzz 3s infinite;
+}
+
+.zzz:nth-child(2) { animation-delay: 1s; font-size: 25px; }
+.zzz:nth-child(3) { animation-delay: 2s; font-size: 30px; }
+
+@keyframes fly-zzz {
+    0% { transform: translate(0, 0) scale(1); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translate(30px, -50px) scale(1.5); opacity: 0; }
+}
+
+.input-group {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.input-group i {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6366f1;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 15px 45px 15px 15px !important;
+    background: rgba(0,0,0,0.3) !important;
+    border-radius: 15px !important;
+    font-size: 0.9rem !important;
+    border: 2px solid transparent !important;
+    transition: 0.3s;
+}
+
+.input-group input:focus {
+    border-color: #6366f1 !important;
+    background: rgba(99, 102, 241, 0.1) !important;
+}
+
+.btn-login-funny {
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, #6366f1, #06b6d4);
+    border: none;
+    border-radius: 20px;
+    color: white;
+    font-weight: 900;
+    font-size: 1.1rem;
+    cursor: pointer;
+    box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+    transition: 0.3s;
+    margin-top: 10px;
+}
+
+.btn-login-funny:hover {
+    transform: scale(1.05) translateY(-5px);
+    box-shadow: 0 15px 30px rgba(99, 102, 241, 0.5);
+}
+
+.office-mess {
+    margin-top: 30px;
+    font-size: 1.5rem;
+    opacity: 0.3;
+    letter-spacing: 15px;
+}
+
+.login-title {
+    font-size: 1.5rem;
+    color: #fff;
+    margin-bottom: 5px;
+    font-weight: 900;
+}.osman-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: #0f172a;
+    overflow: hidden;
+    font-family: 'Cairo', sans-serif;
+}
+
+.osman-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* الموظف عثمان */
+.osman-character {
+    width: 250px;
+    margin-bottom: -50px; /* ليدخل خلف الكارت */
+    z-index: 1;
+    transition: 0.3s;
+}
+
+/* فقاعة الكلام */
+.osman-bubble {
+    position: absolute;
+    top: -40px;
+    right: -60px;
+    background: #fff;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #1e293b;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    border: 2px solid #6366f1;
+    display: none; /* تظهر في مواقف معينة */
+    z-index: 10;
+}
+
+/* كارت تسجيل الدخول */
+.login-card-osman {
+    background: rgba(30, 41, 59, 0.7);
+    backdrop-filter: blur(15px);
+    padding: 50px 40px;
+    border-radius: 40px;
+    width: 400px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+    z-index: 5;
+    transition: 0.3s;
+}
+
+.brand-title {
+    font-size: 2rem;
+    font-weight: 900;
+    background: linear-gradient(to right, #818cf8, #22d3ee);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 15px;
+    margin-bottom: 15px;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid #334155;
+    border-radius: 15px;
+    color: #fff;
+    outline: none;
+    text-align: center;
+}
+
+.input-group input:focus { border-color: #6366f1; }
+
+.btn-osman {
+    width: 100%;
+    padding: 18px;
+    background: #6366f1;
+    color: white;
+    border: none;
+    border-radius: 15px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+/* انميشن الهزة عند الغلط */
+@keyframes shake-mock {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px) rotate(-1deg); }
+    75% { transform: translateX(10px) rotate(1deg); }
+}
+
+.wrong-data { animation: shake-mock 0.2s ease-in-out 3; }
+
+/* الحاوية الرئيسية */
+.elegant-lazy-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: radial-gradient(circle at top right, #1e293b, #020617);
+}
+
+.login-box-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    padding-top: 100px;
+}
+
+/* الموظف */
+.worker-desk-area {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    z-index: 1;
+}
+
+.worker-svg {
+    width: 100%;
+    height: auto;
+    filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+}
+
+/* حركة الرأس (bobbing) */
+.head-bob {
+    animation: bob 4s ease-in-out infinite;
+    transform-origin: center;
+}
+
+@keyframes bob {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(5px) rotate(2deg); }
+}
+
+/* فقاعة التريقة */
+.roast-bubble {
+    position: absolute;
+    top: -20px;
+    right: -80px;
+    background: #6366f1;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 20px 20px 20px 0;
+    font-size: 0.85rem;
+    font-weight: bold;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    opacity: 0;
+    transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 10;
+}
+
+/* الكارت الزجاجي */
+.glass-login-card {
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 35px;
+    padding: 50px 40px 40px;
+    position: relative;
+    z-index: 2;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.6);
+    text-align: center;
+}
+
+.system-tag {
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    color: #06b6d4;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.glass-login-card h1 {
+    color: white;
+    margin: 10px 0 5px;
+    font-size: 1.8rem;
+}
+
+.glass-login-card p {
+    color: #94a3b8;
+    font-size: 0.85rem;
+    margin-bottom: 30px;
+}
+
+/* المدخلات */
+.input-fields .field {
+    margin-bottom: 15px;
+}
+
+.input-fields input {
+    width: 100%;
+    padding: 16px 20px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 18px;
+    color: white;
+    outline: none;
+    transition: 0.3s;
+    font-family: 'Cairo';
+}
+
+.input-fields input:focus {
+    border-color: #6366f1;
+    background: rgba(99, 102, 241, 0.05);
+}
+
+/* الزرار */
+.btn-submit-elegant {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #6366f1, #4338ca);
+    color: white;
+    border: none;
+    border-radius: 18px;
+    font-weight: 900;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2);
+    transition: 0.3s;
+}
+
+.btn-submit-elegant:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 30px rgba(99, 102, 241, 0.4);
+}
+
+.card-footer {
+    margin-top: 20px;
+    color: #475569;
+    font-size: 0.75rem;
+}
+
+/* انميشن الهزة عند الغلط */
+.shake-card {
+    animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
+}
                                             </style>
                                         </head>
                                         <body>
@@ -1377,18 +1827,22 @@
                                         <div class="aura aura-1"></div>
                                         <div class="aura aura-2"></div>
 
-                                        <div id="loading" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#0f172a; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                                            <div style="border:5px solid var(--glass-border); border-top:5px solid var(--primary); border-radius:50%; width:60px; height:60px; animation:spin 1s linear infinite;"></div>
-                                            <div class="logo-container">
-                                                <h1 class="logo-text">ELSHAMAA</h1>
-                                                <span class="logo-tagline">Smart Management System</span>
-                                            </div>
-                                        </div>
+                                        <!-- اللوجو داخل شاشة التحميل -->
+<div id="loading" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#020617; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+    <div class="logo-container">
+        <h1 class="logo-text">ELSHAMAA</h1>
+        <span class="logo-tagline">Management Intelligence</span>
+    </div>
+    <div style="border:3px solid rgba(99,102,241,0.1); border-top:3px solid var(--primary); border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite; margin-top:20px;"></div>
+</div>
 
-                                        <div class="logo-container">
-                                            <h1 class="logo-text">ELSHAMAA</h1>
-                                            <span class="logo-tagline">Smart Management System</span>
-                                        </div>
+<!-- اللوجو الرئيسي في الصفحة -->
+<center>
+    <div class="logo-container">
+        <h1 class="logo-text">ELSHAMAA</h1>
+        <span class="logo-tagline">Smart Management System</span>
+    </div>
+</center>
 
                 <!-- =============================================
                     🔊 نظام الأصوات الكامل - 5 أصوات مختلفة
@@ -1718,14 +2172,55 @@
                                         <div class="container hidden" id="mainContainer">
                                             
                                             <!-- قسم تسجيل الدخول -->
-                                            <div id="loginSection" style="max-width: 400px; margin: 80px auto; text-align: center;">
-                                                <h2 style="font-size: 2rem; margin-bottom: 30px;">🔐 تسجيل الدخول</h2>
-                                                <div style="background: var(--glass); padding: 30px; border-radius: 30px; border: 1px solid var(--glass-border);">
-                                                    <input type="text" id="loginUser" placeholder="اسم المستخدم" style="width:100%">
-                                                    <input type="password" id="loginPass" placeholder="كلمة المرور" style="width:100%">
-                                                    <button onclick="attemptLogin()" class="btn btn-primary" style="width:100%; padding: 15px;">دخول للنظام</button>
-                                                </div>
-                                            </div>
+                                           <!-- قسم تسجيل الدخول الجديد (الكسول) -->
+<div id="loginSection" class="elegant-lazy-container">
+    
+    <div class="login-box-wrapper">
+        <!-- الموظف الكسول (منظم وبسيط) -->
+        <div class="worker-desk-area">
+            <div id="roastBubble" class="roast-bubble">اخلص يا نجم.. ورانا نوم! 🥱</div>
+            <svg viewBox="0 0 200 160" class="worker-svg">
+                <!-- الجسم -->
+                <path d="M50 160 Q100 120 150 160" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2"/>
+                <!-- الرأس -->
+                <g id="workerHead" class="head-bob">
+                    <circle cx="100" cy="80" r="35" fill="#ffdbac" />
+                    <!-- العيون -->
+                    <g id="workerEyes">
+                        <path id="eyeL" d="M85 80 Q90 85 95 80" fill="none" stroke="#1e293b" stroke-width="2.5" />
+                        <path id="eyeR" d="M105 80 Q110 85 115 80" fill="none" stroke="#1e293b" stroke-width="2.5" />
+                    </g>
+                    <!-- الفم -->
+                    <path id="workerMouth" d="M95 100 Q100 105 105 100" fill="none" stroke="#1e293b" stroke-width="2" />
+                </g>
+            </svg>
+        </div>
+
+        <!-- الكارت الزجاجي المنظم -->
+        <div class="glass-login-card" id="loginCard">
+            <div class="login-header">
+                <span class="system-tag">ELSHAMAA V2.0</span>
+                <h1>تسجيل الدخول</h1>
+                <p>من فضلك ادخل بياناتك (بدون إزعاج)</p>
+            </div>
+
+            <div class="input-fields">
+                <div class="field">
+                    <input type="text" id="loginUser" placeholder="اسم المستخدم" onfocus="stateActive()" onblur="stateSleep()">
+                </div>
+                <div class="field">
+                    <input type="password" id="loginPass" placeholder="كلمة المرور" onfocus="stateHide()" onblur="stateActive()">
+                </div>
+            </div>
+
+            <button onclick="mockAttemptLogin()" class="btn-submit-elegant">دخول السيستم</button>
+            
+            <div class="card-footer">
+                <span>نسيت الباسورد؟ نام وافتكر بكره</span>
+            </div>
+        </div>
+    </div>
+</div>
 
                                             <!-- لوحة المشرف -->
                                             <div id="adminSection" class="hidden">
@@ -2106,12 +2601,10 @@
                                                             <input type="text" id="newPassword" placeholder="Password">
                                                             <input type="number" id="newAllowance" value="45">
                                                             <input type="text" id="newFunTitle" placeholder="اللقب (مثلاً: أشطر كتكوت)" style="border-color: var(--vip-gold);">
-                                                           <!-- ابحث عن select id="newUserGroup" واستبدله بهذا -->
-<select id="newUserGroup">
-    <option value="">بدون جروب</option> <!-- الخيار الجديد -->
-    <option value="واتساب">جروب واتساب</option>
-    <option value="طلبات">جروب طلبات</option>
-</select>
+                                                            <select id="newUserGroup">
+                                                                <option value="واتساب">جروب واتساب</option>
+                                                                <option value="طلبات">جروب طلبات</option>
+                                                            </select>
 
                                                             <div style="grid-column: span 2; display: flex; gap: 5px;">
                                                                 <input type="text" id="newProfilePic" placeholder="رابط الصورة أو اختر من الجهاز" style="flex:1">
@@ -7489,27 +7982,30 @@ function updateEmStatus() {
                 }
 
                 // هذه الدالة تراقب نود المجموعات في Firebase وتحدث القائمة فوراً عند أي تغيير
-            function syncGroupsToSelect() {
-    db.ref('groups').on('value', (snap) => {
-        const groups = snap.val() || {};
-        const groupSelect = document.getElementById('newUserGroup');
-        
-        if (!groupSelect) return;
+                function syncGroupsToSelect() {
+                    db.ref('groups').on('value', (snap) => {
+                        const groups = snap.val() || {};
+                        const groupSelect = document.getElementById('newUserGroup');
+                        
+                        if (!groupSelect) return;
 
-        const currentSelection = groupSelect.value;
+                        // حفظ القيمة المختارة حالياً عشان متتمسحش أثناء التحديث
+                        const currentSelection = groupSelect.value;
 
-        // تعديل هذا السطر بالتحديد ليصبح "بدون جروب" بدلاً من "اختر المجموعة"
-        let optionsHTML = '<option value="">بدون جروب</option>'; 
-        
-        Object.values(groups).forEach(g => {
-            optionsHTML += `<option value="${g.name}">${g.name}</option>`;
-        });
+                        // تنظيف القائمة والبدء من جديد
+                        let optionsHTML = '<option value="">-- اختر المجموعة --</option>';
+                        
+                        Object.values(groups).forEach(g => {
+                            // هنا بنضيف اسم المجموعة اللي في الجدول للقائمة
+                            optionsHTML += `<option value="${g.name}">${g.name}</option>`;
+                        });
 
-        groupSelect.innerHTML = optionsHTML;
-        
-        if (currentSelection) groupSelect.value = currentSelection;
-    });
-}
+                        groupSelect.innerHTML = optionsHTML;
+                        
+                        // إعادة اختيار المجموعة لو كانت محددة مسبقاً
+                        if (currentSelection) groupSelect.value = currentSelection;
+                    });
+                }
 
                 // استدعاء الدالة لتبدأ العمل فور فتح الصفحة
                 syncGroupsToSelect();
@@ -10401,6 +10897,157 @@ function updateBroadcastTargets() {
     });
 
     select.innerHTML = html;
+}
+// وظائف الموظف الكسول في تسجيل الدخول
+function wakeUp() {
+    const char = document.getElementById('lazyCharacter');
+    char.innerText = "😲"; // يستيقظ عند الضغط على الاسم
+    char.style.transform = "scale(1.2)";
+    // إخفاء الـ Zzz عند الاستيقاظ
+    document.querySelector('.zzz-container').style.display = 'none';
+}
+
+function goSleep() {
+    const char = document.getElementById('lazyCharacter');
+    char.innerText = "😴"; // يرجع ينام
+    char.style.transform = "scale(1)";
+    document.querySelector('.zzz-container').style.display = 'block';
+}
+
+function hideEyes() {
+    const char = document.getElementById('lazyCharacter');
+    char.innerText = "🙈"; // يخبي عينه عند كتابة الباسورد
+    char.style.transform = "scale(1.1)";
+}
+// نصوص التريقة (تظهر لما يغلط)
+const roastMessages = [
+    "أنت متأكد إنك شغال معانا؟ روح نام يا بابا! 😂",
+    "دي حتى البصمة أسهل من اللي أنت بتعمله ده.. غلط!",
+    "يا عم اطلب قهوة وركز، الباسورد مش كدة خالص!",
+    "شكلك لسه ما شربتش الشاي.. الباسورد غلط يا نجم",
+    "عثمان بيقولك: 'أنا لو منك استقيل أكرملي' 🥱",
+    "بقولك إيه؟ ما تحاولش تاني عشان هنام منك!"
+];
+
+function osmanFocus() {
+    // يفتح عين واحدة ويبص بقرف
+    document.getElementById('eyeL').setAttribute('d', 'M85 100 A5 5 0 1 1 95 100');
+    document.getElementById('osmanBubble').innerText = "نعم؟ عايز إيه؟ 🤨";
+    document.getElementById('osmanBubble').style.display = "block";
+}
+
+function osmanSleep() {
+    // يرجع ينام
+    document.getElementById('eyeL').setAttribute('d', 'M85 100 Q90 105 95 100');
+    document.getElementById('eyeR').setAttribute('d', 'M105 100 Q110 105 115 100');
+    document.getElementById('osmanBubble').innerText = "Zzz... 😴";
+}
+
+function osmanHide() {
+    // يغطي عينه في الباسورد
+    document.getElementById('osmanBubble').innerText = "مش هبص بس اخلص! 🙈";
+    document.getElementById('eyeL').setAttribute('d', 'M85 100 Q90 105 95 100');
+    document.getElementById('eyeR').setAttribute('d', 'M105 100 Q110 105 115 100');
+}
+
+// دالة محاكاة الدخول مع التريقة
+function mockAttemptLogin() {
+    const u = document.getElementById('loginUser').value.trim();
+    const p = document.getElementById('loginPass').value.trim();
+
+    // استدعاء دالة الدخول الأصلية بتاعتك بس هنزود عليها التريقة
+    if (allUsersData[u] && allUsersData[u].password === p) {
+        // نجاح (دخول طبيعي)
+        attemptLogin();
+    } else {
+        // فشل (بدء التريقة)
+        const card = document.getElementById('loginCard');
+        const bubble = document.getElementById('osmanBubble');
+        const mouth = document.getElementById('osmanMouth');
+
+        // هز الكارت
+        card.classList.add('wrong-data');
+        setTimeout(() => card.classList.remove('wrong-data'), 500);
+
+        // عثمان بيضحك تريقة
+        mouth.setAttribute('d', 'M90 120 Q100 140 110 120'); // ابتسامة تريقة
+        bubble.innerText = roastMessages[Math.floor(Math.random() * roastMessages.length)];
+        bubble.style.display = "block";
+        bubble.style.background = "#ff4444";
+        bubble.style.color = "#fff";
+
+        // عثمان يتهز كأنه بيضحك
+        document.getElementById('osmanSvg').style.transform = "scale(1.1) rotate(5deg)";
+        setTimeout(() => {
+            document.getElementById('osmanSvg').style.transform = "scale(1) rotate(0deg)";
+            mouth.setAttribute('d', 'M95 125 Q100 130 105 125');
+        }, 1000);
+    }
+}
+const roasts = [
+    "الباسورد غلط يا عبقري.. روح كمل نوم!",
+    "أنت متأكد إنك شغال معانا؟ عثمان مش فاكرك!",
+    "يا ابني ركز.. شكلك لسه ما فطرتش 🍩",
+    "غلط! شكلك محتاج كورس 'كيف تكتب يوزر نيم'",
+    "عثمان بيقولك: جرب تاني بس بعيد عني عشان هنام"
+];
+
+function stateActive() {
+    // يفتح عينه
+    document.getElementById('eyeL').setAttribute('d', 'M85 75 A5 5 0 1 1 95 75');
+    document.getElementById('eyeR').setAttribute('d', 'M105 75 A5 5 0 1 1 115 75');
+    showBubble("نعم؟ عايز إيه؟ 🤨");
+}
+
+function stateSleep() {
+    // يرجع ينام
+    document.getElementById('eyeL').setAttribute('d', 'M85 80 Q90 85 95 80');
+    document.getElementById('eyeR').setAttribute('d', 'M105 80 Q110 85 115 80');
+    document.getElementById('roastBubble').style.opacity = "0";
+}
+
+function stateHide() {
+    // يخبي عينه
+    showBubble("مش هبص والله.. اخلص! 🙈");
+    document.getElementById('eyeL').setAttribute('d', 'M85 80 Q90 85 95 80');
+    document.getElementById('eyeR').setAttribute('d', 'M105 80 Q110 85 115 80');
+}
+
+function showBubble(msg) {
+    const b = document.getElementById('roastBubble');
+    b.innerText = msg;
+    b.style.opacity = "1";
+}
+
+// دالة محاكاة الدخول مع نظام التريقة المطور
+function mockAttemptLogin() {
+    const u = document.getElementById('loginUser').value.trim().toLowerCase();
+    const p = document.getElementById('loginPass').value.trim();
+
+    // استدعاء المنطق الأصلي بتاعك
+    if (allUsersData[u] && allUsersData[u].password === p) {
+        attemptLogin(); // دالة الدخول الأصلية في ملفك
+    } else {
+        // فشل -> تريقة
+        const card = document.getElementById('loginCard');
+        const mouth = document.getElementById('workerMouth');
+        
+        // 1. هزة الكارت
+        card.classList.add('shake-card');
+        setTimeout(() => card.classList.remove('shake-card'), 500);
+
+        // 2. تريقة عثمان
+        showBubble(roasts[Math.floor(Math.random() * roasts.length)]);
+        document.getElementById('roastBubble').style.background = "#ef4444"; // قلب أحمر من الغيظ
+
+        // 3. شكل بقه يتغير لضحكة تريقة
+        mouth.setAttribute('d', 'M90 95 Q100 115 110 95');
+        
+        setTimeout(() => {
+            mouth.setAttribute('d', 'M95 100 Q100 105 105 100');
+            document.getElementById('roastBubble').style.background = "#6366f1";
+        }, 2000);
+    }
 }
                 </script>
                 <script>
