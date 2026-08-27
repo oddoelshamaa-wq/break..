@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>أتوبيس كومبليت - نظام الأكواد</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
         :root { --bg: #0f1221; --card: #1c2135; --primary: #5851db; --accent: #ffeb3b; --text: #fff; }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; padding: 20px; }
@@ -109,6 +111,47 @@
 </div>
 
 <script>
+    // 1. كود الاتصال بـ Firebase (يجب أن يكون نفس الإعدادات الموجودة في index.html)
+const firebaseConfig = {
+    apiKey: "AIzaSyBojsAZ73wpf-4cD8TviULncyxIIOUO2qY",
+    authDomain: "brak-nagaf.firebaseapp.com",
+    projectId: "brak-nagaf",
+    databaseURL: "https://brak-nagaf-default-rtdb.firebaseio.com/",
+    storageBucket: "brak-nagaf.firebasestorage.app",
+    messagingSenderId: "149166416863",
+    appId: "1:149166416863:web:e94fe392f868da07bbda6a"
+};
+
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+const db = firebase.database();
+
+// 2. فحص الهوية والحالة فوراً
+function checkAccess() {
+    const username = localStorage.getItem('break_sys_user');
+
+    // أ- إذا لم يسجل دخول أصلاً، اطرده
+    if (!username) {
+        window.location.replace('index.html');
+        return;
+    }
+
+    // ب- مراقبة حالة الموظف في الوقت الفعلي
+    db.ref('users/' + username).on('value', (snap) => {
+        const user = snap.val();
+        
+        // جـ- إذا لم يكن في بريك وليس مديراً، اطرده فوراً
+        const managers = ['mahmoud', 'abutamim', 'ahmed'];
+        if (!user.isOnBreak && !managers.includes(username)) {
+            alert("⚠️ ممنوع اللعب أثناء العمل! سيتم تحويلك لصفحة البريك الآن.");
+            window.location.replace('index.html');
+        }
+    });
+}
+
+// تشغيل الفحص عند تحميل الصفحة
+checkAccess();
     let peer, conn, myName, isHost = false, currentRoomCode = "";
     let connections = [];
     let players = {}; 
