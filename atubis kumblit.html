@@ -41,6 +41,8 @@
         
         .divider { margin: 20px 0; border-top: 1px solid #323a54; position: relative; }
         .divider span { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--card); padding: 0 10px; color: #8892b0; font-size: 14px; }
+        /* هذا السطر سيجعل الصفحة مخفية تماماً حتى يتم التأكد من البريك */
+body { display: none; background: #0f1221; }
     </style>
 </head>
 <body>
@@ -128,27 +130,42 @@ if (!firebase.apps.length) {
 const db = firebase.database();
 
 // 2. فحص الهوية والحالة فوراً
+// 2. فحص الهوية والحالة فوراً وبشكل مستمر
 function checkAccess() {
     const username = localStorage.getItem('break_sys_user');
 
-    // أ- إذا لم يسجل دخول أصلاً، اطرده
+    // أ- إذا لم يسجل دخول أصلاً، اطرده لصفحة الدخول
     if (!username) {
+        alert("🚨 يجب تسجيل الدخول أولاً!");
         window.location.replace('index.html');
         return;
     }
 
-    // ب- مراقبة حالة الموظف في الوقت الفعلي
+    // ب- مراقبة حالة الموظف في الوقت الفعلي من قاعدة البيانات
     db.ref('users/' + username).on('value', (snap) => {
         const user = snap.val();
+        const managers = ['mahmoud', 'abutamim', 'ahmed']; // قائمة المديرين
         
-        // جـ- إذا لم يكن في بريك وليس مديراً، اطرده فوراً
-        const managers = ['mahmoud', 'abutamim', 'ahmed'];
-        if (!user.isOnBreak && !managers.includes(username)) {
-            alert("⚠️ ممنوع اللعب أثناء العمل! سيتم تحويلك لصفحة البريك الآن.");
+        // جـ- التحقق: هل هو مدير؟ أو هل هو في بريك؟
+        const isManager = managers.includes(username);
+        const isOnBreak = user && user.isOnBreak === true;
+
+        if (isManager || isOnBreak) {
+            // ✅ مسموح له بالدخول: أظهر محتوى الصفحة
+            document.body.style.display = "flex"; 
+        } else {
+            // ❌ غير مسموح له: اطرده فوراً
+            alert("🛑 ممنوع اللعب أثناء العمل! اذهب وافتح بريك أولاً.");
             window.location.replace('index.html');
         }
+    }, (error) => {
+        // في حالة وجود خطأ في الاتصال
+        window.location.replace('index.html');
     });
 }
+
+// تشغيل الفحص فور تحميل السكريبت
+checkAccess();
 
 // تشغيل الفحص عند تحميل الصفحة
 checkAccess();
