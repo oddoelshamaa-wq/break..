@@ -5315,8 +5315,7 @@
     let usersList = Object.values(allUsersData).filter(u => {
         if (!u || !u.username) return false;
         // إذا أردت إخفاء المشرفين من الجدول تماماً، فعل السطر التالي:
-        // if (MANAGERS.includes(u.username)) return false; 
-        
+if (MANAGERS.includes(u.username)) return false;        
         if (searchVal && !(u.realName || u.username).toLowerCase().includes(searchVal)) return false;
         return true;
     });
