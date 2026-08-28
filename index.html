@@ -4341,7 +4341,7 @@
                                             }
 
     // الاستماع للرسائل الجديدة (نسخة مصلحة تمنع الصوت في الرسائل الصامتة)
-    db.ref('broadcasts').on('child_added', (snap) => {
+db.ref('broadcasts').limitToLast(50).on('value', (snap) => { 
         if (isInitialLoad) return; 
 
         const b = snap.val();
@@ -12517,7 +12517,8 @@ function renderContacts() {
                 </div>
                 <div style="flex:1; margin-right:10px;">
                     <div style="font-weight:900; font-size:0.95rem; color:${isManager ? '#fbbf24' : 'white'}">${u.realName || u.username}</div>
-                    <div style="font-size:0.7rem; color:#64748b;">${unreadCount > 0 ? 'بعت لك رسالة جديدة' : (isManager ? 'مشرف' : 'موظف')}</div>
+                    <!-- تم إفراغ النص هنا تماماً كما طلبت -->
+                    <div style="font-size:0.7rem; color:#64748b;"></div>
                 </div>
                 ${unreadCount > 0 ? `<div class="unread-dot"></div>` : ''}
             </div>
