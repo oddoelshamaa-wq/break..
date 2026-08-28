@@ -4230,12 +4230,30 @@
 
                                             const MANAGERS = ['mahmoud', 'abutamim', 'ahmed'];
 
-                                            function getDeviceType() {
-                                                const ua = navigator.userAgent;
-                                                if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) return "tablet";
-                                                if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua)) return "mobile";
-                                                return "desktop";
-                                            }
+                                         function getDeviceType() {
+    const ua = navigator.userAgent;
+    
+    // فحص إذا كان الجهاز يدعم اللمس المتعدد (ميزة أساسية في الموبايل والتابلت وغير موجودة في الـ PC العادي)
+    const isTouchDevice = (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0));
+
+    // فحص الموبايل والتابلت من خلال اسم المتصفح
+    const isMobileUA = /Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua);
+    const isTabletUA = /(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua);
+
+    // المنطق الجديد: 
+    // حتى لو طلب "Desktop Site"، إذا كان الجهاز يدعم اللمس (Touch) فهو موبايل/تابلت وليس PC
+    if (isMobileUA || isTabletUA || (isTouchDevice && !ua.includes("Windows NT") && !ua.includes("Macintosh"))) {
+        return "mobile";
+    }
+    
+    // في حالة الـ iPhone "Request Desktop Site" المتصفح يدعي أنه Macintosh
+    // لكننا نتأكد من اللمس (iPhones have at least 5 touch points)
+    if (ua.includes("Macintosh") && navigator.maxTouchPoints > 1) {
+        return "mobile"; 
+    }
+
+    return "desktop";
+}
 
                                             const localLoadTime = Date.now();
                                             db.ref('refreshSignal').on('value', (snap) => {
@@ -5802,26 +5820,25 @@ function startMyBreak(t) {
                     });
                 }
 
-                                            function stopMyBreak() {
-                // التحقق من نوع الجهاز ومنع الموظف فقط (الأدمن مستثنى)
-                if (getDeviceType() === "mobile" && currentUser.role !== 'admin') {
-                    alert("🛑 عذراً يا بطل.. قوانين العمل تمنع إنهاء النشاط من الهاتف المحمول. يرجى تسجيل العودة من جهاز الكمبيوتر الخاص بك لضمان دقة المراقبة.");
-                    return; // الخروج من الدالة ومنع الإغلاق
-                }
+                        function stopMyBreak() {
+    const device = getDeviceType();
+    
+    // الآن حتى لو فعل "Request Desktop Site"، سيعرف الكود أنه موبايل ولن يسمح بالإغلاق
+    if (device === "mobile" && currentUser.role !== 'admin') {
+        alert("🛑 عذراً يا بطل.. لا يمكنك إنهاء النشاط من الهاتف حتى لو طلبت نسخة سطح المكتب. يرجى تسجيل العودة من جهاز الكمبيوتر المكتبي الخاص بالعمل.");
+        return; 
+    }
 
-                const u = currentUser;
+    const u = currentUser;
+    if (u.breakType === 'صلاة') {
+        const nextPrayerName = document.getElementById('nextPrayerName').innerText.replace("المتبقي على ", "") || "الصلاة";
+        document.getElementById('prayerCheckTitle').innerText = `هل أتممت ${nextPrayerName}؟`;
+        document.getElementById('prayerCheckModal').classList.remove('hidden');
+        return; 
+    }
 
-                // إذا كان النشاط صلاة، نظهر نافذة التأكيد أولاً
-                if (u.breakType === 'صلاة') {
-                    const nextPrayerName = document.getElementById('nextPrayerName').innerText.replace("المتبقي على ", "") || "الصلاة";
-                    document.getElementById('prayerCheckTitle').innerText = `هل أتممت ${nextPrayerName}؟`;
-                    document.getElementById('prayerCheckModal').classList.remove('hidden');
-                    return; 
-                }
-
-                // إذا كان نشاطاً عادياً، نكمل الإجراء الطبيعي
-                finalizeStopBreak(false); 
-            }
+    finalizeStopBreak(false); 
+}
         function finalizeStopBreak(didFinishPrayer) {
             const u = currentUser;
             if (!u.lastStartTime) return;
@@ -10759,45 +10776,34 @@ function updateLiveNotification(seconds, type) {
                     });
                     // دالة لإدارة الجلسة الواحدة
     // دالة إدارة الجلسات: موبايل حر + كمبيوتر واحد فقط
-    function manageSingleSession(username) {
-        // 1. استثناء المديرين من هذا النظام (اختياري)
-        if (MANAGERS.includes(username)) return;
+ function manageSingleSession(username) {
+    if (MANAGERS.includes(username)) return;
 
-        const device = getDeviceType();
+    const device = getDeviceType(); // سيستخدم الفحص المطور
 
-        // 2. إذا كان المستخدم فاتح من موبايل أو تابلت
-        if (device === "mobile" || device === "tablet") {
-            console.log("تم الدخول من هاتف: لن يتم تطبيق قيود الجلسة الواحدة.");
-            return; // اخرج من الدالة واتركه متصلاً
-        }
-
-        // 3. إذا كان المستخدم فاتح من جهاز كمبيوتر (PC)
-        console.log("تم الدخول من جهاز كمبيوتر: تفعيل نظام الـ PC الواحد.");
-        
-        // إنشاء معرف فريد لهذه الجلسة على هذا الكمبيوتر
-        const currentPcSessionId = "PC_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5);
-        
-        // تخزين المعرف محلياً وفي Firebase في خانة مخصصة للكمبيوتر (pcSessionId)
-        localStorage.setItem('active_pc_session_id', currentPcSessionId);
-        const pcRef = db.ref('users/' + username + '/pcSessionId');
-        pcRef.set(currentPcSessionId);
-
-        // مراقبة الخانة في Firebase
-        pcRef.on('value', (snapshot) => {
-            const sessionIdInDb = snapshot.val();
-            const localSessionId = localStorage.getItem('active_pc_session_id');
-
-            // إذا تغير المعرف في الداتابيز (يعني فتح من PC تاني) وكان الجهاز الحالي PC
-            if (sessionIdInDb && localSessionId && sessionIdInDb !== localSessionId) {
-                alert("⚠️ تنبيه أمني: تم فتح حسابك من جهاز كمبيوتر آخر. سيتم تسجيل خروجك من هذا الجهاز حالاً.");
-                
-                // تنفيذ تسجيل الخروج للكمبيوتر القديم
-                localStorage.removeItem('break_sys_user');
-                localStorage.removeItem('active_pc_session_id');
-                location.reload(); 
-            }
-        });
+    if (device === "mobile") {
+        console.log("📱 تم اكتشاف موبايل (حتى في وضع Desktop Site): الجلسة حرة.");
+        return; 
     }
+
+    // هنا يدخل فقط الـ PC الحقيقي
+    console.log("💻 تم اكتشاف جهاز كمبيوتر حقيقي: تفعيل نظام الـ PC الواحد.");
+    const currentPcSessionId = "PC_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5);
+    localStorage.setItem('active_pc_session_id', currentPcSessionId);
+    const pcRef = db.ref('users/' + username + '/pcSessionId');
+    pcRef.set(currentPcSessionId);
+
+    pcRef.on('value', (snapshot) => {
+        const sessionIdInDb = snapshot.val();
+        const localSessionId = localStorage.getItem('active_pc_session_id');
+        if (sessionIdInDb && localSessionId && sessionIdInDb !== localSessionId) {
+            alert("⚠️ تنبيه: حسابك مفتوح من جهاز كمبيوتر آخر.");
+            localStorage.removeItem('break_sys_user');
+            localStorage.removeItem('active_pc_session_id');
+            location.reload(); 
+        }
+    });
+}
         // فتح نافذة التبديل وملء الأسماء الموجودة في الطابور فقط
         // فتح نافذة اختيار الزميل للتبديل معه
         function openPrayerSwapModal() {
