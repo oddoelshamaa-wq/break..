@@ -2651,6 +2651,9 @@
                         </div>
                         <button onclick="saveWeeklySchedule()" class="btn btn-success" style="width: 100%; margin-top: 15px;">💾 حفظ جدول هذا اليوم</button>
                     </div>
+                    <button onclick="checkAndApplyTodaySchedule()" class="btn btn-vip" style="width: 100%; margin-top: 10px; background: linear-gradient(45deg, #fbbf24, #d97706); color: #000;">
+    🔄 تطبيق جدول اليوم على الطابور الآن
+</button>
                 </div>
                                                     <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 25px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; align-items: center;">
                                                         <div>🍔 حد البريك: <input type="number" id="maxBreaksInput" style="width:50px; margin:0;" value="3"></div>
@@ -5025,6 +5028,8 @@
     }
 
                                             function showAdmin() {
+                                                    checkAndApplyTodaySchedule(); 
+
                                                 listenForGameStart();
                                                 document.getElementById('loginSection').classList.add('hidden');
                                                 document.getElementById('adminSection').classList.remove('hidden');
@@ -7911,6 +7916,8 @@ function updateEmStatus() {
                 // تعديل دالة showAdmin عشان تظهر الزرار لمحمود بس
                 // (مهم: ابحث عن دالة showAdmin الموجودة عندك وضف السطر ده جواها)
                                             function showAdmin() {
+                                                    checkAndApplyTodaySchedule(); 
+
                                                 listenForGameStart();
                                                 initChatNotifications();
                                                 // إظهار وإخفاء الأقسام الرئيسية
@@ -8136,14 +8143,18 @@ function updateEmStatus() {
                     renderWeeklyConfigOrder();
                 }
 
-                function saveWeeklySchedule() {
-                    if(currentSelectedDay === null) return;
-                    db.ref('settings/weeklySchedule/' + currentSelectedDay).set(tempWeeklyOrder).then(() => {
-                        alert("تم حفظ جدول يوم " + daysAr[currentSelectedDay] + " بنجاح ✅");
-                        // إذا كان اليوم المحفوظ هو "اليوم الحالي"، قم بتحديث طابور الصلاة فوراً
-                        checkAndApplyTodaySchedule();
-                    });
-                }
+               function saveWeeklySchedule() {
+    if(currentSelectedDay === null) {
+        alert("اختار اليوم اللي عاوز تحفظه الأول!");
+        return;
+    }
+    
+    db.ref('settings/weeklySchedule/' + currentSelectedDay).set(tempWeeklyOrder).then(() => {
+        alert("تم حفظ جدول يوم " + daysAr[currentSelectedDay] + " في السيرفر ✅");
+        // بعد الحفظ، نسحب الأسماء للطابور فوراً
+        checkAndApplyTodaySchedule();
+    });
+}
 
                 // 2. دالة عرض الجدول للموظف
                 function renderEmployeeWeeklyView() {
@@ -8184,19 +8195,39 @@ function updateEmStatus() {
                 }
 
                 // 3. دالة تطبيق جدول اليوم تلقائياً على "طابور الصلاة"
-                function checkAndApplyTodaySchedule() {
-                    const todayIndex = getCustomDayIndex();
-                    if(todayIndex === -1) return; // يوم جمعة مثلاً
+        function checkAndApplyTodaySchedule(isManual = false) {
+    // تحديد اليوم: إما المختار حالياً أو يوم اليوم الفعلي
+    let dayToApply = (currentSelectedDay !== null) ? currentSelectedDay : getCustomDayIndex();
 
-                    db.ref('settings/weeklySchedule/' + todayIndex).once('value', (snap) => {
-                        const todayOrder = snap.val();
-                        if(todayOrder && todayOrder.length > 0) {
-                            // تحديث طابور الصلاة الحالي (settings/prayerQueue) بجدول اليوم
-                            db.ref('settings/prayerQueue').set(todayOrder);
-                        }
-                    });
-                }
+    // إذا لم يتم العثور على يوم (مثلاً يوم جمعة أو لم يتم الاختيار)
+    if (dayToApply === -1) {
+        // نُظهر التنبيه فقط إذا كان المستخدم هو من ضغط على الزر (Manual)
+        if (isManual) {
+            alert("يرجى اختيار يوم أولاً (السبت، الأحد...)");
+        }
+        return;
+    }
 
+    db.ref('settings/weeklySchedule/' + dayToApply).once('value', (snap) => {
+        const todayOrder = snap.val();
+        
+        if (!todayOrder || todayOrder.length === 0) {
+            if (isManual) alert("هذا اليوم لا يحتوي على أسماء مسجلة!");
+            return;
+        }
+
+        const updates = {};
+        updates['settings/prayerQueue'] = todayOrder;
+        updates['settings/turnTimer/startTime'] = getServerTime();
+        updates['settings/turnTimer/activeUser'] = todayOrder[0];
+        updates['settings/turnTimer/pausedElapsed'] = 0;
+
+        db.ref().update(updates).then(() => {
+            if (isManual) alert("✅ تم إنزال جدول " + daysAr[dayToApply] + " بنجاح.");
+            if (typeof renderPrayerQueue === "function") renderPrayerQueue();
+        });
+    });
+}
                 // استدعاء الدوال عند تحميل الصفحة
                 if(currentUser) {
                     if(currentUser.role === 'admin') {
