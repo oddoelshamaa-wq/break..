@@ -12498,28 +12498,40 @@ function updateGlobalBadge(count) {
 function renderContacts() {
     const container = document.getElementById('contactsContainer');
     if (!container) return;
-    container.innerHTML = '';
+    
+    // الجزء الجديد: زر خاص للمساعدة bo لتغيير اسمها
+    let helperSection = "";
+    if (currentUser.username === 'bo') {
+        helperSection = `
+            <div style="padding: 10px; margin-bottom: 15px; background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(233, 7, 130, 0.1)); border: 1px solid #e90782; border-radius: 15px; text-align: center;">
+                <button onclick="changeMyAssistantNickname()" style="background: #e90782; color: white; border: none; padding: 8px 15px; border-radius: 10px; cursor: pointer; font-family: 'Cairo'; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;">
+                    تغيير اسمي في الشات <i class="fa-solid fa-pencil"></i>
+                </button>
+            </div>
+        `;
+    }
+
+    container.innerHTML = helperSection; // نضع زر المساعدة في البداية
 
     Object.values(allUsersData).forEach(u => {
         if(!u.username || u.username === currentUser.username) return;
-
-        const roomId = [currentUser.username, u.username].sort().join('_');
-        const unreadCount = unreadMessagesData[roomId] || 0;
+        // باقي كود رسم الموظفين كما هو...
         const isManager = MANAGERS.includes(u.username);
         const statusColor = u.state === 'online' ? '#10b981' : '#64748b';
+        const pPic = u.profilePic || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
+        
+        // هنا نجعل الشات يعرض اللقب (funTitle) إذا كان موجوداً
+        const nameToShow = u.funTitle ? u.funTitle : (u.realName || u.username);
 
         container.innerHTML += `
-            <div class="chat-contact-item ${unreadCount > 0 ? 'has-unread' : ''}" onclick="openPrivateChat('${u.username}', '${u.realName || u.username}')">
+            <div class="chat-contact-item" onclick="openPrivateChat('${u.username}', '${nameToShow}')">
                 <div style="position:relative;">
-                    <img src="${u.profilePic || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'}" style="width:45px; height:45px; border-radius:50%; object-fit:cover; border:2px solid ${isManager ? '#fbbf24' : '#6366f1'};">
+                    <img src="${pPic}" style="width:45px; height:45px; border-radius:50%; object-fit:cover; border:2px solid ${isManager ? '#fbbf24' : '#6366f1'};">
                     <div style="position:absolute; bottom:2px; right:2px; width:12px; height:12px; background:${statusColor}; border-radius:50%; border:2px solid #0f172a;"></div>
                 </div>
                 <div style="flex:1; margin-right:10px;">
-                    <div style="font-weight:900; font-size:0.95rem; color:${isManager ? '#fbbf24' : 'white'}">${u.realName || u.username}</div>
-                    <!-- تم إفراغ النص هنا تماماً كما طلبت -->
-                    <div style="font-size:0.7rem; color:#64748b;"></div>
+                    <div style="font-weight:900; font-size:0.95rem; color:${u.username === 'bo' ? '#e90782' : (isManager ? '#fbbf24' : 'white')}">${nameToShow}</div>
                 </div>
-                ${unreadCount > 0 ? `<div class="unread-dot"></div>` : ''}
             </div>
         `;
     });
@@ -13718,6 +13730,20 @@ function toggleGameInputs() {
     } else {
         ansWrap.style.display = 'block';
         roastWrap.style.display = 'block';
+    }
+}
+function changeMyAssistantNickname() {
+    // نأخذ اللقب الحالي من بياناتها
+    const currentTitle = currentUser.funTitle || currentUser.realName;
+    const newName = prompt("اكتبي اسمك أو لقبك الجديد الذي سيظهر للجميع في الشات:", currentTitle);
+    
+    if (newName !== null && newName.trim() !== "") {
+        // تحديث اللقب في قاعدة البيانات تحت حساب bo
+        db.ref('users/bo').update({
+            funTitle: newName.trim()
+        }).then(() => {
+            alert("تم تغيير اسمك بنجاح! سيظهر الآن للجميع ✅");
+        }).catch(err => alert("خطأ: " + err.message));
     }
 }
                 </script>
