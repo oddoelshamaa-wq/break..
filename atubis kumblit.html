@@ -42,8 +42,18 @@
         .divider { margin: 20px 0; border-top: 1px solid #323a54; position: relative; }
         .divider span { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--card); padding: 0 10px; color: #8892b0; font-size: 14px; }
         /* هذا السطر سيجعل الصفحة مخفية تماماً حتى يتم التأكد من البريك */
-body { display: none; background: #0f1221; }
-/* شاشة المنع - تظهر فقط للكمبيوتر */
+/* بدل display: none خليها كده عشان الصفحة متظهرش بيضا */
+body { 
+    background: #0f1221; 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: center; 
+    align-items: center; 
+    min-height: 100vh;
+    margin: 0;
+}
+/* أخفي الحاوية الرئيسية بس */
+.container { display: none; }/* شاشة المنع - تظهر فقط للكمبيوتر */
 #mobileOnlyScreen {
     position: fixed;
     top: 0; left: 0;
@@ -150,26 +160,22 @@ if (!firebase.apps.length) {
 const db = firebase.database();
 
 // 2. فحص الهوية والحالة فوراً
-// 2. فحص الهوية والحالة فوراً وبشكل مستمر
 function checkAccess() {
-    // --- الجزء الجديد الخاص بفحص الموبايل ---
-    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
-    const isSmallScreen = window.innerWidth <= 800; // فحص حجم الشاشة
-
-    if (!isMobile && !isSmallScreen) {
-        // إذا لم يكن موبايل، أظهر شاشة المنع وأوقف باقي السكريبت
-        document.getElementById('mobileOnlyScreen').style.display = 'flex';
-        return; 
-    }
-    // ---------------------------------------
-
+    // جلب اسم المستخدم
     const username = localStorage.getItem('break_sys_user');
+
+    // 1. لو مفيش مستخدم (يعني البرنامج مش قاري بيانات المتصفح)
     if (!username) {
-        window.location.replace('index.html');
+        document.body.innerHTML = `
+            <div style="text-align:center; color:white; padding:20px; font-family:Cairo;">
+                <h2 style="color:#ffeb3b;">عذراً.. أنت غير مسجل دخول</h2>
+                <p>يجب تسجيل الدخول من التطبيق الرئيسي أولاً</p>
+                <button onclick="window.location.href='index.html'" style="padding:15px; background:#5851db; color:white; border:none; border-radius:10px; cursor:pointer;">الذهاب لتسجيل الدخول</button>
+            </div>`;
         return;
     }
 
+    // 2. التحقق من قاعدة البيانات
     db.ref('users/' + username).on('value', (snap) => {
         const user = snap.val();
         const managers = ['mahmoud', 'abutamim', 'ahmed'];
@@ -177,10 +183,19 @@ function checkAccess() {
         const isOnBreak = user && user.isOnBreak === true;
 
         if (isManager || isOnBreak) {
-            document.body.style.display = "flex"; 
+            // إظهار اللعبة وإخفاء أي رسائل تانية
+            document.body.style.display = "flex";
+            document.querySelector('.container').style.display = "block";
+            // لو فيه شاشة منع الموبايل موجودة نخفيها
+            const mobileScreen = document.getElementById('mobileOnlyScreen');
+            if(mobileScreen) mobileScreen.style.display = 'none';
         } else {
-            alert("🛑 ممنوع اللعب أثناء العمل! اذهب وافتح بريك أولاً.");
-            window.location.replace('index.html');
+            document.body.innerHTML = `
+                <div style="text-align:center; color:white; padding:20px; font-family:Cairo;">
+                    <h2 style="color:#f44336;">🛑 ممنوع اللعب الآن!</h2>
+                    <p>أنت لست في وضع "البريك". ارجع للسيستم وافتح بريك الأول.</p>
+                    <button onclick="window.location.href='index.html'" style="padding:10px; background:#333; color:white; border:none; border-radius:10px;">العودة للرئيسية</button>
+                </div>`;
         }
     });
 }
