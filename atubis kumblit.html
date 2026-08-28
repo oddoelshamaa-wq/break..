@@ -43,6 +43,21 @@
         .divider span { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--card); padding: 0 10px; color: #8892b0; font-size: 14px; }
         /* هذا السطر سيجعل الصفحة مخفية تماماً حتى يتم التأكد من البريك */
 body { display: none; background: #0f1221; }
+/* شاشة المنع - تظهر فقط للكمبيوتر */
+#mobileOnlyScreen {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: #0f1221; /* نفس لون خلفية اللعبة */
+    z-index: 99999;
+    display: none; /* مخفية افتراضياً */
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: white;
+    padding: 20px;
+}
     </style>
 </head>
 <body>
@@ -111,7 +126,12 @@ body { display: none; background: #0f1221; }
         <button class="btn btn-admin" onclick="backToGame()">إنهاء التصحيح وبدء دور جديد</button>
     </div>
 </div>
-
+<div id="mobileOnlyScreen">
+    <div style="font-size: 70px;">⚠️</div>
+    <h2 style="color: #ffeb3b;">عذراً.. اللعبة للموبايل فقط!</h2>
+    <p>لقد اكتشفنا أنك تستخدم جهاز كمبيوتر.</p>
+    <p>من فضلك افتح الرابط من "الموبايل" لتتمكن من اللعب مع زملائك.</p>
+</div>
 <script>
     // 1. كود الاتصال بـ Firebase (يجب أن يكون نفس الإعدادات الموجودة في index.html)
 const firebaseConfig = {
@@ -132,35 +152,36 @@ const db = firebase.database();
 // 2. فحص الهوية والحالة فوراً
 // 2. فحص الهوية والحالة فوراً وبشكل مستمر
 function checkAccess() {
-    const username = localStorage.getItem('break_sys_user');
+    // --- الجزء الجديد الخاص بفحص الموبايل ---
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+    const isSmallScreen = window.innerWidth <= 800; // فحص حجم الشاشة
 
-    // أ- إذا لم يسجل دخول أصلاً، اطرده لصفحة الدخول
+    if (!isMobile && !isSmallScreen) {
+        // إذا لم يكن موبايل، أظهر شاشة المنع وأوقف باقي السكريبت
+        document.getElementById('mobileOnlyScreen').style.display = 'flex';
+        return; 
+    }
+    // ---------------------------------------
+
+    const username = localStorage.getItem('break_sys_user');
     if (!username) {
-        alert("🚨 يجب تسجيل الدخول أولاً!");
         window.location.replace('index.html');
         return;
     }
 
-    // ب- مراقبة حالة الموظف في الوقت الفعلي من قاعدة البيانات
     db.ref('users/' + username).on('value', (snap) => {
         const user = snap.val();
-        const managers = ['mahmoud', 'abutamim', 'ahmed']; // قائمة المديرين
-        
-        // جـ- التحقق: هل هو مدير؟ أو هل هو في بريك؟
+        const managers = ['mahmoud', 'abutamim', 'ahmed'];
         const isManager = managers.includes(username);
         const isOnBreak = user && user.isOnBreak === true;
 
         if (isManager || isOnBreak) {
-            // ✅ مسموح له بالدخول: أظهر محتوى الصفحة
             document.body.style.display = "flex"; 
         } else {
-            // ❌ غير مسموح له: اطرده فوراً
             alert("🛑 ممنوع اللعب أثناء العمل! اذهب وافتح بريك أولاً.");
             window.location.replace('index.html');
         }
-    }, (error) => {
-        // في حالة وجود خطأ في الاتصال
-        window.location.replace('index.html');
     });
 }
 
