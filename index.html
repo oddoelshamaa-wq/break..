@@ -2651,7 +2651,7 @@
                         </div>
                         <button onclick="saveWeeklySchedule()" class="btn btn-success" style="width: 100%; margin-top: 15px;">💾 حفظ جدول هذا اليوم</button>
                     </div>
-                    <button onclick="checkAndApplyTodaySchedule()" class="btn btn-vip" style="width: 100%; margin-top: 10px; background: linear-gradient(45deg, #fbbf24, #d97706); color: #000;">
+                    <button onclick="checkAndApplyTodaySchedule(true)" class="btn btn-vip"style="width: 100%; margin-top: 10px; background: linear-gradient(45deg, #fbbf24, #d97706); color: #000;">
     🔄 تطبيق جدول اليوم على الطابور الآن
 </button>
                 </div>
@@ -5028,7 +5028,7 @@ db.ref('broadcasts').limitToLast(50).on('value', (snap) => {
     }
 
                                             function showAdmin() {
-                                                    checkAndApplyTodaySchedule(); 
+    listenForGameStart();
 
                                                 listenForGameStart();
                                                 document.getElementById('loginSection').classList.add('hidden');
@@ -7916,7 +7916,7 @@ function updateEmStatus() {
                 // تعديل دالة showAdmin عشان تظهر الزرار لمحمود بس
                 // (مهم: ابحث عن دالة showAdmin الموجودة عندك وضف السطر ده جواها)
                                             function showAdmin() {
-                                                    checkAndApplyTodaySchedule(); 
+    listenForGameStart();
 
                                                 listenForGameStart();
                                                 initChatNotifications();
@@ -8165,7 +8165,6 @@ function updateEmStatus() {
     db.ref('settings/weeklySchedule/' + currentSelectedDay).set(tempWeeklyOrder).then(() => {
         alert("تم حفظ جدول يوم " + daysAr[currentSelectedDay] + " في السيرفر ✅");
         // بعد الحفظ، نسحب الأسماء للطابور فوراً
-        checkAndApplyTodaySchedule();
     });
 }
 
