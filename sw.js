@@ -1,112 +1,58 @@
-const CACHE_NAME = 'elshamaa-v2.1.0'; // كل ما تعمل تحديث كبير غير الرقم ده (مثلا خليه v2.1.1)
-
-// الملفات الأساسية اللي لازم تتخزن أول مرة
-const CRITICAL_FILES = [
+const CACHE_NAME = 'elshamaa-v' + Date.now(); // استخدام التوقيت كإصدار لضمان التغيير
+const ASSETS_TO_CACHE = [
   './',
-  './index.html'
+  './index.html',
+  // أضف أي ملفات CSS أو صور أساسية هنا
 ];
 
-// تثبيت Service Worker مع كاش للملفات الأساسية
+// تثبيت الـ Service Worker ومسح الكاش القديم فوراً
 self.addEventListener('install', event => {
+  self.skipWaiting(); // إجبار النسخة الجديدة على التنشيط فوراً
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      // نخزن الصفحة نفسها عشان تعمل Offline
-      return cache.addAll(CRITICAL_FILES).catch(() => {
-        // لو ملف معين فشل، نكمل بدون مشكلة
-        console.log('بعض الملفات ما اتحملتش، ده طبيعي');
-      });
+      return cache.addAll(ASSETS_TO_CACHE);
     })
   );
-  self.skipWaiting();
 });
 
-// تفعيل Service Worker وتنظيف الكاش القديم
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => {
       return Promise.all(
-        keys
-          .filter(key => key !== CACHE_NAME)
-          .map(key => caches.delete(key))
+        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
       );
     })
   );
-  // سيطرة على كل التبويبات المفتوحة فوراً
-  self.clients.claim();
-  
-  // بلّغ كل الصفحات إن في تحديث
-  self.clients.matchAll().then(clients => {
-    clients.forEach(client => {
-      client.postMessage({ type: 'NEW_VERSION_AVAILABLE' });
-    });
-  });
+  self.clients.claim(); // السيطرة على الصفحة فوراً
 });
 
-// استراتيجية: Stale While Revalidate
-// أسرع استجابة + تحديث في الخلفية
+// الاستراتيجية المعدلة: Network First لملف الـ HTML
 self.addEventListener('fetch', event => {
-  // نتجاهل طلبات Firebase وطلبات POST
-  if (
-    event.request.url.includes('firebaseio.com') ||
-    event.request.url.includes('googleapis.com') ||
-    event.request.method !== 'GET'
-  ) {
-    event.respondWith(fetch(event.request));
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          // لو النت تمام، خزن النسخة الجديدة في الكاش ورجعها
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+          return response;
+        })
+        .catch(() => caches.match(event.request)) // لو مفيش نت، هات من الكاش
+    );
     return;
   }
 
+  // باقي الملفات (صور، أيقونات) نستخدم الاستراتيجية العادية
   event.respondWith(
-    caches.match(event.request).then(cachedResponse => {
-      const fetchPromise = fetch(event.request)
-        .then(networkResponse => {
-          // لو الرد نجح، خزّنه في الكاش
-          if (networkResponse && networkResponse.status === 200) {
-            const responseClone = networkResponse.clone();
-            caches.open(CACHE_NAME).then(cache => {
-              cache.put(event.request, responseClone);
-            });
-          }
-          return networkResponse;
-        })
-        .catch(() => {
-          // لو النت فصل، رجّع الكاش لو موجود
-          return cachedResponse;
-        });
-
-      // ارجع الكاش فوراً لو موجود، ولو لا انتظر النت
-      return cachedResponse || fetchPromise;
+    caches.match(event.request).then(response => {
+      return response || fetch(event.request);
     })
   );
 });
 
-// استقبال رسائل من الصفحة
+// استقبال رسالة التحديث الإجباري
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.action === 'skipWaiting') {
-    self.skipWaiting();
-  }
-});
-
-// إبقاء Service Worker شغال حتى لو التطبيق مغلق
-// ده اللي بيخلي التطبيق يظهر في شاشة القفل
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-  event.waitUntil(
-    self.clients.matchAll({ type: 'window' }).then(clients => {
-      if (clients.length > 0) {
-        clients[0].focus();
-      } else {
-        self.clients.openWindow('./');
-      }
-    })
-  );
-});
-// معالجة إشعارات شاشة القفل
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
-    const { title, body, ...options } = event.data.payload;
-    self.registration.showNotification(title, { body, ...options });
-  }
-  if (event.data && event.data.action === 'skipWaiting') {
+  if (event.data.action === 'skipWaiting') {
     self.skipWaiting();
   }
 });
