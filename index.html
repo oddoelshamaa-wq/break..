@@ -11026,65 +11026,50 @@ function updateLiveNotification(seconds, type) {
     });
 }
     // كود استقبال التحديث الإجباري من الأدمن (يوضع قبل إغلاق وسم <script>)
-    db.ref('system_update').on('value', (snap) => {
-        const data = snap.val();
-        if (!data) return;
+db.ref('system_update').on('value', (snap) => {
+    const data = snap.val();
+    if (!data) return;
 
-        const lastUpdate = localStorage.getItem('last_processed_update') || 0;
+    const lastUpdate = localStorage.getItem('last_processed_update') || 0;
 
-        // إذا كان التاريخ المرسل أحدث من التاريخ المخزن في جهاز الموظف
-        if (data.timestamp > lastUpdate) {
-            console.log("🚀 جاري تثبيت تحديث جديد من الإدارة...");
-            
-            // 1. تخزين التاريخ الجديد لمنع التكرار
-            localStorage.setItem('last_processed_update', data.timestamp);
+    if (data.timestamp > lastUpdate) {
+        console.log("🚀 جاري تثبيت تحديث جديد وتنظيف الكاش...");
+        localStorage.setItem('last_processed_update', data.timestamp);
 
-            // 2. إظهار شاشة تحميل للموظف عشان يعرف إن فيه تحديث
-            const loadingOverlay = document.getElementById('loading');
-            if(loadingOverlay) {
-                loadingOverlay.style.display = 'flex';
-                loadingOverlay.innerHTML = `
-                    <div style="text-align:center;">
-                        <div style="border:5px solid #6366f1; border-top:5px solid transparent; border-radius:50%; width:50px; height:50px; animation:spin 1s linear infinite; margin:0 auto 20px;"></div>
-                        <h2 style="color:white; font-family:Cairo;">جاري تثبيت تحديث إداري...</h2>
-                        <p style="color:#aaa;">سيتم إعادة تشغيل النظام خلال لحظات</p>
-                    </div>`;
-            }
-
-            // 3. تحديث الـ Service Worker
-           if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        // إضافة updateViaCache: 'none' بتجبر المتصفح يروح للسيرفر يتأكد من ملف sw.js
-        navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
-        .then(reg => {
-            console.log('Service Worker Registered');
-            
-            // فحص دوري للتحديثات كل ما المستخدم يفتح التطبيق
-            reg.update();
-
-            reg.onupdatefound = () => {
-                const installingWorker = reg.installing;
-                installingWorker.onstatechange = () => {
-                    if (installingWorker.state === 'installed') {
-                        if (navigator.serviceWorker.controller) {
-                            // لو في نسخة جديدة اتحملت، اظهر رسالة التحديث
-                            showUpdateBanner();
-                        }
-                    }
-                };
-            };
-        });
-    });
-}
-
-            // 4. إعادة تحميل الصفحة مع كسر الكاش تماماً بعد ثانية واحدة
-            setTimeout(() => {
-                // إضافة رقم عشوائي للرابط لضمان عدم فتح النسخة القديمة من المتصفح
-                window.location.href = window.location.pathname + "?update=" + data.timestamp;
-            }, 2000);
+        // 1. مسح الكاش البرمجي (Cache Storage)
+        if ('caches' in window) {
+            caches.keys().then(names => {
+                for (let name of names) caches.delete(name);
+            });
         }
-    });
-        // تنفيذ التبديل الفعلي في الطابور
+
+        // 2. تحديث الـ Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                for (let registration of registrations) {
+                    registration.unregister(); // حذف التسجيل القديم تماماً
+                }
+            });
+        }
+
+        // 3. إظهار رسالة للمستخدم
+        const loadingOverlay = document.getElementById('loading');
+        if(loadingOverlay) {
+            loadingOverlay.style.display = 'flex';
+            loadingOverlay.innerHTML = `
+                <div style="text-align:center; color:white;">
+                    <h2 style="font-family:Cairo;">جاري تثبيت تحديث إداري نهائي...</h2>
+                    <p>يتم الآن تنظيف ملفات النظام القديمة</p>
+                </div>`;
+        }
+
+        // 4. إعادة تحميل الصفحة "إجبارياً" بكسر الكاش
+        setTimeout(() => {
+            // إضافة Query String عشوائي بيجبر المتصفح يجيب الصفحة من السيرفر مش الموبايل
+            window.location.href = window.location.origin + window.location.pathname + "?v=" + data.timestamp;
+        }, 2000);
+    }
+});
 // دالة لتنفيذ بدء البريك بناءً على الاختيار التفصيلي
 function confirmDetailedBreak(detailedReason) {
     // 1. إخفاء النافذة
