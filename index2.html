@@ -5958,30 +5958,99 @@
     }
 
                     // دالة مساعدة لتنفيذ بدء البريك
-                   function stopMyBreak() {
+          function stopMyBreak() {
     const device = getDeviceType();
     const u = currentUser;
 
-    // --- منطقة التحكم في الموبايل ---
-    // السماح بإنهاء "بريك سهر" فقط من الموبايل، ومنع أي نشاط آخر
+    // التأكد أن المستخدم مسجل دخول وله توقيت بداية
+    if (!u || !u.lastStartTime) return;
+
+    // --- 1. منطقة التحكم في الموبايل ---
     if (device === "mobile" && u.role !== 'admin') {
-        if (u.breakType !== 'بريك سهر') {
+        // السماح فقط بإغلاق "VIP سهرة" من الموبايل
+        if (u.breakType !== 'VIP سهرة') {
             alert("🛑 عذراً يا بطل.. لا يمكنك إنهاء النشاط من الهاتف إلا في (بريك السهر). يرجى تسجيل العودة من جهاز الكمبيوتر المكتبي.");
             return; 
         }
-        // لو النشاط هو "بريك سهر"، الكود هيكمل عادي وينفذ الإيقاف من الموبايل
     }
 
-    // --- منطق الصلاة ---
+    // --- 2. منطق الصلاة ---
     if (u.breakType === 'صلاة') {
         const nextPrayerName = document.getElementById('nextPrayerName').innerText.replace("المتبقي على ", "") || "الصلاة";
-        document.getElementById('prayerCheckTitle').innerText = `هل أتممت ${nextPrayerName}؟`;
-        document.getElementById('prayerCheckModal').classList.remove('hidden');
-        return; 
+        const checkTitle = document.getElementById('prayerCheckTitle');
+        if (checkTitle) checkTitle.innerText = `هل أتممت ${nextPrayerName}؟`;
+        
+        const modal = document.getElementById('prayerCheckModal');
+        if (modal) modal.classList.remove('hidden');
+        return; // نتوقف هنا لأن التكمله ستكون عند ضغط "نعم" أو "لا" في المودال
     }
 
-    // الإنهاء الطبيعي لباقي الأنواع
+    // --- 3. الإنهاء التلقائي لبقية الأنشطة (بريك، ميتنج، سهرة، الخ) ---
     finalizeStopBreak(false); 
+}
+
+// الدالة المسؤولة عن تحديث قاعدة البيانات (يجب أن تكون موجودة بجانبها)
+function finalizeStopBreak(didFinishPrayer) {
+    const u = currentUser;
+    if (!u || !u.lastStartTime) return;
+
+    const now = getServerTime();
+    const duration = Math.floor((now - u.lastStartTime) / 1000);
+    const startTimeStr = new Date(u.lastStartTime).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
+    const endTimeStr = getServerTimeString();
+
+    // 1. تسجيل الجلسة في الأرشيف
+    db.ref('users/' + u.username + '/sessions').push({
+        date: getServerDateString(),
+        type: u.breakType,
+        reason: u.lastReason || 'نشاط عادي',
+        duration: duration,
+        startTime: startTimeStr,
+        endTime: endTimeStr
+    });
+
+    // 2. تحضير التحديثات لعدادات الموظف
+    const updates = {
+        isOnBreak: false,
+        lastStartTime: null,
+        lastEndedTime: now,
+        lastEndedType: u.breakType,
+        emRequest: null,      // مسح طلبات الطوارئ
+        meetingRequest: null  // مسح طلبات الاجتماع
+    };
+
+    // 3. تحديث العدادات بناءً على نوع النشاط
+    if (u.breakType === 'صلاة') {
+        updates.prayerSeconds = (u.prayerSeconds || 0) + duration;
+        updates.prayerCountToday = (u.prayerCountToday || 0) + 1;
+        removeFromQueueByUsername(u.username); // حذفه من طابور الصلاة
+    } 
+    else if (u.breakType === 'بريك عام' || u.breakType === 'طوارئ') {
+        updates.usedSeconds = (u.usedSeconds || 0) + duration;
+    }
+    else if (u.breakType === 'ميتنج') {
+        updates.meetingSeconds = (u.meetingSeconds || 0) + duration;
+    }
+    else if (u.breakType === 'متابع عميل') {
+        updates.followUpSeconds = (u.followUpSeconds || 0) + duration;
+    }
+    else if (u.breakType === 'استراحة VIP' || u.breakType === 'VIP سهرة') {
+        updates.vipSeconds = (u.vipSeconds || 0) + duration;
+    }
+
+    // 4. تنفيذ التحديث في Firebase
+    db.ref('users/' + u.username).update(updates).then(() => {
+        // تصفير خانة السبب وإخفاء النوافذ
+        const reasonInput = document.getElementById('breakReason');
+        if(reasonInput) reasonInput.value = ""; 
+        
+        const prayerModal = document.getElementById('prayerCheckModal');
+        if(prayerModal) prayerModal.classList.add('hidden');
+        
+        if (typeof triggerGlobalRefresh === "function") triggerGlobalRefresh();
+        
+        console.log("تم إنهاء النشاط بنجاح ✅");
+    });
 }
             function finalizeStopBreak(didFinishPrayer) {
                 const u = currentUser;
