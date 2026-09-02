@@ -144,7 +144,8 @@ body {
 </div>
 <script>
     // 1. كود الاتصال بـ Firebase (يجب أن يكون نفس الإعدادات الموجودة في index.html)
-                                                                                  const firebaseConfig = {
+   // 1. كود الاتصال بـ Firebase
+const firebaseConfig = {
     apiKey: "AIzaSyAD0YJCv4EW8iaceUgnZkbXyI1MSNhQ3fc",
     authDomain: "brak-nagaf-v2.firebaseapp.com",
     databaseURL: "https://brak-nagaf-v2-default-rtdb.firebaseio.com",
@@ -153,64 +154,67 @@ body {
     messagingSenderId: "637473406996",
     appId: "1:637473406996:web:4c6538e86dee9cb4c72701",
     measurementId: "G-82VDNF5M0L"
-    };
+};
 
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
 const db = firebase.database();
 
-// 2. فحص الهوية والحالة فوراً
-// دالة فحص الهوية والحالة المحدثة لتشمل بريك VIP
-function checkAccess() {
-    // جلب اسم المستخدم من التخزين المحلي
-    const username = localStorage.getItem('break_sys_user');
+// 2. دالة فحص الجهاز (هل هو موبايل؟)
+function isMobileDevice() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
 
-    // 1. لو مفيش مستخدم مسجل
+// 3. دالة فحص الهوية والحالة (البريك والموبايل)
+function checkAccess() {
+    const username = localStorage.getItem('break_sys_user');
+    const container = document.querySelector('.container');
+    const mobileOnlyScreen = document.getElementById('mobileOnlyScreen');
+
+    // أولاً: فحص هل الجهاز كمبيوتر؟
+    if (!isMobileDevice()) {
+        mobileOnlyScreen.style.display = 'flex'; // إظهار شاشة المنع
+        container.style.display = 'none'; // إخفاء اللعبة نهائياً
+        return; // توقف عن تكملة الكود
+    }
+
+    // ثانياً: فحص تسجيل الدخول
     if (!username) {
         document.body.innerHTML = `
-            <div style="text-align:center; color:white; padding:20px; font-family:Cairo;">
-                <h2 style="color:#ffeb3b;">عذراً.. أنت غير مسجل دخول</h2>
-                <p>يجب تسجيل الدخول من التطبيق الرئيسي أولاً</p>
-                <button onclick="window.location.href='index.html'" style="padding:15px; background:#5851db; color:white; border:none; border-radius:10px; cursor:pointer;">الذهاب لتسجيل الدخول</button>
+            <div style="text-align:center; color:white; padding:20px; font-family:Segoe UI; background:#0f1221; min-height:100vh; display:flex; flex-direction:column; justify-content:center;">
+                <h2 style="color:#ffeb3b;">عذراً.. سجل دخول الأول</h2>
+                <button onclick="window.location.href='index.html'" style="padding:15px; background:#5851db; color:white; border:none; border-radius:10px;">الذهاب لتسجيل الدخول</button>
             </div>`;
         return;
     }
 
-    // 2. التحقق من قاعدة البيانات (Firebase)
+    // ثالثاً: فحص البريك من قاعدة البيانات
     db.ref('users/' + username).on('value', (snap) => {
         const user = snap.val();
-        
-        // قائمة المديرين الذين لهم حق الدخول دائماً
-        const managers = ['mahmoud', 'abutamim', 'ahmed'];
-        
+        const managers = ['mahmoud', 'bo', 'ahmed'];
         const isManager = managers.includes(username);
-        const isOnNormalBreak = user && user.isOnBreak === true; // بريك عادي
-        const isOnVIPBreak = user && user.isOnBreakVIP === true; // بريك VIP (الإضافة الجديدة)
+        const isOnBreak = user && user.isOnBreak === true;
 
-        // التحقق: إذا كان مديراً أو في بريك عادي أو في بريك VIP
-        if (isManager || isOnNormalBreak || isOnVIPBreak) {
-            // إظهار اللعبة
-            document.body.style.display = "flex";
-            const container = document.querySelector('.container');
-            if(container) container.style.display = "block";
-            
-            // إخفاء شاشة منع الكمبيوتر إذا كانت موجودة
-            const mobileScreen = document.getElementById('mobileOnlyScreen');
-            if(mobileScreen) mobileScreen.style.display = 'none';
+        if (isManager || isOnBreak) {
+            // مسموح له يدخل
+            container.style.display = 'block';
+            mobileOnlyScreen.style.display = 'none';
         } else {
-            // رسالة المنع إذا لم يتحقق أي شرط
+            // ممنوع يدخل (مش في بريك)
+            container.style.display = 'none';
             document.body.innerHTML = `
-                <div style="text-align:center; color:white; padding:20px; font-family:Cairo;">
-                    <h2 style="color:#f44336;">🛑 ممنوع اللعب الآن!</h2>
-                    <p>أنت لست في وضع "البريك" أو "بريك VIP".</p>
-                    <p>ارجع للسيستم وافتح بريك الأول لتتمكن من الدخول.</p>
-                    <button onclick="window.location.href='index.html'" style="padding:10px; background:#333; color:white; border:none; border-radius:10px; cursor:pointer;">العودة للرئيسية</button>
+                <div style="text-align:center; color:white; padding:40px; font-family:Segoe UI; background:#0f1221; min-height:100vh; display:flex; flex-direction:column; justify-content:center;">
+                    <div style="font-size:70px;">🛑</div>
+                    <h2 style="color:#f44336;">ممنوع اللعب أثناء العمل!</h2>
+                    <p>عثمان الرخم بيقولك افتح بريك الأول من السيستم عشان اللعبة تفتح معاك.</p>
+                    <button onclick="window.location.href='index.html'" style="padding:15px; background:#333; color:white; border:none; border-radius:10px;">العودة للسيستم</button>
                 </div>`;
         }
     });
 }
-// تشغيل الفحص فور تحميل السكريبت
+
+// تشغيل الفحص فوراً
 checkAccess();
 
 // تشغيل الفحص عند تحميل الصفحة
