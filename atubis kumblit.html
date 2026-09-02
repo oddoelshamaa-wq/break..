@@ -68,23 +68,6 @@ body {
     color: white;
     padding: 20px;
 }
-.btn-exit {
-    background: transparent;
-    color: #8892b0;
-    border: 1px solid #323a54;
-    margin-top: 20px;
-    font-size: 14px;
-    padding: 10px;
-    width: 100%;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: 0.3s;
-}
-.btn-exit:hover {
-    background: rgba(255,255,255,0.05);
-    color: #fff;
-    border-color: #5851db;
-}
     </style>
 </head>
 <body>
@@ -111,7 +94,6 @@ body {
             <input type="text" id="roomCodeInput" class="input-item" placeholder="أدخل كود الغرفة..." style="margin-bottom:10px; text-transform: uppercase;">
             <button class="btn btn-admin" onclick="setupRoom(false)">انضمام للعب</button>
         </div>
-        <button class="btn-exit" onclick="window.location.href='index.html'">🔙 العودة لصفحة البريك الرئيسية</button>
     </div>
 
     <!-- شاشة اللعب -->
@@ -145,7 +127,6 @@ body {
             <h4 style="margin:0 0 10px 0; color:var(--accent)">📊 لوحة النتائج</h4>
             <div id="scoreRows"></div>
         </div>
-        <button class="btn-exit" onclick="if(confirm('هل أنت متأكد من مغادرة اللعبة؟')){window.location.href='index.html'}">🔙 مغادرة اللعبة والعودة للرئيسية</button>  
     </div>
 
     <!-- لوحة تصحيح الأدمن -->
@@ -179,11 +160,12 @@ if (!firebase.apps.length) {
 const db = firebase.database();
 
 // 2. فحص الهوية والحالة فوراً
+// دالة فحص الهوية والحالة المحدثة لتشمل بريك VIP
 function checkAccess() {
-    // جلب اسم المستخدم
+    // جلب اسم المستخدم من التخزين المحلي
     const username = localStorage.getItem('break_sys_user');
 
-    // 1. لو مفيش مستخدم (يعني البرنامج مش قاري بيانات المتصفح)
+    // 1. لو مفيش مستخدم مسجل
     if (!username) {
         document.body.innerHTML = `
             <div style="text-align:center; color:white; padding:20px; font-family:Cairo;">
@@ -194,31 +176,39 @@ function checkAccess() {
         return;
     }
 
-    // 2. التحقق من قاعدة البيانات
+    // 2. التحقق من قاعدة البيانات (Firebase)
     db.ref('users/' + username).on('value', (snap) => {
         const user = snap.val();
+        
+        // قائمة المديرين الذين لهم حق الدخول دائماً
         const managers = ['mahmoud', 'abutamim', 'ahmed'];
+        
         const isManager = managers.includes(username);
-        const isOnBreak = user && user.isOnBreak === true;
+        const isOnNormalBreak = user && user.isOnBreak === true; // بريك عادي
+        const isOnVIPBreak = user && user.isOnBreakVIP === true; // بريك VIP (الإضافة الجديدة)
 
-        if (isManager || isOnBreak) {
-            // إظهار اللعبة وإخفاء أي رسائل تانية
+        // التحقق: إذا كان مديراً أو في بريك عادي أو في بريك VIP
+        if (isManager || isOnNormalBreak || isOnVIPBreak) {
+            // إظهار اللعبة
             document.body.style.display = "flex";
-            document.querySelector('.container').style.display = "block";
-            // لو فيه شاشة منع الموبايل موجودة نخفيها
+            const container = document.querySelector('.container');
+            if(container) container.style.display = "block";
+            
+            // إخفاء شاشة منع الكمبيوتر إذا كانت موجودة
             const mobileScreen = document.getElementById('mobileOnlyScreen');
             if(mobileScreen) mobileScreen.style.display = 'none';
         } else {
+            // رسالة المنع إذا لم يتحقق أي شرط
             document.body.innerHTML = `
                 <div style="text-align:center; color:white; padding:20px; font-family:Cairo;">
                     <h2 style="color:#f44336;">🛑 ممنوع اللعب الآن!</h2>
-                    <p>أنت لست في وضع "البريك". ارجع للسيستم وافتح بريك الأول.</p>
-                    <button onclick="window.location.href='index.html'" style="padding:10px; background:#333; color:white; border:none; border-radius:10px;">العودة للرئيسية</button>
+                    <p>أنت لست في وضع "البريك" أو "بريك VIP".</p>
+                    <p>ارجع للسيستم وافتح بريك الأول لتتمكن من الدخول.</p>
+                    <button onclick="window.location.href='index.html'" style="padding:10px; background:#333; color:white; border:none; border-radius:10px; cursor:pointer;">العودة للرئيسية</button>
                 </div>`;
         }
     });
 }
-
 // تشغيل الفحص فور تحميل السكريبت
 checkAccess();
 
