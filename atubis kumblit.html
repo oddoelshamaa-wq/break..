@@ -3,316 +3,313 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>أتوبيس كومبليت - نظام الأكواد</title>
+    <title>أتوبيس كومبليت - المطور</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
         :root { --bg: #0f1221; --card: #1c2135; --primary: #5851db; --accent: #ffeb3b; --text: #fff; }
-        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; padding: 20px; }
-        .container { width: 100%; max-width: 480px; background: var(--card); border-radius: 30px; padding: 25px; box-shadow: 0 0 30px rgba(0,0,0,0.5); text-align: center; border: 1px solid #3f51b5; position: relative; overflow: hidden; display: none; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; }
+        
+        /* زر العودة للسيستم */
+        .back-nav { position: fixed; top: 10px; right: 10px; z-index: 2000; }
+        .btn-back { background: #333; color: white; padding: 8px 15px; border-radius: 10px; border: 1px solid #555; text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 5px; }
+
+        .container { width: 100%; max-width: 450px; background: var(--card); padding: 20px; display: none; position: relative; margin-top: 50px; border-radius: 20px; }
         .hidden { display: none !important; }
         
-        #waitOverlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 18, 33, 0.95); z-index: 100;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-        }
-
-        .letter-box { border: 2px solid var(--accent); border-radius: 20px; padding: 25px; margin: 15px 0; background: rgba(255,255,255,0.03); }
-        .letter-box span { font-size: 80px; font-weight: bold; color: var(--accent); display: block; }
+        #waitOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 18, 33, 0.98); z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .letter-box { border: 2px solid var(--accent); border-radius: 20px; padding: 20px; margin: 15px 0; background: rgba(255,255,255,0.03); text-align: center; }
+        .letter-box span { font-size: 70px; font-weight: bold; color: var(--accent); }
         
         .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
         .input-item { background: #1e243a; border: 1px solid #323a54; border-radius: 12px; padding: 15px; color: white; text-align: center; font-size: 16px; outline: none; width: 100%; box-sizing: border-box; }
-        .input-item:disabled { background: #0f1221; color: #8892b0; border-color: #222; }
+        .input-item:disabled { opacity: 0.6; background: #0a0c16; }
         
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-bottom: 10px; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; margin-bottom: 10px; transition: 0.3s; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-admin { background: #27ae60; color: white; }
-        .btn:disabled { background: #333; cursor: not-allowed; }
+        .btn:active { transform: scale(0.95); }
         
-        .room-info { background: #2d344b; padding: 10px; border-radius: 10px; margin-bottom: 15px; cursor: pointer; }
-        .scoreboard { background: #14192d; border-radius: 15px; padding: 15px; margin-top: 20px; text-align: right; }
-        .score-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #2d344b; }
+        .review-card { background: #252b42; padding: 15px; border-radius: 15px; margin-bottom: 15px; text-align: right; border: 1px solid var(--accent); position: relative; }
+        .points-btns { display: flex; gap: 5px; margin-top: 5px; justify-content: flex-start; }
+        .points-btns button { flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: bold; color: white; cursor: pointer; }
         
-        .review-card { background: #252b42; padding: 15px; border-radius: 15px; margin-bottom: 15px; text-align: right; border: 1px solid var(--accent); }
-        .points-btns button { padding: 8px 12px; margin-right: 5px; cursor: pointer; border-radius: 5px; border: none; font-weight: bold; color: white; }
-
-        #mobileOnlyScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f1221; z-index: 99999; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: white; padding: 20px; }
+        .score-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #2d344b; }
+        #mobileOnlyScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f1221; z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center; }
     </style>
 </head>
 <body>
 
-<div class="container">
+<!-- زر العودة للسيستم -->
+<div class="back-nav">
+    <a href="index.html" class="btn-back">🔙 العودة للسيستم</a>
+</div>
+
+<div id="mobileOnlyScreen">
+    <div style="font-size: 60px;">📱</div>
+    <h2>اللعبة للموبايل فقط</h2>
+    <p>افتح الرابط من هاتفك لتتمكن من اللعب</p>
+</div>
+
+<div class="container" id="mainApp">
     <div id="waitOverlay" class="hidden">
-        <h1 style="color: var(--accent);">🛑 STOP 🛑</h1>
-        <p id="waitMsg">انتهى الوقت! المشرف يقوم بتصحيح الإجابات الآن...</p>
+        <h1 style="color: var(--accent); font-size: 40px;">🛑 STOP!</h1>
+        <p>المشرف يراجع الإجابات الآن...</p>
     </div>
 
+    <!-- شاشة الدخول -->
     <div id="loginScreen">
-        <h2>🚌 أتوبيس كومبليت</h2>
-        <input type="text" id="userName" class="input-item" style="margin-bottom:20px;" placeholder="أدخل اسمك هنا...">
+        <h2 style="text-align:center;">🚌 أتوبيس كومبليت</h2>
+        <input type="text" id="userName" class="input-item" placeholder="اكتب اسمك هنا..." style="margin-bottom:20px;">
         <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 20px;">
-            <p>أنت المشرف؟</p>
-            <button class="btn btn-primary" onclick="setupRoom(true)">إنشاء غرفة جديدة</button>
-            <hr style="border: 0.5px solid #333; margin: 20px 0;">
-            <p>لديك كود؟</p>
-            <input type="text" id="roomCodeInput" class="input-item" placeholder="أدخل كود الغرفة..." style="margin-bottom:10px; text-transform: uppercase;">
-            <button class="btn btn-admin" onclick="setupRoom(false)">انضمام للعب</button>
+            <button class="btn btn-primary" onclick="initPeer(true)">إنشاء غرفة (أدمن)</button>
+            <div style="text-align:center; color:#8892b0; margin:10px 0;">أو</div>
+            <input type="text" id="roomCodeInput" class="input-item" placeholder="كود الغرفة..." style="text-transform: uppercase;">
+            <button class="btn btn-admin" onclick="initPeer(false)">انضمام للعب</button>
         </div>
     </div>
 
+    <!-- شاشة اللعبة -->
     <div id="gameScreen" class="hidden">
-        <div id="roomDisplay" class="room-info" onclick="copyCode()">
-            <small>كود الغرفة (اضغط للنسخ):</small>
-            <div id="displayCode" style="font-weight: bold; font-size: 22px; color: var(--accent);">----</div>
-        </div>
-
-        <div id="adminPanel" class="hidden">
-            <button class="btn btn-admin" id="newLetterBtn" onclick="newLetter()">🎲 سحب حرف جديد</button>
-        </div>
-        
         <div class="letter-box">
-            <div style="color:#8892b0">الحرف الحالي</div>
+            <small style="color:#8892b0">كود الغرفة: <b id="displayCode" style="color:var(--accent)">--</b></small><br>
+            <div style="margin-top:10px;">الحرف الحالي</div>
             <span id="currentLetter">؟</span>
         </div>
 
-        <div class="grid-inputs">
-            <input type="text" class="input-item iv" id="v0" placeholder="إنسان">
-            <input type="text" class="input-item iv" id="v1" placeholder="حيوان">
-            <input type="text" class="input-item iv" id="v2" placeholder="نبات">
-            <input type="text" class="input-item iv" id="v3" placeholder="جماد">
-            <input type="text" class="input-item iv" id="v4" placeholder="بلد">
-            <input type="text" class="input-item iv" id="v5" placeholder="أكلة">
+        <div id="adminPanel" class="hidden">
+            <button class="btn btn-admin" onclick="generateNewLetter()">🎲 حرف جديد للكل</button>
+            <button class="btn" style="background:#e67e22; color:white;" onclick="toggleReviewPanel()">🧐 لوحة التصحيح</button>
         </div>
 
-        <button class="btn btn-primary" id="stopBtn" onclick="triggerStop()" disabled>أتوبيس كومبليت! 🚌</button>
+        <div class="grid-inputs">
+            <input type="text" class="input-item q-input" id="v0" placeholder="إنسان">
+            <input type="text" class="input-item q-input" id="v1" placeholder="حيوان">
+            <input type="text" class="input-item q-input" id="v2" placeholder="نبات">
+            <input type="text" class="input-item q-input" id="v3" placeholder="جماد">
+            <input type="text" class="input-item q-input" id="v4" placeholder="بلد">
+            <input type="text" class="input-item q-input" id="v5" placeholder="أكلة">
+        </div>
 
-        <div class="scoreboard">
-            <h4 style="margin:0 0 10px 0; color:var(--accent)">📊 لوحة النتائج</h4>
+        <button class="btn btn-primary" id="stopBtn" onclick="sendStopSignal()" disabled>أتوبيس كومبليت! 🚌</button>
+
+        <div id="scoreboard" style="margin-top:20px; background:#14192d; padding:15px; border-radius:15px;">
+            <h4 style="margin:0; color:var(--accent)">📊 لوحة النتائج:</h4>
             <div id="scoreRows"></div>
         </div>
     </div>
 
-    <div id="adminReview" class="hidden">
-        <h3 style="color:var(--accent)">🧐 تصحيح الإجابات</h3>
+    <!-- لوحة المراجعة (للأدمن) -->
+    <div id="adminReviewPanel" class="hidden" style="margin-top:20px; border-top:2px solid var(--accent); padding-top:20px;">
+        <h3 style="color:var(--accent); text-align:center;">🧐 مراجعة الإجابات</h3>
         <div id="reviewList"></div>
-        <button class="btn btn-admin" onclick="backToGameUI()">إغلاق التصحيح</button>
+        <button class="btn btn-primary" onclick="toggleReviewPanel()">إغلاق المراجعة</button>
     </div>
 </div>
 
-<div id="mobileOnlyScreen">
-    <div style="font-size: 70px;">⚠️</div>
-    <h2 style="color: #ffeb3b;">عذراً.. اللعبة للموبايل فقط!</h2>
-</div>
-
 <script>
-    // --- إعدادات Firebase ---
-    const firebaseConfig = {
-        apiKey: "AIzaSyAD0YJCv4EW8iaceUgnZkbXyI1MSNhQ3fc",
-        authDomain: "brak-nagaf-v2.firebaseapp.com",
-        databaseURL: "https://brak-nagaf-v2-default-rtdb.firebaseio.com",
-        projectId: "brak-nagaf-v2",
-        storageBucket: "brak-nagaf-v2.firebasestorage.app",
-        messagingSenderId: "637473406996",
-        appId: "1:637473406996:web:4c6538e86dee9cb4c72701",
-        measurementId: "G-82VDNF5M0L"
-    };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+// --- 1. فحص الوصول والتحويل التلقائي ---
+const firebaseConfig = {
+    apiKey: "AIzaSyAD0YJCv4EW8iaceUgnZkbXyI1MSNhQ3fc",
+    authDomain: "brak-nagaf-v2.firebaseapp.com",
+    databaseURL: "https://brak-nagaf-v2-default-rtdb.firebaseio.com",
+    projectId: "brak-nagaf-v2",
+    storageBucket: "brak-nagaf-v2.firebasestorage.app",
+    messagingSenderId: "637473406996",
+    appId: "1:637473406996:web:4c6538e86dee9cb4c72701",
+    measurementId: "G-82VDNF5M0L"
+};
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-    // --- نظام الحماية والبريك ---
-    function isMobileDevice() { return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent); }
+function checkAccess() {
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if(!isMobile) { document.getElementById('mobileOnlyScreen').style.display='flex'; return; }
     
-    function checkAccess() {
-        const username = localStorage.getItem('break_sys_user');
-        const container = document.querySelector('.container');
-        if (!isMobileDevice()) { document.getElementById('mobileOnlyScreen').style.display = 'flex'; return; }
-        if (!username) { document.body.innerHTML = "<h2 style='color:white;text-align:center;'>سجل دخول أولاً</h2>"; return; }
+    const user = localStorage.getItem('break_sys_user');
+    if(!user) { window.location.href = 'index.html'; return; } // تحويل تلقائي لو مسجلش دخول
+    
+    db.ref('users/' + user).on('value', snap => {
+        const d = snap.val();
+        const managers = ['mahmoud', 'bo', 'ahmed'];
+        if(managers.includes(user) || (d && d.isOnBreak)) {
+            document.getElementById('mainApp').style.display='block';
+        } else {
+            window.location.href = 'index.html'; // تحويل تلقائي لو البريك مقفول
+        }
+    });
+}
+checkAccess();
 
-        db.ref('users/' + username).on('value', (snap) => {
-            const user = snap.val();
-            const managers = ['mahmoud', 'bo', 'ahmed'];
-            if (managers.includes(username) || (user && user.isOnBreak)) {
-                container.style.display = 'block';
-            } else {
-                document.body.innerHTML = "<h2 style='color:white;text-align:center;'>افتح بريك أولاً من السيستم</h2>";
-            }
+// --- 2. منطق اللعبة ---
+let peer, conn, myName, isHost = false, myID;
+let players = {}; 
+let connections = [];
+let receivedSubmissions = new Set(); // لمنع التكرار
+
+function initPeer(host) {
+    myName = document.getElementById('userName').value.trim();
+    if(!myName) return alert("من فضلك اكتب اسمك");
+    isHost = host;
+
+    if(isHost) {
+        const roomCode = Math.random().toString(36).substring(2, 7).toUpperCase();
+        peer = new Peer(roomCode);
+        peer.on('open', id => {
+            myID = id;
+            document.getElementById('displayCode').innerText = id;
+            players[id] = {name: myName, score: 0}; // إضافة المضيف كأول لاعب
+            document.getElementById('adminPanel').classList.remove('hidden');
+            setupGameUI();
+            updateScoreboard();
+        });
+        peer.on('connection', c => {
+            c.on('data', data => handleIncomingData(data, c));
+        });
+    } else {
+        const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+        if(!code) return alert("اكتب كود الغرفة");
+        peer = new Peer();
+        peer.on('open', id => {
+            myID = id;
+            conn = peer.connect(code);
+            conn.on('open', () => {
+                conn.send({type:'join', name:myName});
+                document.getElementById('displayCode').innerText = code;
+                setupGameUI();
+            });
+            conn.on('data', data => handleIncomingData(data));
         });
     }
-    checkAccess();
+}
 
-    // --- منطق اللعبة ---
-    let peer, conn, myName, isHost = false, currentRoomCode = "";
-    let connections = [];
-    let players = {}; 
-    const alphabet = "أبتثجحخدذرزسشصضطظعغفقكلمنهوي".split("");
-    let roundActive = false;
-
-    function setupRoom(hostMode) {
-        myName = document.getElementById('userName').value.trim();
-        if(!myName) return alert("ادخل اسمك");
-        isHost = hostMode;
-        
-        if(isHost) {
-            currentRoomCode = Math.random().toString(36).substring(2, 7).toUpperCase();
-            peer = new Peer(currentRoomCode);
-            peer.on('open', id => {
-                document.getElementById('displayCode').innerText = id;
-                players[id] = {name: myName, score: 0};
-                document.getElementById('adminPanel').classList.remove('hidden');
-                showGameUI();
-                updateUI();
-            });
-            peer.on('connection', c => {
-                connections.push(c);
-                c.on('data', data => handleData(data, c));
-            });
-        } else {
-            currentRoomCode = document.getElementById('roomCodeInput').value.trim().toUpperCase();
-            peer = new Peer();
-            peer.on('open', id => {
-                conn = peer.connect(currentRoomCode);
-                conn.on('open', () => {
-                    conn.send({type:'join', name:myName});
-                    document.getElementById('displayCode').innerText = currentRoomCode;
-                    showGameUI();
-                });
-                conn.on('data', data => handleData(data));
-            });
-        }
-    }
-
-    function handleData(data, sender) {
-        if(data.type === 'join' && isHost) {
+function handleIncomingData(data, sender) {
+    if(data.type === 'join' && isHost) {
+        // فحص لمنع التكرار
+        if(!players[sender.peer]) {
             players[sender.peer] = {name: data.name, score: 0};
-            broadcast({type:'sync', players: players});
-            updateUI();
-        } 
-        else if(data.type === 'sync') {
-            players = data.players;
-            updateUI();
-        } 
-        else if(data.type === 'letter') {
-            startNewRound(data.val);
-        } 
-        else if(data.type === 'stop') {
-            processStopAction();
-        } 
-        else if(data.type === 'submit' && isHost) {
-            showReviewItem(sender.peer, data.name, data.answers);
+            connections.push(sender);
         }
-        else if(data.type === 'reset_ui') {
-            document.getElementById('waitOverlay').classList.add('hidden');
-        }
+        syncPlayers();
     }
-
-    function broadcast(msg) {
-        connections.forEach(c => c.send(msg));
+    else if(data.type === 'sync') {
+        players = data.players;
+        updateScoreboard();
     }
-
-    function startNewRound(letter) {
-        roundActive = true;
-        document.getElementById('waitOverlay').classList.add('hidden');
-        document.getElementById('currentLetter').innerText = letter;
-        resetInputs();
-        document.getElementById('stopBtn').disabled = false;
+    else if(data.type === 'letter') {
+        startRound(data.letter);
     }
-
-    function newLetter() {
-        if(!isHost) return;
-        const char = alphabet[Math.floor(Math.random() * alphabet.length)];
-        broadcast({type: 'reset_ui'});
-        broadcast({type: 'letter', val: char});
-        startNewRound(char);
-    }
-
-    function triggerStop() {
-        if(!roundActive) return;
-        if(isHost) {
-            processStopAction();
+    else if(data.type === 'stop') {
+        stopEverything();
+        if(!isHost) {
+            conn.send({type:'submit', answers: getMyAnswers(), name: myName, id: myID});
         } else {
-            conn.send({type: 'stop'});
+            broadcast({type:'stop'});
+            addReviewItem(myID, myName, getMyAnswers());
         }
     }
-
-    function processStopAction() {
-        roundActive = false;
-        lockInputs();
-        
-        if(isHost) {
-            broadcast({type: 'stop'});
-            // أضف إجابات المشرف نفسه للتصحيح
-            showReviewItem(peer.id, myName, getInputs());
-        } else {
-            document.getElementById('waitOverlay').classList.remove('hidden');
-            conn.send({type: 'submit', name: myName, answers: getInputs()});
-        }
+    else if(data.type === 'submit' && isHost) {
+        addReviewItem(data.id, data.name, data.answers);
     }
+}
 
-    function showReviewItem(id, pName, answers) {
-        const reviewList = document.getElementById('reviewList');
-        document.getElementById('adminReview').classList.remove('hidden');
-        const labels = ["إنسان", "حيوان", "نبات", "جماد", "بلد", "أكلة"];
-        
-        const div = document.createElement('div');
-        div.className = 'review-card';
-        div.innerHTML = `<b>اللاعب: ${pName}</b><br><br>`;
-        answers.forEach((ans, i) => {
-            div.innerHTML += `<div style="margin-bottom:10px;">${labels[i]}: ${ans || '---'} 
-                <span class="points-btns">
-                    <button onclick="addPoints('${id}',10,this)" style="background:#2ecc71">10</button>
-                    <button onclick="addPoints('${id}',5,this)" style="background:#f1c40f;color:#000">5</button>
-                    <button onclick="addPoints('${id}',0,this)" style="background:#e74c3c">0</button>
-                </span></div>`;
-        });
-        reviewList.appendChild(div);
-    }
+function startRound(letter) {
+    document.getElementById('waitOverlay').classList.add('hidden');
+    document.getElementById('adminReviewPanel').classList.add('hidden');
+    document.getElementById('reviewList').innerHTML = "";
+    receivedSubmissions.clear();
+    document.getElementById('currentLetter').innerText = letter;
+    document.querySelectorAll('.q-input').forEach(i => { i.value = ""; i.disabled = false; });
+    document.getElementById('stopBtn').disabled = false;
+}
 
-    function addPoints(id, pts, btn) {
-        if(players[id]) {
-            players[id].score += pts;
-            btn.parentElement.innerHTML = " ✅ " + pts;
-            updateUI();
-            broadcast({type:'sync', players: players});
-        }
-    }
+function generateNewLetter() {
+    const letters = "أبتثجحخدذرزسشصضطظعغفقكلمنهوي";
+    const rand = letters[Math.floor(Math.random() * letters.length)];
+    broadcast({type:'letter', letter: rand});
+    startRound(rand);
+}
 
-    function backToGameUI() {
-        document.getElementById('adminReview').classList.add('hidden');
-        document.getElementById('reviewList').innerHTML = "";
+function sendStopSignal() {
+    stopEverything();
+    if(isHost) {
+        broadcast({type:'stop'});
+        addReviewItem(myID, myName, getMyAnswers());
+    } else {
+        conn.send({type:'stop'});
     }
+}
 
-    function updateUI() {
-        const list = document.getElementById('scoreRows');
-        list.innerHTML = "";
-        Object.values(players).sort((a,b) => b.score - a.score).forEach(p => {
-            list.innerHTML += `<div class="score-row"><span>${p.name}</span><span>${p.score} نقطة</span></div>`;
-        });
-    }
+function stopEverything() {
+    document.querySelectorAll('.q-input').forEach(i => i.disabled = true);
+    document.getElementById('stopBtn').disabled = true;
+    if(!isHost) document.getElementById('waitOverlay').classList.remove('hidden');
+}
 
-    function getInputs() { 
-        return [0,1,2,3,4,5].map(i => document.getElementById('v'+i).value.trim()); 
-    }
+function getMyAnswers() {
+    return [0,1,2,3,4,5].map(i => document.getElementById('v'+i).value.trim());
+}
 
-    function lockInputs() { 
-        document.querySelectorAll('.iv').forEach(el => el.disabled = true);
-        document.getElementById('stopBtn').disabled = true;
-    }
+function addReviewItem(id, name, answers) {
+    if(receivedSubmissions.has(id)) return; // منع تكرار نفس اللاعب في قائمة المراجعة
+    receivedSubmissions.add(id);
 
-    function resetInputs() { 
-        document.querySelectorAll('.iv').forEach(el => { el.disabled = false; el.value = ""; });
-    }
+    const container = document.getElementById('reviewList');
+    document.getElementById('adminReviewPanel').classList.remove('hidden');
+    const labels = ["إنسان", "حيوان", "نبات", "جماد", "بلد", "أكلة"];
+    
+    let html = `<div class="review-card"><strong>👤 اللاعب: ${name}</strong><br>`;
+    answers.forEach((ans, i) => {
+        html += `<div style="margin:8px 0; font-size:14px; border-bottom:1px solid #333; padding-bottom:5px;">
+            ${labels[i]}: <span style="color:var(--accent)">${ans || '---'}</span>
+            <div class="points-btns">
+                <button onclick="givePts('${id}',10,this)" style="background:#27ae60">10</button>
+                <button onclick="givePts('${id}',5,this)" style="background:#f1c40f; color:black">5</button>
+                <button onclick="givePts('${id}',0,this)" style="background:#e74c3c">0</button>
+            </div></div>`;
+    });
+    html += `</div>`;
+    container.innerHTML += html;
+}
 
-    function showGameUI() { 
-        document.getElementById('loginScreen').classList.add('hidden'); 
-        document.getElementById('gameScreen').classList.remove('hidden'); 
+function givePts(id, pts, btn) {
+    if(players[id]) {
+        players[id].score += pts;
+        btn.parentElement.innerHTML = "<span style='color:#27ae60'>✅ تم تسجيل " + pts + " نقطة</span>";
+        syncPlayers();
     }
+}
 
-    function copyCode() {
-        navigator.clipboard.writeText(currentRoomCode);
-        alert("تم نسخ الكود");
+function syncPlayers() {
+    if(isHost) {
+        connections.forEach(c => c.send({type:'sync', players: players}));
+        updateScoreboard();
     }
+}
+
+function updateScoreboard() {
+    const row = document.getElementById('scoreRows');
+    row.innerHTML = "";
+    // تحويل الكائن لمصفوفة مرتبة حسب السكور وحذف المكرر (بناءً على الـ ID)
+    const sorted = Object.entries(players).sort((a,b) => b[1].score - a[1].score);
+    sorted.forEach(([id, p]) => {
+        row.innerHTML += `<div class="score-row"><span>${p.name}</span><span>${p.score} نقطة</span></div>`;
+    });
+}
+
+function broadcast(msg) {
+    connections.forEach(c => c.send(msg));
+}
+
+function setupGameUI() {
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('gameScreen').classList.remove('hidden');
+}
+
+function toggleReviewPanel() {
+    document.getElementById('adminReviewPanel').classList.toggle('hidden');
+}
 </script>
 </body>
 </html>
