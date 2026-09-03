@@ -3,8 +3,7 @@
                                             <html lang="ar" dir="rtl">
                                             <head>
                         <meta charset="UTF-8">
-                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                        <!-- تم تحديث هذا السطر للسماح بعمل المكتبات -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">                        <!-- تم تحديث هذا السطر للسماح بعمل المكتبات -->
             <meta http-equiv="Content-Security-Policy" content="default-src * data: blob: filesystem: about: ws: wss: 'unsafe-inline' 'unsafe-eval'; script-src * data: blob: 'unsafe-inline' 'unsafe-eval'; connect-src * data: blob: 'unsafe-inline'; img-src * data: blob: 'unsafe-inline'; frame-src * data: blob: ; style-src * data: blob: 'unsafe-inline'; font-src * data: blob: 'unsafe-inline'; media-src * blob: data:;">            <title>ELSHAMAA | إدارة البريك</title>
                     <!-- كود تحويل الموقع لتطبيق (PWA) -->
         <link rel="manifest" href="manifest.json">
@@ -2162,6 +2161,53 @@
         from { transform: translateY(20px) scale(0.9); opacity: 0; }
         to { transform: translateY(0) scale(1); opacity: 1; }
     }
+    /* منع الاهتزاز ومنع السكرول بالعرض نهائياً */
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+    /* ده بيمنع الـ "Elastic Scrolling" اللي بيخلي الشاشة تتهز في الآيفون */
+    position: relative;
+    height: auto;
+    touch-action: pan-y; /* بيسمح بالسكرول لفوق وتحت بس وبيمنع الهز يمين وشمال */
+}
+
+* {
+    box-sizing: border-box; /* عشان الـ Padding ميزودش عرض العناصر ويبوظ الموبايل */
+}
+
+/* تحسين أداء الموبايل: إلغاء الـ Aura المتحركة لأنها تقيلة جداً على المعالج */
+@media (max-width: 768px) {
+    .aura {
+        display: none !important; /* إلغاء الخلفيات المتحركة لتسريع الموبايل ومنع الهز */
+    }
+    
+    .container {
+        width: 100% !important;
+        margin: 5px auto !important;
+        padding: 15px 10px !important;
+        border-radius: 20px !important;
+    }
+
+    /* تكبير الخط في المدخلات لمنع الـ Auto Zoom في الآيفون اللي بيعمل هزة */
+    input, select, textarea {
+        font-size: 16px !important;
+    }
+
+    /* تعديل الشبكة (Grid) لتكون عمود واحد فقط لمنع ضغط العناصر */
+    .employee-hero-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+
+    /* ضبط الجداول عشان متخرجش برة الشاشة */
+    .table-responsive {
+        width: 100% !important;
+        margin-right: 0 !important;
+        margin-left: 0 !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+}
     
 
                                                 </style>
@@ -5958,30 +6004,99 @@
     }
 
                     // دالة مساعدة لتنفيذ بدء البريك
-                   function stopMyBreak() {
+          function stopMyBreak() {
     const device = getDeviceType();
     const u = currentUser;
 
-    // --- منطقة التحكم في الموبايل ---
-    // السماح بإنهاء "بريك سهر" فقط من الموبايل، ومنع أي نشاط آخر
+    // التأكد أن المستخدم مسجل دخول وله توقيت بداية
+    if (!u || !u.lastStartTime) return;
+
+    // --- 1. منطقة التحكم في الموبايل ---
     if (device === "mobile" && u.role !== 'admin') {
-        if (u.breakType !== 'بريك سهر') {
+        // السماح فقط بإغلاق "VIP سهرة" من الموبايل
+        if (u.breakType !== 'VIP سهرة') {
             alert("🛑 عذراً يا بطل.. لا يمكنك إنهاء النشاط من الهاتف إلا في (بريك السهر). يرجى تسجيل العودة من جهاز الكمبيوتر المكتبي.");
             return; 
         }
-        // لو النشاط هو "بريك سهر"، الكود هيكمل عادي وينفذ الإيقاف من الموبايل
     }
 
-    // --- منطق الصلاة ---
+    // --- 2. منطق الصلاة ---
     if (u.breakType === 'صلاة') {
         const nextPrayerName = document.getElementById('nextPrayerName').innerText.replace("المتبقي على ", "") || "الصلاة";
-        document.getElementById('prayerCheckTitle').innerText = `هل أتممت ${nextPrayerName}؟`;
-        document.getElementById('prayerCheckModal').classList.remove('hidden');
-        return; 
+        const checkTitle = document.getElementById('prayerCheckTitle');
+        if (checkTitle) checkTitle.innerText = `هل أتممت ${nextPrayerName}؟`;
+        
+        const modal = document.getElementById('prayerCheckModal');
+        if (modal) modal.classList.remove('hidden');
+        return; // نتوقف هنا لأن التكمله ستكون عند ضغط "نعم" أو "لا" في المودال
     }
 
-    // الإنهاء الطبيعي لباقي الأنواع
+    // --- 3. الإنهاء التلقائي لبقية الأنشطة (بريك، ميتنج، سهرة، الخ) ---
     finalizeStopBreak(false); 
+}
+
+// الدالة المسؤولة عن تحديث قاعدة البيانات (يجب أن تكون موجودة بجانبها)
+function finalizeStopBreak(didFinishPrayer) {
+    const u = currentUser;
+    if (!u || !u.lastStartTime) return;
+
+    const now = getServerTime();
+    const duration = Math.floor((now - u.lastStartTime) / 1000);
+    const startTimeStr = new Date(u.lastStartTime).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
+    const endTimeStr = getServerTimeString();
+
+    // 1. تسجيل الجلسة في الأرشيف
+    db.ref('users/' + u.username + '/sessions').push({
+        date: getServerDateString(),
+        type: u.breakType,
+        reason: u.lastReason || 'نشاط عادي',
+        duration: duration,
+        startTime: startTimeStr,
+        endTime: endTimeStr
+    });
+
+    // 2. تحضير التحديثات لعدادات الموظف
+    const updates = {
+        isOnBreak: false,
+        lastStartTime: null,
+        lastEndedTime: now,
+        lastEndedType: u.breakType,
+        emRequest: null,      // مسح طلبات الطوارئ
+        meetingRequest: null  // مسح طلبات الاجتماع
+    };
+
+    // 3. تحديث العدادات بناءً على نوع النشاط
+    if (u.breakType === 'صلاة') {
+        updates.prayerSeconds = (u.prayerSeconds || 0) + duration;
+        updates.prayerCountToday = (u.prayerCountToday || 0) + 1;
+        removeFromQueueByUsername(u.username); // حذفه من طابور الصلاة
+    } 
+    else if (u.breakType === 'بريك عام' || u.breakType === 'طوارئ') {
+        updates.usedSeconds = (u.usedSeconds || 0) + duration;
+    }
+    else if (u.breakType === 'ميتنج') {
+        updates.meetingSeconds = (u.meetingSeconds || 0) + duration;
+    }
+    else if (u.breakType === 'متابع عميل') {
+        updates.followUpSeconds = (u.followUpSeconds || 0) + duration;
+    }
+    else if (u.breakType === 'استراحة VIP' || u.breakType === 'VIP سهرة') {
+        updates.vipSeconds = (u.vipSeconds || 0) + duration;
+    }
+
+    // 4. تنفيذ التحديث في Firebase
+    db.ref('users/' + u.username).update(updates).then(() => {
+        // تصفير خانة السبب وإخفاء النوافذ
+        const reasonInput = document.getElementById('breakReason');
+        if(reasonInput) reasonInput.value = ""; 
+        
+        const prayerModal = document.getElementById('prayerCheckModal');
+        if(prayerModal) prayerModal.classList.add('hidden');
+        
+        if (typeof triggerGlobalRefresh === "function") triggerGlobalRefresh();
+        
+        console.log("تم إنهاء النشاط بنجاح ✅");
+    });
 }
             function finalizeStopBreak(didFinishPrayer) {
                 const u = currentUser;
@@ -11797,35 +11912,23 @@ const isSohra = document.getElementById('isSohraBreak').checked;
     }
 
     // دالة محاكاة الدخول مع نظام التريقة المطور
-    function mockAttemptLogin() {
-        const u = document.getElementById('loginUser').value.trim().toLowerCase();
-        const p = document.getElementById('loginPass').value.trim();
+   function mockAttemptLogin() {
+    const u = document.getElementById('loginUser').value.trim().toLowerCase();
+    const p = document.getElementById('loginPass').value.trim();
 
-        // استدعاء المنطق الأصلي بتاعك
-        if (allUsersData[u] && allUsersData[u].password === p) {
-            attemptLogin(); // دالة الدخول الأصلية في ملفك
-        } else {
-            // فشل -> تريقة
-            const card = document.getElementById('loginCard');
-            const mouth = document.getElementById('workerMouth');
-            
-            // 1. هزة الكارت
-            card.classList.add('shake-card');
-            setTimeout(() => card.classList.remove('shake-card'), 500);
-
-            // 2. تريقة عثمان
-            showBubble(roasts[Math.floor(Math.random() * roasts.length)]);
-            document.getElementById('roastBubble').style.background = "#ef4444"; // قلب أحمر من الغيظ
-
-            // 3. شكل بقه يتغير لضحكة تريقة
-            mouth.setAttribute('d', 'M90 95 Q100 115 110 95');
-            
-            setTimeout(() => {
-                mouth.setAttribute('d', 'M95 100 Q100 105 105 100');
-                document.getElementById('roastBubble').style.background = "#6366f1";
-            }, 2000);
-        }
+    if (allUsersData[u] && allUsersData[u].password === p) {
+        attemptLogin();
+    } else {
+        const card = document.getElementById('loginCard');
+        card.classList.add('shake-card');
+        // السطر ده مهم جداً عشان يوقف الهزة بعد نص ثانية
+        setTimeout(() => {
+            card.classList.remove('shake-card');
+        }, 500);
+        
+        showBubble(roasts[Math.floor(Math.random() * roasts.length)]);
     }
+}
     let currentChatRecipient = null;
     let chatListener = null;
 
