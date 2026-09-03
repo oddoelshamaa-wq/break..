@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>أتوبيس كومبليت - المطور</title>
+    <title>أتوبيس كومبليت - النسخة المصلحة</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -11,59 +11,57 @@
         :root { --bg: #0f1221; --card: #1c2135; --primary: #5851db; --accent: #ffeb3b; --text: #fff; }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; }
         
-        /* زر العودة للسيستم */
-        .back-nav { position: fixed; top: 10px; right: 10px; z-index: 2000; }
-        .btn-back { background: #333; color: white; padding: 8px 15px; border-radius: 10px; border: 1px solid #555; text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 5px; }
+        .back-nav { position: fixed; top: 10px; left: 10px; z-index: 2000; }
+        .btn-back { background: #e74c3c; color: white; padding: 10px 15px; border-radius: 12px; border: none; text-decoration: none; font-size: 14px; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
 
-        .container { width: 100%; max-width: 450px; background: var(--card); padding: 20px; display: none; position: relative; margin-top: 50px; border-radius: 20px; }
+        .container { width: 100%; max-width: 450px; background: var(--card); padding: 20px; display: none; position: relative; margin-top: 60px; border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .hidden { display: none !important; }
         
-        #waitOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 18, 33, 0.98); z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        .letter-box { border: 2px solid var(--accent); border-radius: 20px; padding: 20px; margin: 15px 0; background: rgba(255,255,255,0.03); text-align: center; }
-        .letter-box span { font-size: 70px; font-weight: bold; color: var(--accent); }
+        #waitOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 18, 33, 0.98); z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; border-radius: 30px; }
         
-        .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .input-item { background: #1e243a; border: 1px solid #323a54; border-radius: 12px; padding: 15px; color: white; text-align: center; font-size: 16px; outline: none; width: 100%; box-sizing: border-box; }
-        .input-item:disabled { opacity: 0.6; background: #0a0c16; }
+        .letter-box { border: 3px solid var(--accent); border-radius: 25px; padding: 20px; margin: 15px 0; background: rgba(255,255,255,0.05); text-align: center; }
+        .letter-box span { font-size: 80px; font-weight: bold; color: var(--accent); line-height: 1; }
         
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; margin-bottom: 10px; transition: 0.3s; }
+        .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .input-item { background: #1e243a; border: 2px solid #323a54; border-radius: 15px; padding: 15px; color: white; text-align: center; font-size: 18px; outline: none; width: 100%; box-sizing: border-box; }
+        .input-item:focus { border-color: var(--primary); }
+        .input-item:disabled { opacity: 0.5; background: #0a0c16; }
+        
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 15px; font-size: 18px; font-weight: bold; cursor: pointer; margin-bottom: 10px; transition: 0.3s; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-admin { background: #27ae60; color: white; }
-        .btn:active { transform: scale(0.95); }
         
-        .review-card { background: #252b42; padding: 15px; border-radius: 15px; margin-bottom: 15px; text-align: right; border: 1px solid var(--accent); position: relative; }
-        .points-btns { display: flex; gap: 5px; margin-top: 5px; justify-content: flex-start; }
-        .points-btns button { flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: bold; color: white; cursor: pointer; }
+        .review-card { background: #252b42; padding: 15px; border-radius: 20px; margin-bottom: 15px; text-align: right; border: 1px solid var(--accent); }
+        .points-btns { display: flex; gap: 8px; margin-top: 10px; }
+        .points-btns button { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: bold; color: white; font-size: 16px; }
         
-        .score-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #2d344b; }
+        .score-row { display: flex; justify-content: space-between; padding: 12px; background: rgba(255,255,255,0.03); margin-bottom: 5px; border-radius: 10px; }
         #mobileOnlyScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f1221; z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center; }
     </style>
 </head>
 <body>
 
-<!-- زر العودة للسيستم -->
 <div class="back-nav">
-    <a href="index.html" class="btn-back">🔙 العودة للسيستم</a>
+    <a href="index.html" class="btn-back">🔙 خروج للسيستم</a>
 </div>
 
 <div id="mobileOnlyScreen">
     <div style="font-size: 60px;">📱</div>
     <h2>اللعبة للموبايل فقط</h2>
-    <p>افتح الرابط من هاتفك لتتمكن من اللعب</p>
 </div>
 
 <div class="container" id="mainApp">
     <div id="waitOverlay" class="hidden">
-        <h1 style="color: var(--accent); font-size: 40px;">🛑 STOP!</h1>
-        <p>المشرف يراجع الإجابات الآن...</p>
+        <h1 style="color: var(--accent); font-size: 50px;">🛑 STOP</h1>
+        <p style="font-size: 18px;">المشرف يقوم بالتصحيح حالياً...</p>
     </div>
 
     <!-- شاشة الدخول -->
     <div id="loginScreen">
-        <h2 style="text-align:center;">🚌 أتوبيس كومبليت</h2>
-        <input type="text" id="userName" class="input-item" placeholder="اكتب اسمك هنا..." style="margin-bottom:20px;">
-        <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 20px;">
-            <button class="btn btn-primary" onclick="initPeer(true)">إنشاء غرفة (أدمن)</button>
+        <h2 style="text-align:center; font-size: 28px;">🚌 أتوبيس كومبليت</h2>
+        <input type="text" id="userName" class="input-item" placeholder="اكتب اسمك..." style="margin-bottom:20px;">
+        <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 25px;">
+            <button class="btn btn-primary" onclick="initPeer(true)">إنشاء غرفة جديدة</button>
             <div style="text-align:center; color:#8892b0; margin:10px 0;">أو</div>
             <input type="text" id="roomCodeInput" class="input-item" placeholder="كود الغرفة..." style="text-transform: uppercase;">
             <button class="btn btn-admin" onclick="initPeer(false)">انضمام للعب</button>
@@ -72,14 +70,18 @@
 
     <!-- شاشة اللعبة -->
     <div id="gameScreen" class="hidden">
+        <div style="text-align:center; margin-bottom:10px;">
+            <small style="color:#8892b0">كود الغرفة:</small><br>
+            <b id="displayCode" style="color:var(--accent); font-size: 22px;">--</b>
+        </div>
+
         <div class="letter-box">
-            <small style="color:#8892b0">كود الغرفة: <b id="displayCode" style="color:var(--accent)">--</b></small><br>
-            <div style="margin-top:10px;">الحرف الحالي</div>
+            <div style="font-size: 14px; color: #8892b0; margin-bottom: 5px;">الحرف الحالي</div>
             <span id="currentLetter">؟</span>
         </div>
 
         <div id="adminPanel" class="hidden">
-            <button class="btn btn-admin" onclick="generateNewLetter()">🎲 حرف جديد للكل</button>
+            <button class="btn btn-admin" onclick="generateNewLetter()">🎲 سحب حرف جديد</button>
             <button class="btn" style="background:#e67e22; color:white;" onclick="toggleReviewPanel()">🧐 لوحة التصحيح</button>
         </div>
 
@@ -94,13 +96,13 @@
 
         <button class="btn btn-primary" id="stopBtn" onclick="sendStopSignal()" disabled>أتوبيس كومبليت! 🚌</button>
 
-        <div id="scoreboard" style="margin-top:20px; background:#14192d; padding:15px; border-radius:15px;">
-            <h4 style="margin:0; color:var(--accent)">📊 لوحة النتائج:</h4>
+        <div id="scoreboard" style="margin-top:20px; background:#14192d; padding:15px; border-radius:20px;">
+            <h4 style="margin:0 0 10px 0; color:var(--accent); text-align:center;">📊 لوحة النتائج</h4>
             <div id="scoreRows"></div>
         </div>
     </div>
 
-    <!-- لوحة المراجعة (للأدمن) -->
+    <!-- لوحة المراجعة -->
     <div id="adminReviewPanel" class="hidden" style="margin-top:20px; border-top:2px solid var(--accent); padding-top:20px;">
         <h3 style="color:var(--accent); text-align:center;">🧐 مراجعة الإجابات</h3>
         <div id="reviewList"></div>
@@ -109,7 +111,7 @@
 </div>
 
 <script>
-// --- 1. فحص الوصول والتحويل التلقائي ---
+// --- إعدادات الحماية والوصول ---
 const firebaseConfig = {
     apiKey: "AIzaSyAD0YJCv4EW8iaceUgnZkbXyI1MSNhQ3fc",
     authDomain: "brak-nagaf-v2.firebaseapp.com",
@@ -128,7 +130,7 @@ function checkAccess() {
     if(!isMobile) { document.getElementById('mobileOnlyScreen').style.display='flex'; return; }
     
     const user = localStorage.getItem('break_sys_user');
-    if(!user) { window.location.href = 'index.html'; return; } // تحويل تلقائي لو مسجلش دخول
+    if(!user) { window.location.href = 'index.html'; return; }
     
     db.ref('users/' + user).on('value', snap => {
         const d = snap.val();
@@ -136,21 +138,21 @@ function checkAccess() {
         if(managers.includes(user) || (d && d.isOnBreak)) {
             document.getElementById('mainApp').style.display='block';
         } else {
-            window.location.href = 'index.html'; // تحويل تلقائي لو البريك مقفول
+            window.location.href = 'index.html';
         }
     });
 }
 checkAccess();
 
-// --- 2. منطق اللعبة ---
+// --- منطق اللعبة ---
 let peer, conn, myName, isHost = false, myID;
 let players = {}; 
 let connections = [];
-let receivedSubmissions = new Set(); // لمنع التكرار
+let receivedSubmissions = new Set();
 
 function initPeer(host) {
     myName = document.getElementById('userName').value.trim();
-    if(!myName) return alert("من فضلك اكتب اسمك");
+    if(!myName) return alert("اكتب اسمك أولاً");
     isHost = host;
 
     if(isHost) {
@@ -159,17 +161,22 @@ function initPeer(host) {
         peer.on('open', id => {
             myID = id;
             document.getElementById('displayCode').innerText = id;
-            players[id] = {name: myName, score: 0}; // إضافة المضيف كأول لاعب
+            players[id] = {name: myName, score: 0};
             document.getElementById('adminPanel').classList.remove('hidden');
             setupGameUI();
             updateScoreboard();
         });
         peer.on('connection', c => {
-            c.on('data', data => handleIncomingData(data, c));
+            c.on('open', () => {
+                if (!connections.find(conn => conn.peer === c.peer)) {
+                    connections.push(c);
+                }
+                c.on('data', data => handleIncomingData(data, c));
+            });
         });
     } else {
         const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
-        if(!code) return alert("اكتب كود الغرفة");
+        if(!code) return alert("اكتب الكود");
         peer = new Peer();
         peer.on('open', id => {
             myID = id;
@@ -186,11 +193,7 @@ function initPeer(host) {
 
 function handleIncomingData(data, sender) {
     if(data.type === 'join' && isHost) {
-        // فحص لمنع التكرار
-        if(!players[sender.peer]) {
-            players[sender.peer] = {name: data.name, score: 0};
-            connections.push(sender);
-        }
+        players[sender.peer] = {name: data.name, score: 0};
         syncPlayers();
     }
     else if(data.type === 'sync') {
@@ -198,15 +201,15 @@ function handleIncomingData(data, sender) {
         updateScoreboard();
     }
     else if(data.type === 'letter') {
-        startRound(data.letter);
+        startRound(data.val); // استخدام val للتأكد من وصول الحرف
     }
     else if(data.type === 'stop') {
         stopEverything();
-        if(!isHost) {
-            conn.send({type:'submit', answers: getMyAnswers(), name: myName, id: myID});
-        } else {
+        if(isHost) {
             broadcast({type:'stop'});
             addReviewItem(myID, myName, getMyAnswers());
+        } else {
+            conn.send({type:'submit', answers: getMyAnswers(), name: myName, id: myID});
         }
     }
     else if(data.type === 'submit' && isHost) {
@@ -215,11 +218,14 @@ function handleIncomingData(data, sender) {
 }
 
 function startRound(letter) {
+    // التأكد أن الحرف ليس فارغاً
+    const finalLetter = letter || "؟";
     document.getElementById('waitOverlay').classList.add('hidden');
     document.getElementById('adminReviewPanel').classList.add('hidden');
     document.getElementById('reviewList').innerHTML = "";
     receivedSubmissions.clear();
-    document.getElementById('currentLetter').innerText = letter;
+    
+    document.getElementById('currentLetter').innerText = finalLetter;
     document.querySelectorAll('.q-input').forEach(i => { i.value = ""; i.disabled = false; });
     document.getElementById('stopBtn').disabled = false;
 }
@@ -227,7 +233,7 @@ function startRound(letter) {
 function generateNewLetter() {
     const letters = "أبتثجحخدذرزسشصضطظعغفقكلمنهوي";
     const rand = letters[Math.floor(Math.random() * letters.length)];
-    broadcast({type:'letter', letter: rand});
+    broadcast({type:'letter', val: rand});
     startRound(rand);
 }
 
@@ -252,16 +258,16 @@ function getMyAnswers() {
 }
 
 function addReviewItem(id, name, answers) {
-    if(receivedSubmissions.has(id)) return; // منع تكرار نفس اللاعب في قائمة المراجعة
+    if(receivedSubmissions.has(id)) return;
     receivedSubmissions.add(id);
 
     const container = document.getElementById('reviewList');
     document.getElementById('adminReviewPanel').classList.remove('hidden');
     const labels = ["إنسان", "حيوان", "نبات", "جماد", "بلد", "أكلة"];
     
-    let html = `<div class="review-card"><strong>👤 اللاعب: ${name}</strong><br>`;
+    let html = `<div class="review-card"><strong>👤 ${name}</strong><br>`;
     answers.forEach((ans, i) => {
-        html += `<div style="margin:8px 0; font-size:14px; border-bottom:1px solid #333; padding-bottom:5px;">
+        html += `<div style="margin:10px 0; border-bottom:1px solid #333; padding-bottom:5px;">
             ${labels[i]}: <span style="color:var(--accent)">${ans || '---'}</span>
             <div class="points-btns">
                 <button onclick="givePts('${id}',10,this)" style="background:#27ae60">10</button>
@@ -276,14 +282,14 @@ function addReviewItem(id, name, answers) {
 function givePts(id, pts, btn) {
     if(players[id]) {
         players[id].score += pts;
-        btn.parentElement.innerHTML = "<span style='color:#27ae60'>✅ تم تسجيل " + pts + " نقطة</span>";
+        btn.parentElement.innerHTML = "<span style='color:#27ae60'>✅ تم رصد " + pts + "</span>";
         syncPlayers();
     }
 }
 
 function syncPlayers() {
     if(isHost) {
-        connections.forEach(c => c.send({type:'sync', players: players}));
+        broadcast({type:'sync', players: players});
         updateScoreboard();
     }
 }
@@ -291,15 +297,17 @@ function syncPlayers() {
 function updateScoreboard() {
     const row = document.getElementById('scoreRows');
     row.innerHTML = "";
-    // تحويل الكائن لمصفوفة مرتبة حسب السكور وحذف المكرر (بناءً على الـ ID)
-    const sorted = Object.entries(players).sort((a,b) => b[1].score - a[1].score);
-    sorted.forEach(([id, p]) => {
+    // تحويل الكائن لمصفوفة مرتبة
+    const sorted = Object.values(players).sort((a,b) => b.score - a.score);
+    sorted.forEach(p => {
         row.innerHTML += `<div class="score-row"><span>${p.name}</span><span>${p.score} نقطة</span></div>`;
     });
 }
 
 function broadcast(msg) {
-    connections.forEach(c => c.send(msg));
+    connections.forEach(c => {
+        if(c.open) c.send(msg);
+    });
 }
 
 function setupGameUI() {
