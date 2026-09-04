@@ -48,6 +48,9 @@
 
         #global-scores-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.98); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .scores-card { background: var(--card); width: 90%; border-radius: 24px; padding: 20px; }
+        
+        /* واجهة المنع */
+        #access-denied { display:none; position:fixed; inset:0; background:var(--bg); z-index:10000; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px; }
     </style>
 </head>
 <body>
@@ -57,13 +60,21 @@
         <h2>عذراً، هذه اللعبة للموبايل فقط!</h2>
     </div>
 
+    <!-- رسالة رفض الدخول -->
+    <div id="access-denied">
+        <div style="font-size: 60px;">🛑</div>
+        <h2 style="color:var(--danger)">عفواً، البريك غير مفعل!</h2>
+        <p>لا يمكنك دخول اللعبة حالياً لأنك لست في فترة بريك.</p>
+        <button onclick="location.reload()" style="padding:12px 30px; background:var(--primary); color:white; border:none; border-radius:10px;">إعادة محاولة</button>
+    </div>
+
     <div id="lobby">
         <div class="lobby-box">
             <h2 style="margin-top:0; text-align:center;">🎬 خمن الفيلم</h2>
             <input type="text" id="user-name" placeholder="أدخل اسمك..." maxlength="15">
-            <button onclick="createRoom()" style="width:100%; padding:15px; background:var(--primary); color:white; border:none; border-radius:12px; margin-bottom:10px; font-weight:bold;">إنشاء غرفة</button>
+            <button id="create-btn" onclick="createRoom()" style="width:100%; padding:15px; background:var(--primary); color:white; border:none; border-radius:12px; margin-bottom:10px; font-weight:bold;">إنشاء غرفة</button>
             <input type="number" id="room-input" placeholder="كود الغرفة..." inputmode="numeric">
-            <button onclick="joinRoom()" style="width:100%; padding:15px; background:var(--secondary); color:white; border:none; border-radius:12px; font-weight:bold;">انضمام</button>
+            <button id="join-btn" onclick="joinRoom()" style="width:100%; padding:15px; background:var(--secondary); color:white; border:none; border-radius:12px; font-weight:bold;">انضمام</button>
         </div>
     </div>
 
@@ -121,61 +132,62 @@
         let serverOpen = false; 
         let myBreakActive = false;
 
-        const movies = [
-            { e: "🐘 🔵", a: "الفيل الازرق" }, { e: "👨‍🏫 🏫 🍎", a: "الناظر" },
-            { e: "🚢 🧊 💔", a: "تيتانيك" }, { e: "🦁 👑", a: "الاسد الملك" },
-            { e: "🏢 👮‍♂️ 👮‍♂️", a: "الخلية" }, { e: "🏝️ 👮‍♂️ 🔫", a: "الجزيرة" },
-            { e: "👳‍♂️ 🏫 📚", a: "صعيدي في الجامعة الامريكية" }, { e: "⚡ 👓 🪄", a: "هاري بوتر" },
-            { e: "🥊 👨‍🦲 🐴", a: "بوحه" }, { e: "🍳 👨‍🍳 🐭", a: "خلطبيطة بالصلصة" },
-            { e: "🤡 🎈", a: "ات" }, { e: "🚢 🤣 👮‍♂️", a: "امير البحار" },
-            { e: "🕵️‍♂️ 🇮🇹", a: "كازابلانكا" }, { e: "👨‍👩‍👧‍👦 🏠 👻", a: "الانس والنمس" },
-            { e: "👮‍♂️ 🏫 👨‍👩‍👧‍👦", a: "الباشا تلميذ" }, { e: "👳‍♂️ 🏦 💰", a: "طير انت" },
-            { e: "🏎️ 👨‍👩‍👧‍👦", a: "فول الصين العظيم" }, { e: "👨‍🦱 🕶️ 🦅", a: "اتش دبور" },
-            { e: "🥊 🐴 🥩", a: "اللمبي" }, { e: "🕵️‍♂️ 📱 🕵️‍♂️", a: "ولاد رزق" },
-            { e: "🏨 🧟‍♂️", a: "حملة فرعون" }, { e: "👨‍🏫 🤣", a: "مدرسة المشاغبين" },
-            { e: "🍔 🍕 🐘", a: "اكس لارج" }, { e: "✈️ 🇪🇬 🕶️", a: "عسل اسود" },
-            { e: "👔 💼 🤣", a: "مرجان احمد مرجان" }, { e: "🤵 👰 🔪", a: "افواه وارانب" },
-            { e: "🪖 🇬🇧 🇪🇬", a: "كيرة والجن" }, { e: "👴 👴 👴 🏖️", a: "وقفة رجالة" },
-            { e: "🧠 🖐️ 🤣", a: "مش انا" }, { e: "💡 🏃‍♂️ 🤣", a: "واحد تاني" },
-            { e: "✈️ 🏝️ 💃", a: "لف ودوران" }, { e: "🏢 🏗️ 🤣", a: "مطب صناعي" },
-            { e: "🧔 🔫 🤣", a: "جعلتني مجرما" }, { e: "🍔 📻 🤣", a: "ظرف طارق" },
-            { e: "🧠 👨‍🎨 ✈️", a: "اسف على الازعاج" }, { e: "🕺 🕺 🕺 ⏳", a: "سمير وشهير وبهير" },
-            { e: "🛵 🇮🇹 🍕", a: "همام في امستردام" }, { e: "🏍️ 🥖 👮‍♂️", a: "ابو علي" },
-            { e: "👮‍♂️ 🤵 🤣", a: "البدلة" }, { e: "⚔️ 🦁 🏹", a: "الناصر صلاح الدين" },
-            { e: "👦 👦 👦", a: "كده رضا" }, { e: "⚖️ 👨‍⚖️ 🏢", a: "ضد الحكومة" },
-            { e: "🐍 🪜", a: "السلم والثعبان" }, { e: "👮‍♂️ 👩‍🔬 ❤️", a: "تيمور وشفيقة" },
-            { e: "🧛‍♂️ 🦇 🩸", a: "خط دم" }, { e: "🕯️ 👻 🏫", a: "وردة" },
-            { e: "👨‍💼 💼 🕋", a: "بوحة" }, { e: "🐪 🏜️ 🤣", a: "شورت وفانلة وكاب" },
-            { e: "👨 💍 👩", a: "سهر الليالي" }, { e: "🚖 🤣 👮‍♂️", a: "ليلة سقوط بغداد" },
-            { e: "🎻 🎼 💔", a: "الكيت كات" }, { e: "🏛️ 🕵️‍♂️ 🏺", a: "كنز الدولة" },
-            { e: "🥊 🏋️‍♂️ 🤣", a: "حلم العمر" }, { e: "🎭 🤡 🔫", a: "الفرح" },
-            { e: "🏟️ ⚽ 🤣", a: "العالمي" }, { e: "🏙️ 🏗️ 🏢", a: "كباريه" },
-            { e: "👰 🤵 🚌", a: "يا انا يا خالتي" }, { e: "🕶️ 🚬 👮‍♂️", a: "تيتو" },
-            { e: "🪖 🇪🇬 ⚔️", a: "الممر" }, { e: "🦁 👑 🌅", a: "الاسد الملك" }
-        ];
+        // دالة لفحص صلاحية الدخول قبل البدء
+        async function checkPermission(name) {
+            // 1. فحص هل السيرفر مفتوح للكل
+            const globalSnap = await db.ref('serverSettings/globalOpen').once('value');
+            const isGlobal = globalSnap.val() || false;
 
-        document.getElementById('user-answer').addEventListener('keypress', (e) => { if (e.key === 'Enter') submitAttempt(); });
+            // 2. فحص هل الشخص عنده بريك خاص
+            const userSnap = await db.ref(`userBreaks/${name}`).once('value');
+            const hasBreak = userSnap.val() || false;
 
-        function createRoom() {
+            return (isGlobal || hasBreak);
+        }
+
+        async function createRoom() {
             myName = document.getElementById('user-name').value.trim().toLowerCase();
             if(!myName) return alert("اكتب اسمك أولاً");
+            
+            // الأدمن دائماً يدخل ليتمكن من إدارة الغرفة
             roomID = Math.floor(1000 + Math.random() * 9000);
             isAdmin = true;
             const playlist = Array.from(Array(movies.length).keys()).sort(() => Math.random() - 0.5);
             db.ref('rooms/' + roomID).set({ admin: myName, currentIndex: 0, playlist: playlist, isLocked: false, showScores: false }).then(() => start());
         }
 
-        function joinRoom() {
-            myName = document.getElementById('user-name').value.trim().toLowerCase();
-            roomID = document.getElementById('room-input').value.trim();
-            if(!myName || !roomID) return alert("أكمل بياناتك");
-            db.ref('rooms/' + roomID).once('value', s => {
-                if(s.exists()){ isAdmin = (s.val().admin === myName); start(); } else alert("الغرفة غير موجودة");
-            });
+        async function joinRoom() {
+            const nameInput = document.getElementById('user-name').value.trim().toLowerCase();
+            const idInput = document.getElementById('room-input').value.trim();
+            
+            if(!nameInput || !idInput) return alert("أكمل بياناتك");
+
+            // فحص الغرفة أولاً
+            const roomSnap = await db.ref('rooms/' + idInput).once('value');
+            if(!roomSnap.exists()) return alert("الغرفة غير موجودة");
+
+            const roomData = roomSnap.val();
+            const isRoomAdmin = (roomData.admin === nameInput);
+
+            // إذا لم يكن الأدمن، افحص البريك
+            if(!isRoomAdmin) {
+                const allowed = await checkPermission(nameInput);
+                if(!allowed) {
+                    document.getElementById('lobby').style.display = 'none';
+                    document.getElementById('access-denied').style.display = 'flex';
+                    return;
+                }
+            }
+
+            myName = nameInput;
+            roomID = idInput;
+            isAdmin = isRoomAdmin;
+            start();
         }
 
         function start() {
             document.getElementById('lobby').style.display = 'none';
+            document.getElementById('access-denied').style.display = 'none';
             document.getElementById('game-screen').style.display = 'flex';
             document.getElementById('display-code').innerText = "#" + roomID;
             if(isAdmin) {
@@ -188,16 +200,9 @@
         }
 
         function listen() {
-            // 1. مراقبة حالة البريك (التحكم الفردي) وحالة السيرفر (فتح للجميع)
-            db.ref('serverSettings/globalOpen').on('value', snap => {
-                serverOpen = snap.val() || false;
-                checkAccess();
-            });
-
-            db.ref(`userBreaks/${myName}`).on('value', snap => {
-                myBreakActive = snap.val() || false;
-                checkAccess();
-            });
+            // مراقبة البريك بشكل لحظي (لو قفل وهو شغال)
+            db.ref('serverSettings/globalOpen').on('value', snap => { serverOpen = snap.val() || false; checkAccess(); });
+            db.ref(`userBreaks/${myName}`).on('value', snap => { myBreakActive = snap.val() || false; checkAccess(); });
 
             const rRef = db.ref('rooms/' + roomID);
             rRef.on('value', snap => {
@@ -235,17 +240,17 @@
         }
 
         function checkAccess(forceLock = false) {
+            // لو الشخص مش أدمن وانتهى البريك وهو جوه اللعبة، نخرجه
+            if (!isAdmin && !serverOpen && !myBreakActive) {
+                document.getElementById('game-screen').style.display = 'none';
+                document.getElementById('access-denied').style.display = 'flex';
+                return;
+            }
+
             const input = document.getElementById('user-answer');
             const btn = document.getElementById('send-btn');
             
-            // القاعدة: مسموح فقط إذا (السيرفر مفتوح للكل) أو (البريك الخاص بي شغال) أو (أنا المشرف)
-            const hasPermission = (serverOpen || myBreakActive || isAdmin);
-
-            if (!hasPermission) {
-                input.disabled = true;
-                btn.disabled = true;
-                input.placeholder = "🚫 البريك مغلق حالياً";
-            } else if (forceLock) {
+            if (forceLock) {
                 input.disabled = true;
                 btn.disabled = true;
                 input.placeholder = "انتظر الدور التالي...";
@@ -256,12 +261,46 @@
             }
         }
 
+        // --- باقي دوال اللعبة والأفلام (نفس الكود السابق) ---
+        const movies = [
+            { e: "🐘 🔵", a: "الفيل الازرق" }, { e: "👨‍🏫 🏫 🍎", a: "الناظر" },
+            { e: "🚢 🧊 💔", a: "تيتانيك" }, { e: "🦁 👑", a: "الاسد الملك" },
+            { e: "🏢 👮‍♂️ 👮‍♂️", a: "الخلية" }, { e: "🏝️ 👮‍♂️ 🔫", a: "الجزيرة" },
+            { e: "👳‍♂️ 🏫 📚", a: "صعيدي في الجامعة الامريكية" }, { e: "⚡ 👓 🪄", a: "هاري بوتر" },
+            { e: "🥊 👨‍🦲 🐴", a: "بوحه" }, { e: "🍳 👨‍🍳 🐭", a: "خلطبيطة بالصلصة" },
+            { e: "🤡 🎈", a: "ات" }, { e: "🚢 🤣 👮‍♂️", a: "امير البحار" },
+            { e: "🕵️‍♂️ 🇮🇹", a: "كازابلانكا" }, { e: "👨‍👩‍👧‍👦 🏠 👻", a: "الانس والنمس" },
+            { e: "👮‍♂️ 🏫 👨‍👩‍👧‍👦", a: "الباشا تلميذ" }, { e: "👳‍♂️ 🏦 💰", a: "طير انت" },
+            { e: "🏎️ 👨‍👩‍👧‍👦", a: "فول الصين العظيم" }, { e: "👨‍🦱 🕶️ 🦅", a: "اتش دبور" },
+            { e: "🥊 🐴 🥩", a: "اللمبي" }, { e: "🕵️‍♂️ 📱 🕵️‍♂️", a: "ولاد رزق" },
+            { e: "🏨 🧟‍♂️", a: "حملة فرعون" }, { e: "👨‍🏫 🤣", a: "مدرسة المشاغبين" },
+            { e: "🍔 🍕 🐘", a: "اكس لارج" }, { e: "✈️ 🇪🇬 🕶️", a: "عسل اسود" },
+            { e: "👔 💼 🤣", a: "مرجان احمد مرجان" }, { e: "🤵 👰 🔪", a: "افواه وارانب" },
+            { e: "🪖 🇬🇧 🇪🇬", a: "كيرة والجن" }, { e: "👴 👴 👴 🏖️", a: "وقفة رجالة" },
+            { e: "🧠 🖐️ 🤣", a: "مش انا" }, { e: "💡 🏃‍♂️ 🤣", a: "واحد تاني" },
+            { e: "✈️ 🏝️ 💃", a: "لف ودوران" }, { e: "🏢 🏗️ 🤣", a: "مطب صناعي" },
+            { e: "🧔 🔫 🤣", a: "جعلتني مجرما" }, { e: "🍔 📻 🤣", a: "ظرف طارق" },
+            { e: "🧠 👨‍🎨 ✈️", a: "اسف على الازعاج" }, { e: "🕺 🕺 🕺 ⏳", a: "سمير وشهير وبهير" },
+            { e: "🛵 🇮🇹 🍕", a: "همام في امستردام" }, { e: "🏍️ 🥖 👮‍♂️", a: "ابو علي" },
+            { e: "👮‍♂️ 🤵 🤣", a: "البدلة" }, { e: "⚔️ 🦁 🏹", a: "الناصر صلاح الدين" },
+            { e: "👦 👦 👦", a: "كده رضا" }, { e: "⚖️ 👨‍⚖️ 🏢", a: "ضد الحكومة" },
+            { e: "🐍 🪜", a: "السلم والثعبان" }, { e: "👮‍♂️ 👩‍🔬 ❤️", a: "تيمور وشفيقة" },
+            { e: "🧛‍♂️ 🦇 🩸", a: "خط دم" }, { e: "🕯️ 👻 🏫", a: "وردة" },
+            { e: "👨‍💼 💼 🕋", a: "بوحة" }, { e: "🐪 🏜️ 🤣", a: "شورت وفانلة وكاب" },
+            { e: "👨 💍 👩", a: "سهر الليالي" }, { e: "🚖 🤣 👮‍♂️", a: "ليلة سقوط بغداد" },
+            { e: "🎻 🎼 💔", a: "الكيت كات" }, { e: "🏛️ 🕵️‍♂️ 🏺", a: "كنز الدولة" },
+            { e: "🥊 🏋️‍♂️ 🤣", a: "حلم العمر" }, { e: "🎭 🤡 🔫", a: "الفرح" },
+            { e: "🏟️ ⚽ 🤣", a: "العالمي" }, { e: "🏙️ 🏗️ 🏢", a: "كباريه" },
+            { e: "👰 🤵 🚌", a: "يا انا يا خالتي" }, { e: "🕶️ 🚬 👮‍♂️", a: "تيتو" },
+            { e: "🪖 🇪🇬 ⚔️", a: "الممر" }, { e: "🦁 👑 🌅", a: "الاسد الملك" }
+        ];
+
+        document.getElementById('user-answer').addEventListener('keypress', (e) => { if (e.key === 'Enter') submitAttempt(); });
         function submitAttempt() {
             if (!serverOpen && !myBreakActive && !isAdmin) return;
             const input = document.getElementById('user-answer');
             const ans = input.value.trim();
             if(!ans) return;
-            
             db.ref('rooms/' + roomID).once('value', s => {
                 const room = s.val();
                 if(room.isLocked || room.showScores) return;
@@ -275,7 +314,6 @@
                 input.value = "";
             });
         }
-
         function updateScoresUI(scores) {
             const list = document.getElementById('scores-list');
             list.innerHTML = "";
@@ -283,7 +321,6 @@
                 list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:12px; border-bottom:1px solid #334155;"><span>${name}</span> <b>${pts} نقطة</b></div>`;
             });
         }
-
         function toggleGlobalResults(show) { db.ref(`rooms/${roomID}`).update({ showScores: show }); }
         function revealToAll() { db.ref(`rooms/${roomID}`).update({ isLocked: true, revealed: true }); }
         function nextQuestion() {
