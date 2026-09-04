@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم الإدارية - محمود</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <style>
+        :root { --bg: #0b0e1a; --card: #161b30; --primary: #7269ff; --accent: #00d2ff; --text: #e0e6ed; --success: #00ff88; }
+        body { background: var(--bg); color: var(--text); font-family: 'Cairo', sans-serif; margin: 0; padding: 20px; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        
+        .header { 
+            text-align: center; margin-bottom: 30px; padding: 30px; 
+            background: linear-gradient(135deg, #1a1f3c, #2c3464); 
+            border-radius: 25px; border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+        }
+        .header h1 { margin: 0; font-size: 26px; letter-spacing: 1px; }
+        .signature { margin-top: 15px; font-size: 18px; color: var(--accent); font-weight: bold; text-shadow: 0 0 8px rgba(0,210,255,0.4); }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; }
+        .card { background: var(--card); border-radius: 20px; padding: 20px; border: 1px solid rgba(255,255,255,0.05); }
+        .card h2 { font-size: 18px; margin-bottom: 20px; color: var(--accent); display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #2a314d; padding-bottom: 10px; }
+        
+        .user-row { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 15px; background: rgba(255,255,255,0.02); 
+            border-radius: 15px; margin-bottom: 10px; border: 1px solid transparent; transition: 0.3s;
+        }
+        .user-row:hover { border-color: var(--primary); background: rgba(114, 105, 255, 0.05); }
+
+        /* Switch Style */
+        .switch { position: relative; display: inline-block; width: 46px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--success); box-shadow: 0 0 10px var(--success); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        .badge-online { background: var(--success); color: #000; font-size: 11px; padding: 2px 8px; border-radius: 5px; font-weight: bold; }
+        .btn-back { display: block; width: fit-content; margin: 30px auto; padding: 12px 30px; background: #e74c3c; color: white; text-decoration: none; border-radius: 12px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>🚀 لوحة الإدارة الذكية</h1>
+        <div class="signature">😉 دي حاجه بسيطه من محمود بي غمزه</div>
+    </div>
+
+    <div class="grid">
+        <!-- الحالة العامة -->
+        <div class="card">
+            <h2>🌐 دخول سريع للكل</h2>
+            <div class="user-row" style="background: rgba(0, 210, 255, 0.05);">
+                <span>فتح الموقع فوراً للجميع</span>
+                <label class="switch">
+                    <input type="checkbox" id="globalToggle" onchange="toggleGlobal(this.checked)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <!-- المتصلون -->
+        <div class="card">
+            <h2>🟢 المتصلون الآن <span id="count" style="margin-right:auto; font-size:12px; opacity:0.6;">0</span></h2>
+            <div id="activeList"></div>
+        </div>
+
+        <!-- التحكم الفردي -->
+        <div class="card">
+            <h2>👤 فتح دخول مباشر (بدون رصيد بريك)</h2>
+            <div id="usersList"></div>
+        </div>
+    </div>
+
+    <a href="index.html" class="btn-back">الخروج من لوحة التحكم</a>
+</div>
+
+<script>
+// إعدادات الفايربيس (نفس الإعدادات الأصلية)
+const firebaseConfig = {
+    apiKey: "AIzaSyAD0YJCv4EW8iaceUgnZkbXyI1MSNhQ3fc",
+    authDomain: "brak-nagaf-v2.firebaseapp.com",
+    databaseURL: "https://brak-nagaf-v2-default-rtdb.firebaseio.com",
+    projectId: "brak-nagaf-v2",
+    storageBucket: "brak-nagaf-v2.firebasestorage.app",
+    messagingSenderId: "637473406996",
+    appId: "1:637473406996:web:4c6538e86dee9cb4c72701"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// التحكم العام
+function toggleGlobal(s) { db.ref('gameSettings').update({ allowAll: s }); }
+db.ref('gameSettings/allowAll').on('value', s => { document.getElementById('globalToggle').checked = s.val(); });
+
+// عرض المتصلين
+db.ref('active_players').on('value', s => {
+    const list = document.getElementById('activeList');
+    const data = s.val();
+    list.innerHTML = data ? "" : "<p style='text-align:center; opacity:0.5;'>لا يوجد لاعبين حالياً</p>";
+    if(data) {
+        document.getElementById('count').innerText = Object.keys(data).length;
+        Object.values(data).forEach(p => {
+            list.innerHTML += `<div class="user-row"><span>👤 ${p.name}</span><span class="badge-online">أونلاين</span></div>`;
+        });
+    }
+});
+
+// التحكم في الدخول المباشر
+db.ref('users').on('value', s => {
+    const list = document.getElementById('usersList');
+    list.innerHTML = "";
+    const users = s.val();
+    for(let id in users) {
+        let u = users[id];
+        // ملاحظة: قمنا باستخدام isOnBreak لضمان فتح الموقع، لكننا سنضيف isVip لتجنب خصم الرصيد في بعض السيستمات
+        list.innerHTML += `
+            <div class="user-row">
+                <span><strong>${id}</strong></span>
+                <label class="switch">
+                    <input type="checkbox" ${u.isOnBreak ? 'checked' : ''} onchange="forceOpen('${id}', this.checked)">
+                    <span class="slider"></span>
+                </label>
+            </div>`;
+    }
+});
+
+function forceOpen(uid, status) {
+    // نقوم بتحديث الـ isOnBreak لفتح الشاشة، ونصفر أي عداد بريك إذا كان موجوداً
+    // جرب إضافة 'isVip': status إذا كان السيستم يدعمها لتخطي الخصم
+    db.ref('users/' + uid).update({ 
+        isOnBreak: status,
+        isVip: status, // محاولة لتخطي حساب الوقت (إذا كان السيستم يدعمها)
+        lastBreakTime: 0 // تصفير وقت آخر بريك لمنع العداد من البدء بشكل تلقائي
+    });
+}
+</script>
+</body>
+</html>
