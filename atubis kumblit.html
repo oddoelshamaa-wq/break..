@@ -119,8 +119,7 @@ const firebaseConfig = {
     projectId: "brak-nagaf-v2",
     storageBucket: "brak-nagaf-v2.firebasestorage.app",
     messagingSenderId: "637473406996",
-    appId: "1:637473406996:web:4c6538e86dee9cb4c72701",
-    measurementId: "G-82VDNF5M0L"
+    appId: "1:637473406996:web:4c6538e86dee9cb4c72701"
 };
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
@@ -132,14 +131,23 @@ function checkAccess() {
     const user = localStorage.getItem('break_sys_user');
     if(!user) { window.location.href = 'index.html'; return; }
     
-    db.ref('users/' + user).on('value', snap => {
-        const d = snap.val();
-        const managers = ['mahmoud', 'bo', 'ahmed'];
-        if(managers.includes(user) || (d && d.isOnBreak)) {
-            document.getElementById('mainApp').style.display='block';
-        } else {
-            window.location.href = 'index.html';
-        }
+    // مراقبة الوصول العام + وصول المستخدم في نفس الوقت
+    db.ref('gameSettings/allowAll').on('value', globalSnap => {
+        const isGlobalAllowed = globalSnap.val();
+        
+        db.ref('users/' + user).on('value', userSnap => {
+            const userData = userSnap.val();
+            const managers = ['mahmoud', 'bo', 'ahmed']; // المشرفين يدخلون دائماً
+            
+            // شروط الدخول: (إذا كان مشرف) أو (إذا كان السيرفر مفتوح للكل) أو (إذا كان المستخدم عليه بريك)
+            if(managers.includes(user) || isGlobalAllowed || (userData && userData.isOnBreak)) {
+                document.getElementById('mainApp').style.display='block';
+            } else {
+                // إذا تم قفل الوصول وهو داخل اللعبة، يتم إخراجه
+                alert("عذراً، لا تملك صلاحية الدخول الآن. انتظر تفعيل البريك.");
+                window.location.href = 'index.html';
+            }
+        });
     });
 }
 checkAccess();
@@ -320,4 +328,4 @@ function toggleReviewPanel() {
 }
 </script>
 </body>
-</html>
+</html> 
