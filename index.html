@@ -14337,6 +14337,34 @@ function activateSohraImmediately() {
         if (typeof triggerGlobalRefresh === "function") triggerGlobalRefresh();
     });
 }
+function shareFilmGameLink() {
+    const gameUrl = 'https://oddoelshamaa-wq.github.io/break../film%20.html';
+    const messageText = `🎬 يا شباب، تعالوا نلعب "لعبة الأفلام" مع بعض! \n👇 ادخلوا من اللينك ده: \n${gameUrl}`;
+
+    // 1. التحقق هل المستخدم فاتح محادثة حالياً؟
+    if (!currentChatID) {
+        alert("افتح شات (خاص أو مجموعة) الأول عشان تشارك اللينك مع أصحابك! 📣");
+        window.open(gameUrl, '_blank'); 
+        return;
+    }
+
+    // 2. تحديد مسار الإرسال (خاص أو مجموعة)
+    const path = currentChatType === 'private' ? 'private_messages/' : 'group_messages/';
+
+    // 3. إرسال الرسالة إلى Firebase
+    db.ref(path + currentChatID).push({
+        sender: currentUser.username,
+        text: messageText,
+        timestamp: getServerTime()
+    }).then(() => {
+        // 4. بعد نجاح الإرسال، نفتح اللعبة للمستخدم
+        console.log("تمت مشاركة لينك الأفلام بنجاح ✅");
+        window.location.href = gameUrl; 
+    }).catch((error) => {
+        console.error("خطأ في المشاركة:", error);
+        window.location.href = gameUrl; // فتح اللعبة حتى لو فشل الإرسال
+    });
+}
                     </script>
                 
             <!-- ... أكواد المودالز القديمة ... -->
@@ -14443,6 +14471,10 @@ function activateSohraImmediately() {
     <button onclick="shareBusGameLink()" class="btn btn-dark" style="border:1px solid #10b981;">
         🚌 أتوبيس كومبليت (مشاركة ولعب)
     </button>
+    <!-- الزر المطور للعبة الأفلام -->
+<button onclick="shareFilmGameLink()" class="btn btn-dark" style="border:1px solid #ec4899;">
+    🎬 لعبة الأفلام (مشاركة ولعب)
+</button>
     </div>
                 <!-- تأكد إن ده هو آخر سطر في الملف -->
         
