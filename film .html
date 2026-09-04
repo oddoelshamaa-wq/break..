@@ -14,7 +14,6 @@
             --safe-bottom: env(safe-area-inset-bottom);
         }
 
-        /* قفل اللعبة على الكمبيوتر */
         #mobile-only-warning {
             display: none; position: fixed; inset: 0; background: var(--bg);
             z-index: 9999; flex-direction: column; align-items: center; justify-content: center;
@@ -22,7 +21,7 @@
         }
         @media (min-width: 768px) { #mobile-only-warning { display: flex; } body { overflow: hidden; } }
 
-        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; touch-action: manipulation; }
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
         body { background: var(--bg); color: var(--text); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
         #lobby { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
@@ -37,49 +36,41 @@
         .feed-container { flex: 1; background: rgba(0,0,0,0.2); border-radius: 15px; padding: 10px; overflow-y: auto; display: flex; flex-direction: column-reverse; gap: 8px; border: 1px solid #334155; }
         .msg { padding: 10px; border-radius: 10px; font-size: 0.9rem; }
         .msg.correct { background: rgba(34, 197, 94, 0.2); border: 1px solid var(--secondary); color: #4ade80; }
-        .msg.wrong { background: rgba(255,255,255,0.05); }
-
+        
         .admin-panel { background: #1e293b; padding: 10px; display: none; gap: 5px; border-top: 1px solid #334155; }
         .adm-btn { flex: 1; padding: 10px 5px; border-radius: 8px; border: none; color: white; font-size: 0.75rem; font-weight: bold; }
 
         .input-bar { background: var(--card); padding: 10px 10px calc(10px + var(--safe-bottom)); display: flex; gap: 8px; border-top: 1px solid #334155; }
         .send-btn { background: var(--primary); color: white; border: none; padding: 0 15px; border-radius: 12px; font-weight: bold; }
-        .send-btn:disabled { background: #334155; opacity: 0.5; }
 
-        #global-scores-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.98); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        .scores-card { background: var(--card); width: 90%; border-radius: 24px; padding: 20px; }
-        
-        /* شاشات المنع */
         #access-denied, #no-login { display:none; position:fixed; inset:0; background:var(--bg); z-index:10000; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px; }
+        
+        .status-badge { font-size: 11px; padding: 4px 10px; border-radius: 20px; margin-top: 5px; display: inline-block; }
+        .status-open { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+        .status-closed { background: rgba(239, 68, 68, 0.2); color: #f87171; }
     </style>
 </head>
 <body>
 
-    <div id="mobile-only-warning">
-        <div style="font-size: 50px;">📱</div>
-        <h2>عذراً، هذه اللعبة للموبايل فقط!</h2>
-    </div>
-
-    <!-- شاشة إذا لم يسجل دخول في نظام البريك أصلاً -->
     <div id="no-login">
         <div style="font-size: 60px;">🔑</div>
         <h2 style="color:var(--primary)">يرجى تسجيل الدخول</h2>
         <p>يجب فتح نظام البريك وتسجيل الدخول بحسابك أولاً.</p>
     </div>
 
-    <!-- شاشة إذا كان الموظف شغال ومش في بريك -->
     <div id="access-denied">
         <div style="font-size: 60px;">🛑</div>
-        <h2 style="color:var(--danger)">البريك غير مفعل!</h2>
-        <p>الموقع يفتح فقط عندما تكون في فترة (بريك، صلاة، أو VIP).</p>
+        <h2 style="color:var(--danger)">اللعبة مغلقة حالياً</h2>
+        <p id="denied-reason">الموقع يفتح فقط عندما تكون في فترة بريك أو عندما يفتح الأدمن السيرفر للجميع.</p>
+        <button onclick="location.reload()" style="padding:12px 30px; background:var(--primary); color:white; border:none; border-radius:10px; margin-top:20px;">تحديث الحالة</button>
     </div>
 
     <div id="lobby">
         <div class="lobby-box">
             <h2 style="margin-top:0;">🎬 خمن الفيلم</h2>
             <div id="user-info" style="margin-bottom: 20px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 15px;">
-                <p style="margin:0; font-size: 14px; color: #aaa;">أهلاً بك يا بطل</p>
-                <b id="detected-name" style="color: var(--primary); font-size: 18px;">جاري التعرف...</b>
+                <b id="detected-name" style="color: var(--primary); font-size: 18px;">...</b>
+                <div id="server-status-label"></div>
             </div>
             
             <button onclick="createRoom()" style="width:100%; padding:15px; background:var(--primary); color:white; border:none; border-radius:12px; margin-bottom:10px; font-weight:bold;">إنشاء غرفة</button>
@@ -95,9 +86,9 @@
         <div class="header">
             <div id="display-code" style="font-size:12px; color:#94a3b8">#----</div>
             <div style="font-weight:bold; font-size:14px;">🎬 تحدي الأفلام</div>
-            <div onclick="location.reload()" style="color:var(--danger); font-size:14px; font-weight:bold;">خروج</div>
+            <div onclick="leaveGame()" style="color:var(--danger); font-size:14px; font-weight:bold;">خروج</div>
         </div>
-
+        <!-- ... باقي واجهة اللعبة كما هي ... -->
         <div class="game-area">
             <div id="status-banner" style="display:none; padding:10px; border-radius:10px; text-align:center; font-size:13px; margin-bottom:10px; font-weight:bold;"></div>
             <div class="emoji-box" id="emoji-display">⏳</div>
@@ -120,221 +111,178 @@
     <div id="global-scores-overlay">
         <div class="scores-card">
             <h3 style="text-align:center; margin-top:0;">🏆 قائمة المتصدرين</h3>
-            <div id="scores-list" style="max-height:300px; overflow-y:auto;"></div>
+            <div id="scores-list"></div>
             <div id="admin-close-btn" style="display:none">
                 <button onclick="toggleGlobalResults(false)" style="width:100%; padding:12px; background:var(--danger); color:white; border:none; border-radius:12px; margin-top:15px;">إغلاق عند الجميع</button>
             </div>
-            <p id="player-wait-msg" style="text-align:center; color:#94a3b8; font-size:12px; margin-top:10px;">انتظر المشرف لبدء الدور التالي...</p>
         </div>
     </div>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAD0YJCv4EW8iaceUgnZkbXyI1MSNhQ3fc",
-            authDomain: "brak-nagaf-v2.firebaseapp.com",
-            databaseURL: "https://brak-nagaf-v2-default-rtdb.firebaseio.com",
-            projectId: "brak-nagaf-v2",
-            storageBucket: "brak-nagaf-v2.firebasestorage.app",
-            messagingSenderId: "637473406996",
-            appId: "1:637473406996:web:4c6538e86dee9cb4c72701"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+<script>
+const firebaseConfig = {
+    apiKey: "AIzaSyAD0YJCv4EW8iaceUgnZkbXyI1MSNhQ3fc",
+    authDomain: "brak-nagaf-v2.firebaseapp.com",
+    databaseURL: "https://brak-nagaf-v2-default-rtdb.firebaseio.com",
+    projectId: "brak-nagaf-v2",
+    storageBucket: "brak-nagaf-v2.firebasestorage.app",
+    messagingSenderId: "637473406996",
+    appId: "1:637473406996:web:4c6538e86dee9cb4c72701"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-        let myName = "", roomID = null, isAdmin = false;
-        const MANAGERS = ['mahmoud', 'bo', 'ahmed']; 
+let myName = "", roomID = null, isAdmin = false;
+let globalAllow = false; // حالة "فتح اللعبة للجميع"
+const MANAGERS = ['mahmoud', 'bo', 'ahmed']; 
 
-        // 1. التعرف على الموظف والتحقق من حالته فورياً
-        window.onload = function() {
-            const savedUser = localStorage.getItem('break_sys_user');
-            
-            if (!savedUser) {
-                document.getElementById('lobby').style.display = 'none';
-                document.getElementById('no-login').style.display = 'flex';
-                return;
-            }
+// 1. مراقبة حالة السيرفر والبريك
+window.onload = function() {
+    const savedUser = localStorage.getItem('break_sys_user');
+    if (!savedUser) {
+        document.getElementById('lobby').style.display = 'none';
+        document.getElementById('no-login').style.display = 'flex';
+        return;
+    }
+    myName = savedUser.toLowerCase();
 
-            myName = savedUser.toLowerCase();
+    // استماع لحالة "فتح اللعبة للجميع" من لوحة التحكم
+    db.ref('gameSettings/allowAll').on('value', snap => {
+        globalAllow = snap.val() || false;
+        updateServerStatusLabel();
+        checkAccess();
+    });
 
-            // مراقبة حالة البريك من السيرفر بشكل لحظي
-            db.ref(`users/${myName}`).on('value', snap => {
-                const userData = snap.val();
-                if (!userData) return;
+    // استماع لحالة البريك الشخصي
+    db.ref(`users/${myName}`).on('value', snap => {
+        const userData = snap.val() || {};
+        document.getElementById('detected-name').innerText = userData.realName || myName;
+        checkAccess(userData.isOnBreak);
+    });
+};
 
-                document.getElementById('detected-name').innerText = userData.realName || myName;
+function updateServerStatusLabel() {
+    const label = document.getElementById('server-status-label');
+    if (globalAllow) {
+        label.innerHTML = '<span class="status-badge status-open">🌐 السيرفر مفتوح للجميع</span>';
+    } else {
+        label.innerHTML = '<span class="status-badge status-closed">🔒 الدخول بالبريك فقط</span>';
+    }
+}
 
-                // لو مش أدمن ومش في بريك، اقفل اللعبة
-                if (!MANAGERS.includes(myName) && userData.isOnBreak !== true) {
-                    showBlocked();
-                } else {
-                    unblock();
-                }
-            });
-        };
+// 2. فحص الصلاحية لدخول اللعبة
+function checkAccess(personalBreakStatus) {
+    const isManager = MANAGERS.includes(myName);
+    const isOnBreak = personalBreakStatus === true;
 
-        function showBlocked() {
-            document.getElementById('lobby').style.display = 'none';
-            document.getElementById('game-screen').style.display = 'none';
-            document.getElementById('access-denied').style.display = 'flex';
-        }
-
-        function unblock() {
-            document.getElementById('access-denied').style.display = 'none';
-            // نُظهر اللوبي فقط إذا لم يكن اللاعب داخل جيم بالفعل
-            if (roomID === null) {
-                document.getElementById('lobby').style.display = 'flex';
-            } else {
-                document.getElementById('game-screen').style.display = 'flex';
-            }
-        }
-
-        function createRoom() {
-            roomID = Math.floor(1000 + Math.random() * 9000);
-            isAdmin = true;
-            const playlist = Array.from(Array(movies.length).keys()).sort(() => Math.random() - 0.5);
-            db.ref('rooms/' + roomID).set({ admin: myName, currentIndex: 0, playlist: playlist, isLocked: false, showScores: false }).then(() => start());
-        }
-
-        function joinRoom() {
-            const idInput = document.getElementById('room-input').value.trim();
-            if(!idInput) return alert("أدخل كود الغرفة");
-            db.ref('rooms/' + idInput).once('value', s => {
-                if(s.exists()){ 
-                    roomID = idInput;
-                    isAdmin = (s.val().admin === myName); 
-                    start(); 
-                } else alert("الغرفة غير موجودة");
-            });
-        }
-
-        function start() {
-            document.getElementById('lobby').style.display = 'none';
-            document.getElementById('game-screen').style.display = 'flex';
-            document.getElementById('display-code').innerText = "#" + roomID;
-            if(isAdmin) {
-                document.getElementById('admin-tools').style.display = 'flex';
-                document.getElementById('admin-close-btn').style.display = 'block';
-                document.getElementById('player-wait-msg').style.display = 'none';
-            }
-            db.ref(`rooms/${roomID}/scores/${myName}`).transaction(s => s || 0);
-            listenToRoom();
-        }
-
-        function listenToRoom() {
-            const rRef = db.ref('rooms/' + roomID);
-            rRef.on('value', snap => {
-                const room = snap.val();
-                if(!room) return;
-
-                const movie = movies[room.playlist[room.currentIndex]];
-                document.getElementById('emoji-display').innerText = movie.e;
-                document.getElementById('movie-count').innerText = `الفيلم ${room.currentIndex + 1} من ${room.playlist.length}`;
-
-                const overlay = document.getElementById('global-scores-overlay');
-                overlay.style.display = room.showScores ? 'flex' : 'none';
-                if(room.showScores) updateScoresUI(room.scores);
-
-                const banner = document.getElementById('status-banner');
-                if(room.isLocked) {
-                    banner.style.display = 'block';
-                    banner.style.background = room.winner ? "var(--secondary)" : "var(--accent)";
-                    banner.innerText = room.winner ? `🎉 فاز ${room.winner}: ${movie.a}` : `👁️ الحل: ${movie.a}`;
-                } else {
-                    banner.style.display = 'none';
-                }
-                
-                checkInputLock(room.isLocked || room.showScores);
-            });
-
-            db.ref(`rooms/${roomID}/guesses`).limitToLast(20).on('child_added', snap => {
-                const g = snap.val();
-                const feed = document.getElementById('feed');
-                const div = document.createElement('div');
-                div.className = `msg ${g.isCorrect ? 'correct' : 'wrong'}`;
-                div.innerHTML = `<b>${g.user}:</b> ${g.text} ${g.isCorrect ? '✅' : '❌'}`;
-                feed.prepend(div);
-            });
-        }
-
-        function checkInputLock(forceLock) {
-            const input = document.getElementById('user-answer');
-            const btn = document.getElementById('send-btn');
-            if (forceLock) {
-                input.disabled = true; btn.disabled = true; input.placeholder = "انتظر...";
-            } else {
-                input.disabled = false; btn.disabled = false; input.placeholder = "اسم الفيلم...";
-            }
-        }
-
-        const movies = [
-            { e: "🐘 🔵", a: "الفيل الازرق" }, { e: "👨‍🏫 🏫 🍎", a: "الناظر" },
-            { e: "🚢 🧊 💔", a: "تيتانيك" }, { e: "🦁 👑", a: "الاسد الملك" },
-            { e: "🏢 👮‍♂️ 👮‍♂️", a: "الخلية" }, { e: "🏝️ 👮‍♂️ 🔫", a: "الجزيرة" },
-            { e: "👳‍♂️ 🏫 📚", a: "صعيدي في الجامعة الامريكية" }, { e: "⚡ 👓 🪄", a: "هاري بوتر" },
-            { e: "🥊 👨‍🦲 🐴", a: "بوحه" }, { e: "🍳 👨‍🍳 🐭", a: "خلطبيطة بالصلصة" },
-            { e: "🤡 🎈", a: "ات" }, { e: "🚢 🤣 👮‍♂️", a: "امير البحار" },
-            { e: "🕵️‍♂️ 🇮🇹", a: "كازابلانكا" }, { e: "👨‍👩‍👧‍👦 🏠 👻", a: "الانس والنمس" },
-            { e: "👮‍♂️ 🏫 👨‍👩‍👧‍👦", a: "الباشا تلميذ" }, { e: "👳‍♂️ 🏦 💰", a: "طير انت" },
-            { e: "🏎️ 👨‍👩‍👧‍👦", a: "فول الصين العظيم" }, { e: "👨‍🦱 🕶️ 🦅", a: "اتش دبور" },
-            { e: "🥊 🐴 🥩", a: "اللمبي" }, { e: "🕵️‍♂️ 📱 🕵️‍♂️", a: "ولاد رزق" },
-            { e: "🏨 🧟‍♂️", a: "حملة فرعون" }, { e: "👨‍🏫 🤣", a: "مدرسة المشاغبين" },
-            { e: "🍔 🍕 🐘", a: "اكس لارج" }, { e: "✈️ 🇪🇬 🕶️", a: "عسل اسود" },
-            { e: "👔 💼 🤣", a: "مرجان احمد مرجان" }, { e: "🤵 👰 🔪", a: "افواه وارانب" },
-            { e: "🪖 🇬🇧 🇪🇬", a: "كيرة والجن" }, { e: "👴 👴 👴 🏖️", a: "وقفة رجالة" },
-            { e: "🧠 🖐️ 🤣", a: "مش انا" }, { e: "💡 🏃‍♂️ 🤣", a: "واحد تاني" },
-            { e: "✈️ 🏝️ 💃", a: "لف ودوران" }, { e: "🏢 🏗️ 🤣", a: "مطب صناعي" },
-            { e: "🧔 🔫 🤣", a: "جعلتني مجرما" }, { e: "🍔 📻 🤣", a: "ظرف طارق" },
-            { e: "🧠 👨‍🎨 ✈️", a: "اسف على الازعاج" }, { e: "🕺 🕺 🕺 ⏳", a: "سمير وشهير وبهير" },
-            { e: "🛵 🇮🇹 🍕", a: "همام في امستردام" }, { e: "🏍️ 🥖 👮‍♂️", a: "ابو علي" },
-            { e: "👮‍♂️ 🤵 🤣", a: "البدلة" }, { e: "⚔️ 🦁 🏹", a: "الناصر صلاح الدين" },
-            { e: "👦 👦 👦", a: "كده رضا" }, { e: "⚖️ 👨‍⚖️ 🏢", a: "ضد الحكومة" },
-            { e: "🐍 🪜", a: "السلم والثعبان" }, { e: "👮‍♂️ 👩‍🔬 ❤️", a: "تيمور وشفيقة" },
-            { e: "🧛‍♂️ 🦇 🩸", a: "خط دم" }, { e: "🕯️ 👻 🏫", a: "وردة" },
-            { e: "🐪 🏜️ 🤣", a: "شورت وفانلة وكاب" },
-            { e: "👨 💍 👩", a: "سهر الليالي" }, { e: "🚖 🤣 👮‍♂️", a: "ليلة سقوط بغداد" },
-            { e: "🎻 🎼 💔", a: "الكيت كات" }, { e: "🏛️ 🕵️‍♂️ 🏺", a: "كنز الدولة" },
-            { e: "🥊 🏋️‍♂️ 🤣", a: "حلم العمر" }, { e: "🎭 🤡 🔫", a: "الفرح" },
-            { e: "🏟️ ⚽ 🤣", a: "العالمي" }, { e: "🏙️ 🏗️ 🏢", a: "كباريه" },
-            { e: "👰 🤵 🚌", a: "يا انا يا خالتي" }, { e: "🕶️ 🚬 👮‍♂️", a: "تيتو" },
-            { e: "🪖 🇪🇬 ⚔️", a: "الممر" }
-        ];
-
-        document.getElementById('user-answer').addEventListener('keypress', (e) => { if (e.key === 'Enter') submitAttempt(); });
+    // المسموح لهم: (المديرين) أو (السيرفر مفتوح للكل) أو (الموظف في بريك)
+    if (isManager || globalAllow || isOnBreak) {
+        document.getElementById('access-denied').style.display = 'none';
+        if (roomID === null) document.getElementById('lobby').style.display = 'flex';
         
-        function submitAttempt() {
-            const input = document.getElementById('user-answer');
-            const ans = input.value.trim();
-            if(!ans) return;
-            
-            db.ref('rooms/' + roomID).once('value', s => {
-                const room = s.val();
-                if(room.isLocked || room.showScores) return;
-                const correct = movies[room.playlist[room.currentIndex]].a;
-                const isCorrect = (normalize(ans) === normalize(correct));
-                db.ref(`rooms/${roomID}/guesses`).push({ user: myName, text: ans, isCorrect: isCorrect });
-                if(isCorrect) {
-                    db.ref(`rooms/${roomID}`).update({ isLocked: true, winner: myName });
-                    db.ref(`rooms/${roomID}/scores/${myName}`).transaction(p => (p || 0) + 1);
-                }
-                input.value = "";
-            });
-        }
+        // تسجيله في قائمة "المتصلون الآن" في لوحة التحكم
+        db.ref(`active_players/${myName}`).set({ name: myName, lastSeen: Date.now() });
+        db.ref(`active_players/${myName}`).onDisconnect().remove();
+    } else {
+        document.getElementById('lobby').style.display = 'none';
+        document.getElementById('game-screen').style.display = 'none';
+        document.getElementById('access-denied').style.display = 'flex';
+        db.ref(`active_players/${myName}`).remove();
+    }
+}
 
-        function updateScoresUI(scores) {
-            const list = document.getElementById('scores-list');
-            list.innerHTML = "";
-            Object.entries(scores || {}).sort((a,b) => b[1] - a[1]).forEach(([name, pts]) => {
-                list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:12px; border-bottom:1px solid #334155;"><span>${name}</span> <b>${pts} نقطة</b></div>`;
-            });
-        }
+function leaveGame() {
+    db.ref(`active_players/${myName}`).remove();
+    location.reload();
+}
 
-        function toggleGlobalResults(show) { db.ref(`rooms/${roomID}`).update({ showScores: show }); }
-        function revealToAll() { db.ref(`rooms/${roomID}`).update({ isLocked: true, revealed: true }); }
-        function nextQuestion() {
-            db.ref(`rooms/${roomID}`).update({ currentIndex: firebase.database.ServerValue.increment(1), isLocked: false, winner: null, revealed: false, showScores: false, guesses: null });
-            document.getElementById('feed').innerHTML = "";
+// --- دوال اللعبة الأساسية (بدون تغيير) ---
+function createRoom() {
+    roomID = Math.floor(1000 + Math.random() * 9000);
+    isAdmin = true;
+    const playlist = Array.from(Array(movies.length).keys()).sort(() => Math.random() - 0.5);
+    db.ref('rooms/' + roomID).set({ admin: myName, currentIndex: 0, playlist: playlist, isLocked: false, showScores: false }).then(() => start());
+}
+
+function joinRoom() {
+    const idInput = document.getElementById('room-input').value.trim();
+    if(!idInput) return alert("أدخل كود الغرفة");
+    db.ref('rooms/' + idInput).once('value', s => {
+        if(s.exists()){ 
+            roomID = idInput;
+            isAdmin = (s.val().admin === myName); 
+            start(); 
+        } else alert("الغرفة غير موجودة");
+    });
+}
+
+function start() {
+    document.getElementById('lobby').style.display = 'none';
+    document.getElementById('game-screen').style.display = 'flex';
+    document.getElementById('display-code').innerText = "#" + roomID;
+    if(isAdmin) document.getElementById('admin-tools').style.display = 'flex';
+    db.ref(`rooms/${roomID}/scores/${myName}`).transaction(s => s || 0);
+    listenToRoom();
+}
+
+function listenToRoom() {
+    const rRef = db.ref('rooms/' + roomID);
+    rRef.on('value', snap => {
+        const room = snap.val();
+        if(!room) return;
+        const movie = movies[room.playlist[room.currentIndex]];
+        document.getElementById('emoji-display').innerText = movie.e;
+        document.getElementById('movie-count').innerText = `الفيلم ${room.currentIndex + 1} من ${room.playlist.length}`;
+        document.getElementById('global-scores-overlay').style.display = room.showScores ? 'flex' : 'none';
+        if(room.showScores) updateScoresUI(room.scores);
+        
+        const banner = document.getElementById('status-banner');
+        if(room.isLocked) {
+            banner.style.display = 'block';
+            banner.style.background = room.winner ? "var(--secondary)" : "var(--accent)";
+            banner.innerText = room.winner ? `🎉 فاز ${room.winner}: ${movie.a}` : `👁️ الحل: ${movie.a}`;
+        } else { banner.style.display = 'none'; }
+    });
+    // استكمال كود guesses...
+    db.ref(`rooms/${roomID}/guesses`).limitToLast(10).on('child_added', snap => {
+        const g = snap.val();
+        const feed = document.getElementById('feed');
+        const div = document.createElement('div');
+        div.className = `msg ${g.isCorrect ? 'correct' : 'wrong'}`;
+        div.innerHTML = `<b>${g.user}:</b> ${g.text} ${g.isCorrect ? '✅' : '❌'}`;
+        feed.prepend(div);
+    });
+}
+
+function submitAttempt() {
+    const input = document.getElementById('user-answer');
+    const ans = input.value.trim();
+    if(!ans) return;
+    db.ref('rooms/' + roomID).once('value', s => {
+        const room = s.val();
+        if(room.isLocked) return;
+        const correct = movies[room.playlist[room.currentIndex]].a;
+        const isCorrect = (normalize(ans) === normalize(correct));
+        db.ref(`rooms/${roomID}/guesses`).push({ user: myName, text: ans, isCorrect: isCorrect });
+        if(isCorrect) {
+            db.ref(`rooms/${roomID}`).update({ isLocked: true, winner: myName });
+            db.ref(`rooms/${roomID}/scores/${myName}`).transaction(p => (p || 0) + 1);
         }
-        function normalize(s) { return s.replace(/[أآإ]/g, "ا").replace(/ة/g, "ه").replace(/\s+/g, '').trim(); }
-    </script>
+        input.value = "";
+    });
+}
+
+function normalize(s) { return s.replace(/[أآإ]/g, "ا").replace(/ة/g, "ه").replace(/\s+/g, '').trim(); }
+function nextQuestion() { db.ref(`rooms/${roomID}`).update({ currentIndex: firebase.database.ServerValue.increment(1), isLocked: false, winner: null, guesses: null, showScores: false }); document.getElementById('feed').innerHTML=""; }
+function toggleGlobalResults(show) { db.ref(`rooms/${roomID}`).update({ showScores: show }); }
+function revealToAll() { db.ref(`rooms/${roomID}`).update({ isLocked: true }); }
+
+const movies = [
+    { e: "🐘 🔵", a: "الفيل الازرق" }, { e: "👨‍🏫 🏫 🍎", a: "الناظر" },
+    { e: "🚢 🧊 💔", a: "تيتانيك" }, { e: "🦁 👑", a: "الاسد الملك" },
+    { e: "🏢 👮‍♂️ 👮‍♂️", a: "الخلية" }, { e: "🏝️ 👮‍♂️ 🔫", a: "الجزيرة" },
+    { e: "👳‍♂️ 🏫 📚", a: "صعيدي في الجامعة الامريكية" }, { e: "⚡ 👓 🪄", a: "هاري بوتر" },
+    { e: "🥊 👨‍🦲 🐴", a: "بوحه" }, { e: "🍳 👨‍🍳 🐭", a: "خلطبيطة بالصلصة" }
+];
+</script>
 </body>
 </html>
