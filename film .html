@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>تحدي الأفلام - موبايل فقط</title>
+    <title>تحدي الأفلام - نظام البريك المطور</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
@@ -20,83 +20,41 @@
             z-index: 9999; flex-direction: column; align-items: center; justify-content: center;
             text-align: center; padding: 20px;
         }
+        @media (min-width: 768px) { #mobile-only-warning { display: flex; } body { overflow: hidden; } }
 
-        @media (min-width: 768px) {
-            #mobile-only-warning { display: flex; }
-            body { overflow: hidden; }
-        }
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; touch-action: manipulation; }
+        body { background: var(--bg); color: var(--text); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-        * { 
-            -webkit-tap-highlight-color: transparent; 
-            box-sizing: border-box; 
-            font-family: 'Segoe UI', system-ui, sans-serif; 
-            touch-action: manipulation;
-        }
-
-        body { 
-            background: var(--bg); color: var(--text); margin: 0; 
-            height: 100vh; height: -webkit-fill-available;
-            display: flex; flex-direction: column; overflow: hidden; 
-        }
-
-        /* واجهة اللوبي */
         #lobby { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .lobby-box { background: var(--card); padding: 25px; border-radius: 24px; width: 100%; max-width: 320px; box-shadow: 0 20px 50px rgba(0,0,0,0.4); }
         
-        /* المدخلات - حجم الخط 16px يمنع الزوم التلقائي في آيفون */
-        input { 
-            width: 100%; padding: 14px; margin-bottom: 12px; border-radius: 12px; 
-            border: 2px solid #334155; background: #0f172a; color: white; 
-            text-align: center; font-size: 16px !important; 
-        }
+        input { width: 100%; padding: 14px; margin-bottom: 12px; border-radius: 12px; border: 2px solid #334155; background: #0f172a; color: white; text-align: center; font-size: 16px !important; }
 
-        /* الهيدر */
         .header { background: #1e293b; padding: 12px 15px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
-
-        /* منطقة اللعبة */
         .game-area { flex: 1; padding: 10px; display: flex; flex-direction: column; overflow: hidden; }
         .emoji-box { background: var(--card); padding: 20px 10px; border-radius: 20px; font-size: 3.5rem; text-align: center; margin-bottom: 10px; }
         
-        .feed-container { 
-            flex: 1; background: rgba(0,0,0,0.2); border-radius: 15px; 
-            padding: 10px; overflow-y: auto; display: flex; 
-            flex-direction: column-reverse; gap: 8px; border: 1px solid #334155;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .msg { padding: 10px; border-radius: 10px; font-size: 0.9rem; animation: slideIn 0.2s ease; }
+        .feed-container { flex: 1; background: rgba(0,0,0,0.2); border-radius: 15px; padding: 10px; overflow-y: auto; display: flex; flex-direction: column-reverse; gap: 8px; border: 1px solid #334155; }
+        .msg { padding: 10px; border-radius: 10px; font-size: 0.9rem; }
         .msg.correct { background: rgba(34, 197, 94, 0.2); border: 1px solid var(--secondary); color: #4ade80; }
         .msg.wrong { background: rgba(255,255,255,0.05); }
 
-        /* التحكم والمناطق السفلية */
         .admin-panel { background: #1e293b; padding: 10px; display: none; gap: 5px; border-top: 1px solid #334155; }
         .adm-btn { flex: 1; padding: 10px 5px; border-radius: 8px; border: none; color: white; font-size: 0.75rem; font-weight: bold; }
 
-        .input-bar { 
-            background: var(--card); padding: 10px 10px calc(10px + var(--safe-bottom)); 
-            display: flex; gap: 8px; border-top: 1px solid #334155;
-        }
-        
-        .game-input { flex: 1; margin-bottom: 0; }
+        .input-bar { background: var(--card); padding: 10px 10px calc(10px + var(--safe-bottom)); display: flex; gap: 8px; border-top: 1px solid #334155; }
         .send-btn { background: var(--primary); color: white; border: none; padding: 0 15px; border-radius: 12px; font-weight: bold; }
+        .send-btn:disabled { background: #334155; opacity: 0.5; }
 
-        /* النتائج */
-        #global-scores-overlay { 
-            display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.98); 
-            z-index: 1000; flex-direction: column; align-items: center; justify-content: center; padding: 20px; 
-        }
+        #global-scores-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.98); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .scores-card { background: var(--card); width: 90%; border-radius: 24px; padding: 20px; }
-
-        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-    <!-- شاشة التحذير للكمبيوتر -->
     <div id="mobile-only-warning">
         <div style="font-size: 50px;">📱</div>
         <h2>عذراً، هذه اللعبة للموبايل فقط!</h2>
-        <p>يرجى مسح الكود أو فتح الرابط من هاتفك للاستمتاع بالتحدي.</p>
     </div>
 
     <div id="lobby">
@@ -104,7 +62,6 @@
             <h2 style="margin-top:0; text-align:center;">🎬 خمن الفيلم</h2>
             <input type="text" id="user-name" placeholder="أدخل اسمك..." maxlength="15">
             <button onclick="createRoom()" style="width:100%; padding:15px; background:var(--primary); color:white; border:none; border-radius:12px; margin-bottom:10px; font-weight:bold;">إنشاء غرفة</button>
-            <div style="text-align:center; color:#64748b; margin-bottom:10px;">أو</div>
             <input type="number" id="room-input" placeholder="كود الغرفة..." inputmode="numeric">
             <button onclick="joinRoom()" style="width:100%; padding:15px; background:var(--secondary); color:white; border:none; border-radius:12px; font-weight:bold;">انضمام</button>
         </div>
@@ -118,7 +75,7 @@
         </div>
 
         <div class="game-area">
-            <div id="status-banner" style="display:none; padding:10px; border-radius:10px; text-align:center; font-size:13px; margin-bottom:10px;"></div>
+            <div id="status-banner" style="display:none; padding:10px; border-radius:10px; text-align:center; font-size:13px; margin-bottom:10px; font-weight:bold;"></div>
             <div class="emoji-box" id="emoji-display">⏳</div>
             <div id="movie-count" style="text-align:center; font-size:12px; color:#64748b; margin-bottom:10px;"></div>
             <div class="feed-container" id="feed"></div>
@@ -130,8 +87,8 @@
             <button class="adm-btn" style="background:var(--accent)" onclick="revealToAll()">كشف الحل 👁️</button>
         </div>
 
-        <div class="input-bar">
-            <input type="text" id="user-answer" class="game-input" placeholder="اسم الفيلم..." autocomplete="off">
+        <div class="input-bar" id="bottom-bar">
+            <input type="text" id="user-answer" style="margin-bottom:0" placeholder="اسم الفيلم..." autocomplete="off">
             <button class="send-btn" id="send-btn" onclick="submitAttempt()">إرسال</button>
         </div>
     </div>
@@ -141,14 +98,13 @@
             <h3 style="text-align:center; margin-top:0;">🏆 قائمة المتصدرين</h3>
             <div id="scores-list" style="max-height:300px; overflow-y:auto;"></div>
             <div id="admin-close-btn" style="display:none">
-                <button onclick="toggleGlobalResults(false)" style="width:100%; padding:12px; background:var(--danger); color:white; border:none; border-radius:12px; margin-top:15px;">إغلاق والعودة للعب</button>
+                <button onclick="toggleGlobalResults(false)" style="width:100%; padding:12px; background:var(--danger); color:white; border:none; border-radius:12px; margin-top:15px;">إغلاق عند الجميع</button>
             </div>
             <p id="player-wait-msg" style="text-align:center; color:#94a3b8; font-size:12px; margin-top:10px;">انتظر المشرف لبدء الدور التالي...</p>
         </div>
     </div>
 
     <script>
-        // دمج إعدادات Firebase الخاصة بك هنا
         const firebaseConfig = {
             apiKey: "AIzaSyAD0YJCv4EW8iaceUgnZkbXyI1MSNhQ3fc",
             authDomain: "brak-nagaf-v2.firebaseapp.com",
@@ -162,9 +118,10 @@
         const db = firebase.database();
 
         let myName = "", roomID = null, isAdmin = false;
+        let serverOpen = false; 
+        let myBreakActive = false;
 
-        // مصفوفة الأفلام (نفس التي لديك)
-          const movies = [
+        const movies = [
             { e: "🐘 🔵", a: "الفيل الازرق" }, { e: "👨‍🏫 🏫 🍎", a: "الناظر" },
             { e: "🚢 🧊 💔", a: "تيتانيك" }, { e: "🦁 👑", a: "الاسد الملك" },
             { e: "🏢 👮‍♂️ 👮‍♂️", a: "الخلية" }, { e: "🏝️ 👮‍♂️ 🔫", a: "الجزيرة" },
@@ -196,39 +153,31 @@
             { e: "👰 🤵 🚌", a: "يا انا يا خالتي" }, { e: "🕶️ 🚬 👮‍♂️", a: "تيتو" },
             { e: "🪖 🇪🇬 ⚔️", a: "الممر" }, { e: "🦁 👑 🌅", a: "الاسد الملك" }
         ];
-        // وظيفة لإرسال الإجابة عند الضغط على Enter في كيبورد الموبايل
-        document.getElementById('user-answer').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') submitAttempt();
-        });
+
+        document.getElementById('user-answer').addEventListener('keypress', (e) => { if (e.key === 'Enter') submitAttempt(); });
 
         function createRoom() {
-            myName = document.getElementById('user-name').value.trim();
+            myName = document.getElementById('user-name').value.trim().toLowerCase();
             if(!myName) return alert("اكتب اسمك أولاً");
             roomID = Math.floor(1000 + Math.random() * 9000);
             isAdmin = true;
             const playlist = Array.from(Array(movies.length).keys()).sort(() => Math.random() - 0.5);
-            db.ref('rooms/' + roomID).set({ 
-                admin: myName, currentIndex: 0, playlist: playlist, 
-                isLocked: false, showScores: false 
-            }).then(() => start());
+            db.ref('rooms/' + roomID).set({ admin: myName, currentIndex: 0, playlist: playlist, isLocked: false, showScores: false }).then(() => start());
         }
 
         function joinRoom() {
-            myName = document.getElementById('user-name').value.trim();
+            myName = document.getElementById('user-name').value.trim().toLowerCase();
             roomID = document.getElementById('room-input').value.trim();
             if(!myName || !roomID) return alert("أكمل بياناتك");
             db.ref('rooms/' + roomID).once('value', s => {
-                if(s.exists()){ 
-                    isAdmin = (s.val().admin === myName); 
-                    start(); 
-                } else alert("الغرفة غير موجودة");
+                if(s.exists()){ isAdmin = (s.val().admin === myName); start(); } else alert("الغرفة غير موجودة");
             });
         }
 
         function start() {
             document.getElementById('lobby').style.display = 'none';
             document.getElementById('game-screen').style.display = 'flex';
-            document.getElementById('display-code').innerText = "كود الغرفة: #" + roomID;
+            document.getElementById('display-code').innerText = "#" + roomID;
             if(isAdmin) {
                 document.getElementById('admin-tools').style.display = 'flex';
                 document.getElementById('admin-close-btn').style.display = 'block';
@@ -239,6 +188,17 @@
         }
 
         function listen() {
+            // 1. مراقبة حالة البريك (التحكم الفردي) وحالة السيرفر (فتح للجميع)
+            db.ref('serverSettings/globalOpen').on('value', snap => {
+                serverOpen = snap.val() || false;
+                checkAccess();
+            });
+
+            db.ref(`userBreaks/${myName}`).on('value', snap => {
+                myBreakActive = snap.val() || false;
+                checkAccess();
+            });
+
             const rRef = db.ref('rooms/' + roomID);
             rRef.on('value', snap => {
                 const room = snap.val();
@@ -249,29 +209,19 @@
                 document.getElementById('movie-count').innerText = `الفيلم ${room.currentIndex + 1} من ${room.playlist.length}`;
 
                 const overlay = document.getElementById('global-scores-overlay');
-                if(room.showScores) {
-                    overlay.style.display = 'flex';
-                    updateScoresUI(room.scores);
-                    document.getElementById('user-answer').blur(); // إغلاق الكيبورد
-                } else {
-                    overlay.style.display = 'none';
-                }
+                overlay.style.display = room.showScores ? 'flex' : 'none';
+                if(room.showScores) updateScoresUI(room.scores);
 
                 const banner = document.getElementById('status-banner');
                 if(room.isLocked) {
                     banner.style.display = 'block';
-                    if(room.winner) {
-                        banner.style.background = "var(--secondary)";
-                        banner.innerText = `فاز ${room.winner}: ${movie.a}`;
-                    } else if(room.revealed) {
-                        banner.style.background = "var(--accent)";
-                        banner.innerText = `الحل هو: ${movie.a}`;
-                    }
-                    document.getElementById('user-answer').disabled = true;
+                    banner.style.background = room.winner ? "var(--secondary)" : "var(--accent)";
+                    banner.innerText = room.winner ? `🎉 فاز ${room.winner}: ${movie.a}` : `👁️ الحل: ${movie.a}`;
                 } else {
                     banner.style.display = 'none';
-                    document.getElementById('user-answer').disabled = false;
                 }
+                
+                checkAccess(room.isLocked || room.showScores);
             });
 
             db.ref(`rooms/${roomID}/guesses`).limitToLast(20).on('child_added', snap => {
@@ -284,19 +234,30 @@
             });
         }
 
-        function updateScoresUI(scores) {
-            const list = document.getElementById('scores-list');
-            list.innerHTML = "";
-            Object.entries(scores || {}).sort((a,b) => b[1] - a[1]).forEach(([name, pts]) => {
-                list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:12px; border-bottom:1px solid #334155;">
-                    <span>${name}</span> <b>${pts} نقطة</b>
-                </div>`;
-            });
+        function checkAccess(forceLock = false) {
+            const input = document.getElementById('user-answer');
+            const btn = document.getElementById('send-btn');
+            
+            // القاعدة: مسموح فقط إذا (السيرفر مفتوح للكل) أو (البريك الخاص بي شغال) أو (أنا المشرف)
+            const hasPermission = (serverOpen || myBreakActive || isAdmin);
+
+            if (!hasPermission) {
+                input.disabled = true;
+                btn.disabled = true;
+                input.placeholder = "🚫 البريك مغلق حالياً";
+            } else if (forceLock) {
+                input.disabled = true;
+                btn.disabled = true;
+                input.placeholder = "انتظر الدور التالي...";
+            } else {
+                input.disabled = false;
+                btn.disabled = false;
+                input.placeholder = "اسم الفيلم...";
+            }
         }
 
-        function toggleGlobalResults(show) { db.ref(`rooms/${roomID}`).update({ showScores: show }); }
-
         function submitAttempt() {
+            if (!serverOpen && !myBreakActive && !isAdmin) return;
             const input = document.getElementById('user-answer');
             const ans = input.value.trim();
             if(!ans) return;
@@ -304,12 +265,9 @@
             db.ref('rooms/' + roomID).once('value', s => {
                 const room = s.val();
                 if(room.isLocked || room.showScores) return;
-
                 const correct = movies[room.playlist[room.currentIndex]].a;
                 const isCorrect = (normalize(ans) === normalize(correct));
-
                 db.ref(`rooms/${roomID}/guesses`).push({ user: myName, text: ans, isCorrect: isCorrect });
-
                 if(isCorrect) {
                     db.ref(`rooms/${roomID}`).update({ isLocked: true, winner: myName });
                     db.ref(`rooms/${roomID}/scores/${myName}`).transaction(p => (p || 0) + 1);
@@ -318,19 +276,21 @@
             });
         }
 
-        function revealToAll() { db.ref(`rooms/${roomID}`).update({ isLocked: true, revealed: true }); }
-
-        function nextQuestion() {
-            db.ref(`rooms/${roomID}`).update({
-                currentIndex: firebase.database.ServerValue.increment(1),
-                isLocked: false, winner: null, revealed: false, showScores: false, guesses: null
+        function updateScoresUI(scores) {
+            const list = document.getElementById('scores-list');
+            list.innerHTML = "";
+            Object.entries(scores || {}).sort((a,b) => b[1] - a[1]).forEach(([name, pts]) => {
+                list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:12px; border-bottom:1px solid #334155;"><span>${name}</span> <b>${pts} نقطة</b></div>`;
             });
+        }
+
+        function toggleGlobalResults(show) { db.ref(`rooms/${roomID}`).update({ showScores: show }); }
+        function revealToAll() { db.ref(`rooms/${roomID}`).update({ isLocked: true, revealed: true }); }
+        function nextQuestion() {
+            db.ref(`rooms/${roomID}`).update({ currentIndex: firebase.database.ServerValue.increment(1), isLocked: false, winner: null, revealed: false, showScores: false, guesses: null });
             document.getElementById('feed').innerHTML = "";
         }
-
-        function normalize(s) { 
-            return s.replace(/[أآإ]/g, "ا").replace(/ة/g, "ه").replace(/\s+/g, '').trim(); 
-        }
+        function normalize(s) { return s.replace(/[أآإ]/g, "ا").replace(/ة/g, "ه").replace(/\s+/g, '').trim(); }
     </script>
 </body>
 </html>
