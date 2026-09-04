@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>أفلام تعرفه؟ - موسوعة الأفلام</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        :root { --primary: #38bdf8; --bg: #0f172a; --card: #1e293b; --success: #4ade80; --error: #f87171; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        #mobileOnly { display: none; position: fixed; inset: 0; background: var(--bg); z-index: 9999; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        
+        /* شريط الدرجات */
+        .header { background: var(--card); padding: 10px; border-bottom: 2px solid #334155; }
+        .scoreboard { display: flex; overflow-x: auto; gap: 8px; padding: 5px; }
+        .score-card { background: #0f172a; padding: 6px 12px; border-radius: 10px; border: 1px solid var(--primary); min-width: fit-content; text-align: center; }
+        .score-card .name { font-size: 0.7rem; color: #94a3b8; display: block; }
+        .score-card .points { font-size: 0.9rem; font-weight: bold; color: var(--primary); }
+
+        /* منطقة اللعبة */
+        .game-zone { flex: 1; display: flex; flex-direction: column; padding: 15px; overflow: hidden; }
+        .emoji-display { font-size: 3.5rem; background: var(--card); padding: 25px; border-radius: 20px; text-align: center; margin-bottom: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        .info-bar { display: flex; justify-content: space-between; font-size: 0.75rem; color: #94a3b8; margin-bottom: 5px; }
+
+        /* شات الإجابات */
+        .feed { flex: 1; overflow-y: auto; display: flex; flex-direction: column-reverse; gap: 6px; padding-bottom: 10px; }
+        .msg { padding: 10px 14px; border-radius: 12px; font-size: 0.85rem; line-height: 1.4; animation: pop 0.2s ease; }
+        .msg-wrong { background: rgba(248, 113, 113, 0.1); border-right: 3px solid var(--error); color: #fecaca; }
+        .msg-correct { background: rgba(74, 222, 128, 0.1); border-right: 3px solid var(--success); color: #bbf7d0; font-weight: bold; }
+        .msg-user { color: var(--primary); font-weight: bold; margin-left: 5px; }
+
+        /* منطقة الكتابة */
+        .input-box { background: var(--card); padding: 15px; display: flex; gap: 10px; border-top: 1px solid #334155; }
+        input { flex: 1; padding: 14px; border-radius: 12px; border: none; background: #0f172a; color: white; outline: none; border: 1px solid #334155; font-size: 1rem; }
+        .send-btn { background: var(--primary); color: #0f172a; border: none; padding: 0 25px; border-radius: 12px; font-weight: bold; }
+
+        @keyframes pop { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div id="mobileOnly"><h2>📱 اللعبة للموبايل فقط</h2></div>
+
+    <div id="mainApp" class="hidden">
+        <div class="header">
+            <div class="scoreboard" id="scoreboard"></div>
+        </div>
+
+        <div class="game-zone">
+            <div class="info-bar">
+                <span id="index-txt">تحميل...</span>
+                <span id="player-name-txt" style="color:var(--success)"></span>
+            </div>
+            <div class="emoji-display" id="display">⏳</div>
+            
+            <div class="feed" id="feed">
+                <!-- الإجابات بتظهر هنا -->
+            </div>
+        </div>
+
+        <div class="input-box">
+            <input type="text" id="answer-input" placeholder="خمن اسم الفيلم..." autocomplete="off">
+            <button class="send-btn" onclick="sendAnswer()">إرسال</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. Firebase Config ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyAD0YJCv4EW8iaceUgnZkbXyI1MSNhQ3fc",
+            authDomain: "brak-nagaf-v2.firebaseapp.com",
+            databaseURL: "https://brak-nagaf-v2-default-rtdb.firebaseio.com",
+            projectId: "brak-nagaf-v2",
+            storageBucket: "brak-nagaf-v2.firebasestorage.app",
+            messagingSenderId: "637473406996",
+            appId: "1:637473406996:web:4c6538e86dee9cb4c72701"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // --- 2. قائمة الأفلام الضخمة (60 فيلم) ---
+        const movies = [
+            { e: "🐘 🔵", a: "الفيل الازرق" }, { e: "👨‍🏫 🏫 🍎", a: "الناظر" },
+            { e: "🚢 🧊 💔", a: "تيتانيك" }, { e: "🦁 👑", a: "الاسد الملك" },
+            { e: "🏢 👮‍♂️ 👮‍♂️", a: "الخلية" }, { e: "🏝️ 👮‍♂️ 🔫", a: "الجزيرة" },
+            { e: "👳‍♂️ 🏫 📚", a: "صعيدي في الجامعة الامريكية" }, { e: "⚡ 👓 🪄", a: "هاري بوتر" },
+            { e: "🥊 👨‍🦲 🐴", a: "بوحه" }, { e: "🍳 👨‍🍳 🐭", a: "خلطبيطة بالصلصة" },
+            { e: "🤡 🎈", a: "ات" }, { e: "🚢 🤣 👮‍♂️", a: "امير البحار" },
+            { e: "🕵️‍♂️ 🇮🇹", a: "كازابلانكا" }, { e: "👨‍👩‍👧‍👦 🏠 👻", a: "الانس والنمس" },
+            { e: "👮‍♂️ 🏫 👨‍👩‍👧‍👦", a: "الباشا تلميذ" }, { e: "👳‍♂️ 🏦 💰", a: "طير انت" },
+            { e: "🏎️ 👨‍👩‍👧‍👦", a: "فول الصين العظيم" }, { e: "👨‍🦱 🕶️ 🦅", a: "اتش دبور" },
+            { e: "🥊 🐴 🥩", a: "اللمبي" }, { e: "🕵️‍♂️ 📱 🕵️‍♂️", a: "ولاد رزق" },
+            { e: "🏨 🧟‍♂️", a: "حملة فرعون" }, { e: "👨‍🏫 🤣", a: "مدرسة المشاغبين" },
+            { e: "🍔 🍕 🐘", a: "اكس لارج" }, { e: "✈️ 🇪🇬 🕶️", a: "عسل اسود" },
+            { e: "👔 💼 🤣", a: "مرجان احمد مرجان" }, { e: "🤵 👰 🔪", a: "افواه وارانب" },
+            { e: "🪖 🇬🇧 🇪🇬", a: "كيرة والجن" }, { e: "👴 👴 👴 🏖️", a: "وقفة رجالة" },
+            { e: "🧠 🖐️ 🤣", a: "مش انا" }, { e: "💡 🏃‍♂️ 🤣", a: "واحد تاني" },
+            { e: "✈️ 🏝️ 💃", a: "لف ودوران" }, { e: "🏢 🏗️ 🤣", a: "مطب صناعي" },
+            { e: "🧔 🔫 🤣", a: "جعلتني مجرما" }, { e: "🍔 📻 🤣", a: "ظرف طارق" },
+            { e: "🧠 👨‍🎨 ✈️", a: "اسف على الازعاج" }, { e: "🕺 🕺 🕺 ⏳", a: "سمير وشهير وبهير" },
+            { e: "🛵 🇮🇹 🍕", a: "همام في امستردام" }, { e: "🏍️ 🥖 👮‍♂️", a: "ابو علي" },
+            { e: "👮‍♂️ 🤵 🤣", a: "البدلة" }, { e: "⚔️ 🦁 🏹", a: "الناصر صلاح الدين" },
+            { e: "👦 👦 👦", a: "كده رضا" }, { e: "⚖️ 👨‍⚖️ 🏢", a: "ضد الحكومة" },
+            { e: "🐍 🪜", a: "السلم والثعبان" }, { e: "👮‍♂️ 👩‍🔬 ❤️", a: "تيمور وشفيقة" },
+            { e: "🧛‍♂️ 🦇 🩸", a: "خط دم" }, { e: "🕯️ 👻 🏫", a: "وردة" },
+            { e: "👨‍💼 💼 🕋", a: "بوحة" }, { e: "🐪 🏜️ 🤣", a: "شورت وفانلة وكاب" },
+            { e: "👨 💍 👩", a: "سهر الليالي" }, { e: "🚖 🤣 👮‍♂️", a: "ليلة سقوط بغداد" },
+            { e: "🎻 🎼 💔", a: "الكيت كات" }, { e: "🏛️ 🕵️‍♂️ 🏺", a: "كنز الدولة" },
+            { e: "🥊 🏋️‍♂️ 🤣", a: "حلم العمر" }, { e: "🎭 🤡 🔫", a: "الفرح" },
+            { e: "🏟️ ⚽ 🤣", a: "العالمي" }, { e: "🏙️ 🏗️ 🏢", a: "كباريه" },
+            { e: "👰 🤵 🚌", a: "يا انا يا خالتي" }, { e: "🕶️ 🚬 👮‍♂️", a: "تيتو" },
+            { e: "🪖 🇪🇬 ⚔️", a: "الممر" }, { e: "🦁 👑 🌅", a: "الاسد الملك" }
+        ];
+
+        const currentUser = localStorage.getItem('break_sys_user');
+
+        function checkAccess() {
+            const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
+            if(!isMobile) { document.getElementById('mobileOnly').style.display = 'flex'; return; }
+            if(!currentUser) { window.location.href = 'index.html'; return; }
+            
+            document.getElementById('player-name-txt').textContent = "اللاعب: " + currentUser;
+
+            db.ref('gameSettings/allowAll').on('value', globalSnap => {
+                db.ref('users/' + currentUser).on('value', userSnap => {
+                    if(globalSnap.val() || (userSnap.val() && userSnap.val().isOnBreak) || ['mahmoud','bo','ahmed'].includes(currentUser)) {
+                        document.getElementById('mainApp').classList.remove('hidden');
+                        syncGame();
+                    } else {
+                        alert("البريك مقفول!"); window.location.href = 'index.html';
+                    }
+                });
+            });
+        }
+
+        function syncGame() {
+            db.ref('collectiveGame/currentIndex').on('value', snap => {
+                let idx = snap.val() || 0;
+                document.getElementById('index-txt').textContent = `فيلم ${idx + 1} / ${movies.length}`;
+                if(idx < movies.length) {
+                    document.getElementById('display').textContent = movies[idx].e;
+                } else {
+                    document.getElementById('display').textContent = "🏆🏁";
+                    document.getElementById('index-txt').textContent = "خلصنا!";
+                }
+            });
+
+            db.ref('leaderboard').on('value', snap => {
+                const sb = document.getElementById('scoreboard');
+                sb.innerHTML = "";
+                const data = snap.val();
+                if(data) {
+                    Object.entries(data).sort((a,b)=>b[1]-a[1]).forEach(([n, p]) => {
+                        sb.innerHTML += `<div class="score-card"><span class="name">${n}</span><span class="points">${p}</span></div>`;
+                    });
+                }
+            });
+
+            db.ref('collectiveGame/feed').limitToLast(15).on('value', snap => {
+                const feed = document.getElementById('feed');
+                feed.innerHTML = "";
+                snap.forEach(c => {
+                    const d = c.val();
+                    const div = document.createElement('div');
+                    div.className = `msg ${d.type === 'correct' ? 'msg-correct' : 'msg-wrong'}`;
+                    div.innerHTML = `<span class="msg-user">${d.user}:</span> ${d.text}`;
+                    feed.appendChild(div);
+                });
+            });
+        }
+
+        function normalize(t) { return t.replace(/[أآإ]/g, "ا").replace(/ة/g, "ه").replace(/\s+/g, '').trim().toLowerCase(); }
+
+        function sendAnswer() {
+            const inp = document.getElementById('answer-input');
+            const val = inp.value.trim();
+            if(!val) return;
+
+            db.ref('collectiveGame/currentIndex').once('value', snap => {
+                const idx = snap.val() || 0;
+                if(idx >= movies.length) return;
+
+                if(normalize(val) === normalize(movies[idx].a)) {
+                    db.ref('collectiveGame').update({ currentIndex: idx + 1 });
+                    db.ref('collectiveGame/feed').push({ user: currentUser, text: `عرف الحل: ${movies[idx].a} ✅`, type: 'correct' });
+                    db.ref('leaderboard/' + currentUser).transaction(s => (s || 0) + 1);
+                } else {
+                    db.ref('collectiveGame/feed').push({ user: currentUser, text: val, type: 'wrong' });
+                }
+                inp.value = "";
+            });
+        }
+
+        document.getElementById('answer-input').addEventListener('keypress', e => { if(e.key === 'Enter') sendAnswer(); });
+        checkAccess();
+    </script>
+</body>
+</html>
