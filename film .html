@@ -391,12 +391,23 @@
             });
         }
 
-        function submitAnswer() {
-            const val = document.getElementById('answer-input').value.trim();
-            if(!val) return;
-            document.getElementById('answer-input').disabled = true;
-            db.ref(`rooms/${currentRoom}/tempGuesses/${userName}`).set(val);
-        }
+      function submitAnswer() {
+    const val = document.getElementById('answer-input').value.trim();
+    
+    if(!userName) return alert("الرجاء كتابة اسمك أولاً");
+    if(!currentRoom) return alert("أنت لست في غرفة حالياً!");
+    if(!val) return alert("اكتب إجابة أولاً");
+
+    document.getElementById('answer-input').disabled = true;
+
+    db.ref(`rooms/${currentRoom}/tempGuesses/${userName}`).set(val)
+    .then(() => {
+        alert("تم الإرسال بنجاح!");
+    })
+    .catch((error) => {
+        alert("فشل الإرسال: " + error.message);
+    });
+}
 
         // أدوات الأدمن
         function ownerReveal() {
