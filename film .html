@@ -3,34 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>روم أفلام - نظام الغرف</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <title>روم أفلام - نسخة الموبايل</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
         :root { 
-            --primary: #6366f1; /* لون الزر البنفسجي */
-            --secondary: #22c55e; /* لون الزر الأخضر */
+            --primary: #6366f1; 
+            --secondary: #22c55e; 
             --bg: #0f172a; 
             --card: #1e293b; 
             --text: #ffffff;
-            --owner: #f472b6;
+            --accent: #f472b6;
         }
 
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+
         body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
             background: var(--bg); 
             color: var(--text); 
             margin: 0; 
+            padding: 0;
             display: flex; 
             flex-direction: column; 
             height: 100vh; 
             overflow: hidden; 
         }
 
-        /* واجهة الدخول (الروم) */
+        /* منع نسخة الكمبيوتر */
+        #pc-blocker {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            z-index: 9999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* واجهة الدخول */
         #lobby-screen {
             display: flex;
             flex-direction: column;
@@ -38,121 +53,223 @@
             justify-content: center;
             height: 100%;
             padding: 20px;
-            gap: 20px;
         }
 
         .lobby-card {
             background: var(--card);
             padding: 30px;
-            border-radius: 20px;
+            border-radius: 25px;
             width: 100%;
-            max-width: 400px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            max-width: 350px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
             text-align: center;
         }
-
-        .lobby-card h1 { font-size: 1.8rem; margin-bottom: 20px; }
 
         input {
             width: 100%;
-            padding: 15px;
+            padding: 16px;
             margin: 10px 0;
-            border-radius: 12px;
-            border: 1px solid #334155;
+            border-radius: 15px;
+            border: 2px solid #334155;
             background: #0f172a;
             color: white;
             font-size: 1rem;
-            box-sizing: border-box;
             text-align: center;
+            outline: none;
         }
+
+        input:focus { border-color: var(--primary); }
 
         .btn {
             width: 100%;
-            padding: 15px;
+            padding: 16px;
             border: none;
-            border-radius: 12px;
+            border-radius: 15px;
             font-size: 1.1rem;
             font-weight: bold;
             cursor: pointer;
-            margin-top: 10px;
-            transition: 0.3s;
+            transition: 0.2s;
         }
 
-        .btn-create { background: var(--primary); color: white; }
+        .btn-create { background: var(--primary); color: white; margin-bottom: 10px; }
         .btn-join { background: var(--secondary); color: white; }
-        .btn-exit { background: #ef4444; color: white; position: absolute; top: 10px; left: 10px; width: auto; padding: 5px 15px; font-size: 0.8rem; }
 
         /* واجهة اللعبة */
         #game-screen { display: none; flex-direction: column; height: 100%; }
 
-        .header { background: var(--card); padding: 10px; border-bottom: 2px solid #334155; position: relative; }
-        .room-info { font-size: 0.8rem; color: #94a3b8; text-align: center; margin-bottom: 5px; }
-        .scoreboard { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 5px; scrollbar-width: none; }
-        .score-card { background: #0f172a; padding: 6px 12px; border-radius: 10px; border: 1px solid var(--primary); min-width: 60px; text-align: center; }
-        .score-card .name { font-size: 0.6rem; color: #94a3b8; display: block; }
-        .score-card .points { font-size: 1rem; font-weight: bold; }
+        .header { 
+            background: #1e293b; 
+            padding: 10px 15px; 
+            border-bottom: 1px solid #334155;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
 
-        .game-zone { flex: 1; display: flex; flex-direction: column; padding: 15px; overflow-y: auto; }
-        .emoji-display { font-size: 3.5rem; background: var(--card); padding: 25px; border-radius: 20px; text-align: center; position: relative; }
-        .feed { margin-top: 15px; display: flex; flex-direction: column; gap: 8px; }
-        .msg { padding: 12px; border-radius: 12px; font-size: 0.9rem; border-right: 4px solid #444; background: rgba(255,255,255,0.05); }
-        .msg-correct { border-color: var(--secondary); color: #bbf7d0; }
-        
-        .owner-panel { background: #2d1b36; padding: 12px; display: none; gap: 8px; flex-wrap: wrap; }
-        .owner-btn { flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; min-width: 80px; }
+        .room-status { font-size: 0.8rem; color: #94a3b8; display: flex; justify-content: space-between; }
 
-        .input-area { background: var(--card); padding: 15px; display: flex; gap: 10px; }
+        /* لوحة النقاط المحدثة */
+        .scoreboard { 
+            display: flex; 
+            gap: 10px; 
+            overflow-x: auto; 
+            padding: 5px 0;
+            scrollbar-width: none;
+        }
+        .scoreboard::-webkit-scrollbar { display: none; }
+
+        .score-item {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid var(--primary);
+            padding: 5px 15px;
+            border-radius: 10px;
+            min-width: 80px;
+            text-align: center;
+        }
+        .score-item .u-name { font-size: 0.7rem; color: #94a3b8; display: block; }
+        .score-item .u-points { font-weight: bold; color: white; }
+
+        .game-main { 
+            flex: 1; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            overflow-y: auto;
+        }
+
+        .emoji-box {
+            background: var(--card);
+            border-radius: 20px;
+            padding: 40px 20px;
+            text-align: center;
+            font-size: 4rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            margin-bottom: 15px;
+        }
+
+        .movie-info { text-align: center; color: #64748b; font-size: 0.9rem; margin-bottom: 15px; }
+
+        .feed-container { display: flex; flex-direction: column; gap: 10px; }
+        .msg {
+            padding: 15px;
+            border-radius: 15px;
+            background: rgba(255,255,255,0.05);
+            font-size: 0.95rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .msg.correct { border-right: 5px solid var(--secondary); background: rgba(34, 197, 94, 0.1); }
+        .msg.wrong { border-right: 5px solid #ef4444; }
+
+        .admin-controls {
+            background: #1e293b;
+            padding: 10px;
+            display: none;
+            gap: 8px;
+            border-top: 1px solid #334155;
+        }
+
+        .adm-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            color: white;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+
+        /* منطقة الإدخال السفلية */
+        .bottom-bar {
+            background: var(--card);
+            padding: 15px;
+            display: flex;
+            gap: 10px;
+            padding-bottom: env(safe-area-inset-bottom, 15px);
+        }
+
+        .input-box {
+            flex: 1;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 12px;
+            color: white;
+            outline: none;
+        }
+
+        .send-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0 20px;
+            font-weight: bold;
+        }
+
     </style>
 </head>
 <body>
 
+    <div id="pc-blocker">
+        <h2>⚠️ تنبيه</h2>
+        <p>عذراً، هذه اللعبة مخصصة للهواتف المحمولة فقط لضمان أفضل تجربة لعب.</p>
+        <p>يرجى الدخول من هاتفك.</p>
+    </div>
+
     <!-- شاشة الدخول -->
     <div id="lobby-screen">
         <div class="lobby-card">
-            <h1>  افلام</h1>
-            <input type="text" id="user-name" placeholder="اكتب اسمك...">
-            
-            <button class="btn btn-create" onclick="createNewRoom()">إنشاء غرفة جديدة</button>
-            
-            <div style="margin: 15px 0; color: #64748b;">أو</div>
-            
-            <input type="text" id="room-code-input" placeholder="كود الغرفة...">
+            <h1 style="margin-top:0">🎬 خمن الفيلم</h1>
+            <input type="text" id="user-name" placeholder="أدخل اسمك المستعار...">
+            <button class="btn btn-create" onclick="createNewRoom()">إنشاء غرفة</button>
+            <div style="margin: 10px; opacity: 0.5;">أو</div>
+            <input type="number" id="room-code-input" placeholder="كود الغرفة...">
             <button class="btn btn-join" onclick="joinRoom()">انضمام للعب</button>
         </div>
     </div>
 
     <!-- شاشة اللعبة -->
     <div id="game-screen">
-        <button class="btn-exit" onclick="exitToLobby()">⬅️ خروج</button>
-        
         <div class="header">
-            <div class="room-info" id="display-room-code">كود الغرفة: ----</div>
-            <div class="scoreboard" id="scoreboard"></div>
-        </div>
-
-        <div class="game-zone">
-            <div class="emoji-display">
-                <span id="emoji-content">⏳</span>
+            <div class="room-status">
+                <span id="display-room-code">كود: ----</span>
+                <span onclick="location.reload()" style="color:#ef4444">خروج 🚪</span>
             </div>
-            <div id="movie-count" style="text-align:center; font-size:0.7rem; color:#64748b; margin:10px 0;">الفيلم 0 / 60</div>
+            <div class="scoreboard" id="scoreboard">
+                <!-- النقاط تظهر هنا -->
+            </div>
+        </div>
+
+        <div class="game-main">
+            <div class="emoji-box" id="emoji-content">⏳</div>
+            <div class="movie-info" id="movie-count">الفيلم 0 / 60</div>
             
-            <div class="feed" id="feed"></div>
+            <div class="feed-container" id="feed"></div>
         </div>
 
-        <div class="owner-panel" id="owner-panel">
-            <button class="owner-btn" style="background:#f472b6" onclick="ownerReveal()">👁️ كشف النتائج</button>
-            <button class="owner-btn" style="background:#22c55e" onclick="ownerNext()">➡️ التالي</button>
-            <button class="owner-btn" style="background:#64748b" onclick="ownerResetScores()">🔄 تصفير النقط</button>
+        <!-- لوحة التحكم للأدمن فقط -->
+        <div class="admin-controls" id="owner-panel">
+            <button class="adm-btn" style="background:var(--accent)" onclick="ownerReveal()">👁️ كشف الحل</button>
+            <button class="adm-btn" style="background:var(--secondary)" onclick="ownerNext()">➡️ التالي</button>
+            <button class="adm-btn" style="background:#64748b" onclick="ownerResetScores()">🔄 تصفير</button>
         </div>
 
-        <div class="input-area">
-            <input type="text" id="answer-input" placeholder="اسم الفيلم...">
-            <button class="owner-btn" style="background:var(--primary); color:white; width:80px;" onclick="submitAnswer()">إرسال</button>
+        <div class="bottom-bar">
+            <input type="text" id="answer-input" class="input-box" placeholder="اكتب اسم الفيلم هنا...">
+            <button class="send-btn" onclick="submitAnswer()">إرسال</button>
         </div>
     </div>
 
     <script>
+        // --- حماية الموبايل فقط ---
+        if (!/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            document.getElementById('pc-blocker').style.display = 'flex';
+        }
+
         // --- إعدادات Firebase ---
+        // ملاحظة: يفضل استخدام مفاتيحك الخاصة، هذه للمثال
         const firebaseConfig = {
             apiKey: "AIzaSyAD0YJCv4EW8iaceUgnZkbXyI1MSNhQ3fc",
             authDomain: "brak-nagaf-v2.firebaseapp.com",
@@ -202,39 +319,23 @@
             { e: "🪖 🇪🇬 ⚔️", a: "الممر" }, { e: "🦁 👑 🌅", a: "الاسد الملك" }
         ];
 
-        // --- وظائف الروم ---
-
         function createNewRoom() {
             userName = document.getElementById('user-name').value.trim();
-            if(!userName) return alert("اكتب اسمك أولاً");
-            
-            const code = Math.floor(1000 + Math.random() * 9000); // كود عشوائي من 4 أرقام
+            if(!userName) return alert("الرجاء كتابة اسمك");
+            const code = Math.floor(1000 + Math.random() * 8999);
             isAdmin = true;
-            
-            const roomData = {
-                admin: userName,
-                currentIndex: 0,
-                status: "waiting"
-            };
-            
-            db.ref('rooms/' + code).set(roomData).then(() => {
-                enterRoom(code);
-            });
+            db.ref('rooms/' + code).set({ admin: userName, currentIndex: 0 }).then(() => enterRoom(code));
         }
 
         function joinRoom() {
             userName = document.getElementById('user-name').value.trim();
             const code = document.getElementById('room-code-input').value.trim();
-            
             if(!userName || !code) return alert("أكمل البيانات");
-
             db.ref('rooms/' + code).once('value', snap => {
                 if(snap.exists()) {
                     isAdmin = (snap.val().admin === userName);
                     enterRoom(code);
-                } else {
-                    alert("الغرفة غير موجودة!");
-                }
+                } else alert("الغرفة غير موجودة");
             });
         }
 
@@ -243,78 +344,72 @@
             document.getElementById('lobby-screen').style.display = 'none';
             document.getElementById('game-screen').style.display = 'flex';
             document.getElementById('display-room-code').textContent = "كود الغرفة: " + code;
-            
             if(isAdmin) document.getElementById('owner-panel').style.display = 'flex';
-            
             startSync();
         }
 
         function startSync() {
             const roomRef = db.ref('rooms/' + currentRoom);
 
-            // مزامنة السؤال والعد
+            // مزامنة السؤال
             roomRef.child('currentIndex').on('value', snap => {
                 const idx = snap.val() || 0;
-                if(idx < movies.length) {
+                if(movies[idx]) {
                     document.getElementById('emoji-content').textContent = movies[idx].e;
                     document.getElementById('movie-count').textContent = `الفيلم ${idx + 1} / ${movies.length}`;
                     document.getElementById('answer-input').value = "";
                     document.getElementById('answer-input').disabled = false;
-                    document.getElementById('feed').innerHTML = '<div style="text-align:center; color:#64748b">بانتظار إجابتك...</div>';
+                    document.getElementById('feed').innerHTML = "";
                 }
             });
 
-            // مزامنة السكور
+            // مزامنة لوحة النتائج (الدرجات)
             roomRef.child('scores').on('value', snap => {
                 const sb = document.getElementById('scoreboard');
                 sb.innerHTML = "";
-                const data = snap.val();
-                if(data) {
-                    Object.entries(data).sort((a,b)=>b[1]-a[1]).forEach(([n, p]) => {
-                        sb.innerHTML += `<div class="score-card"><span class="name">${n}</span><span class="points">${p}</span></div>`;
+                const scores = snap.val();
+                if(scores) {
+                    Object.entries(scores).sort((a,b)=>b[1]-a[1]).forEach(([name, pts]) => {
+                        sb.innerHTML += `<div class="score-item"><span class="u-name">${name}</span><span class="u-points">${pts}</span></div>`;
                     });
                 }
             });
 
             // مزامنة كشف النتائج
             roomRef.child('roundResults').on('value', snap => {
-                if(snap.val()) showFinalFeed(snap.val());
+                const data = snap.val();
+                if(data) {
+                    const feed = document.getElementById('feed');
+                    feed.innerHTML = `<div style="text-align:center; color:var(--secondary); font-weight:bold; margin-bottom:10px">✅ الحل الصحيح: ${data.movie}</div>`;
+                    data.list.forEach(item => {
+                        feed.innerHTML += `<div class="msg ${item.isCorrect ? 'correct' : 'wrong'}">
+                            <span>${item.user}: ${item.text}</span>
+                            <span>${item.isCorrect ? '✔️' : '❌'}</span>
+                        </div>`;
+                    });
+                }
             });
         }
 
-       function submitAnswer() {
-    const val = document.getElementById('answer-input').value.trim();
-    
-    if(!userName) return alert("الرجاء كتابة اسمك أولاً");
-    if(!currentRoom) return alert("أنت لست في غرفة حالياً!");
-    if(!val) return alert("اكتب إجابة أولاً");
+        function submitAnswer() {
+            const val = document.getElementById('answer-input').value.trim();
+            if(!val) return;
+            document.getElementById('answer-input').disabled = true;
+            db.ref(`rooms/${currentRoom}/tempGuesses/${userName}`).set(val);
+        }
 
-    document.getElementById('answer-input').disabled = true;
-
-    db.ref(`rooms/${currentRoom}/tempGuesses/${userName}`).set(val)
-    .then(() => {
-        alert("تم الإرسال بنجاح!");
-    })
-    .catch((error) => {
-        alert("فشل الإرسال: " + error.message);
-    });
-}
-
-        // --- أدوات الأدمن ---
+        // أدوات الأدمن
         function ownerReveal() {
             db.ref(`rooms/${currentRoom}`).once('value', snap => {
                 const room = snap.val();
-                const idx = room.currentIndex || 0;
-                const correctAns = movies[idx].a;
+                const correctAns = movies[room.currentIndex].a;
                 const guesses = room.tempGuesses || {};
-                
                 const results = [];
+                
                 Object.entries(guesses).forEach(([u, txt]) => {
                     const isCorrect = normalize(txt) === normalize(correctAns);
                     results.push({ user: u, text: txt, isCorrect });
-                    if(isCorrect) {
-                        db.ref(`rooms/${currentRoom}/scores/${u}`).transaction(s => (s || 0) + 1);
-                    }
+                    if(isCorrect) db.ref(`rooms/${currentRoom}/scores/${u}`).transaction(s => (s || 0) + 1);
                 });
                 db.ref(`rooms/${currentRoom}/roundResults`).set({ movie: correctAns, list: results });
             });
@@ -327,22 +422,10 @@
         }
 
         function ownerResetScores() {
-            if(confirm("تصفير النقط؟")) db.ref(`rooms/${currentRoom}/scores`).remove();
-        }
-
-        function showFinalFeed(data) {
-            const feed = document.getElementById('feed');
-            feed.innerHTML = `<div style="text-align:center; color:var(--secondary); font-weight:bold;">✅ الحل: ${data.movie}</div>`;
-            data.list.forEach(r => {
-                feed.innerHTML += `<div class="msg ${r.isCorrect ? 'msg-correct' : ''}"><b>${r.user}:</b> ${r.text} ${r.isCorrect ? '✅' : '❌'}</div>`;
-            });
+            if(confirm("تصفير جميع النقاط؟")) db.ref(`rooms/${currentRoom}/scores`).remove();
         }
 
         function normalize(t) { return t.replace(/[أآإ]/g, "ا").replace(/ة/g, "ه").replace(/\s+/g, '').trim().toLowerCase(); }
-
-        function exitToLobby() {
-            location.reload();
-        }
     </script>
 </body>
 </html>
