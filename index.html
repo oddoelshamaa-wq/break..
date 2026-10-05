@@ -2228,6 +2228,15 @@ html, body {
             <span class="logo-tagline">Management Intelligence</span>
         </div>
         <div style="border:3px solid rgba(99,102,241,0.1); border-top:3px solid var(--primary); border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite; margin-top:20px;"></div>
+        <p id="loadingStatus" style="color:#94a3b8; text-align:center; max-width:90%; margin-top:16px;">جارٍ الاتصال وتحميل بيانات النظام...</p>
+    </div>
+    <div id="activityLoading" role="status" aria-live="polite" aria-hidden="true" aria-busy="false" style="position:fixed; inset:0; background:#020617; z-index:20001; display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+        <div class="logo-container">
+            <h1 class="logo-text">ELSHAMAA</h1>
+            <span class="logo-tagline">Management Intelligence</span>
+        </div>
+        <div aria-hidden="true" style="border:3px solid rgba(99,102,241,0.1); border-top:3px solid var(--primary); border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite; margin-top:20px;"></div>
+        <p id="activityLoadingStatus" style="color:#94a3b8; text-align:center; max-width:90%; margin-top:16px;">جارٍ حفظ البريك...</p>
     </div>
 
     <!-- اللوجو الرئيسي في الصفحة -->
@@ -2377,6 +2386,39 @@ html, body {
                                                     </div>
 
                                                     <div id="archiveCountBadge" style="text-align: left; margin-top: 10px; color: #888; font-size: 0.9rem;"></div>
+                                                </div>
+                                            </div>
+
+                                            <div id="myBreakReportModal" class="hidden" style="position:fixed; inset:0; background:rgba(2,6,23,0.96); z-index:50000; padding:20px; overflow-y:auto; backdrop-filter:blur(12px);">
+                                                <div style="max-width:1000px; margin:25px auto; background:#1e293b; border:1px solid #38bdf8; border-radius:24px; padding:24px;">
+                                                    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px; margin-bottom:18px;">
+                                                        <div>
+                                                            <h2 style="margin:0; color:#38bdf8;">📊 تقرير البريك الخاص بي</h2>
+                                                            <small style="color:#94a3b8;">عرض شخصي فقط — لا توجد صلاحية لحذف السجلات</small>
+                                                        </div>
+                                                        <button onclick="closeMyBreakReport()" class="btn btn-dark">إغلاق ✖</button>
+                                                    </div>
+                                                    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; align-items:end; margin-bottom:18px;">
+                                                        <label>من تاريخ<input id="myBreakReportFrom" type="date" style="width:100%; margin-top:5px;" onchange="renderMyBreakReport()"></label>
+                                                        <label>إلى تاريخ<input id="myBreakReportTo" type="date" style="width:100%; margin-top:5px;" onchange="renderMyBreakReport()"></label>
+                                                        <button onclick="document.getElementById('myBreakReportFrom').value=''; document.getElementById('myBreakReportTo').value=''; renderMyBreakReport();" class="btn btn-dark">عرض كل التواريخ</button>
+                                                    </div>
+                                                    <div id="myBreakReportSummary" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-bottom:18px;"></div>
+                                                    <h3 style="color:#f87171; margin:20px 0 10px;">⏱️ حساب البريك والأكسدة لكل يوم</h3>
+                                                    <small style="display:block; color:#94a3b8; margin-bottom:8px;">الأكسدة هي الوقت الزائد عن رصيد البريك اليومي. المدد معروضة بصيغة ساعة:دقيقة.</small>
+                                                    <div class="table-responsive" style="margin-bottom:22px;">
+                                                        <table style="width:100%;">
+                                                            <thead><tr><th>اليوم</th><th>البريك والطوارئ المستخدمة</th><th>الرصيد اليومي</th><th>الأكسدة</th></tr></thead>
+                                                            <tbody id="myBreakDailyBody"></tbody>
+                                                        </table>
+                                                    </div>
+                                                    <h3 style="color:#38bdf8; margin:20px 0 10px;">📋 تفاصيل كل خروج وسببه</h3>
+                                                    <div class="table-responsive">
+                                                        <table style="width:100%;">
+                                                            <thead><tr><th>التاريخ</th><th>نوع النشاط والتفاصيل</th><th>المدة</th></tr></thead>
+                                                            <tbody id="myBreakReportBody"></tbody>
+                                                        </table>
+                                                    </div>
                                                 </div>
                                             </div>
 
@@ -3170,6 +3212,9 @@ html, body {
                                                 <div id="employeeSection" class="hidden">
                                                     <!-- الهيدر الجديد المنظم -->
                                                     <!-- صف الأزرار العلوي للموظف المحدث -->
+                                                    <button onclick="openMyBreakReport()" class="btn btn-primary btn-sm" style="margin-top:8px; border:1px solid #38bdf8; color:#38bdf8;">
+                                                        📊 تقرير البريك الخاص بي
+                                                    </button>
                                                     <button id="myProfileBtn" onclick="openMyProfile()" class="btn btn-dark btn-sm" style="margin-top:8px; position:relative; border:1px solid var(--glass-border);">
                                                         📂 ملفي والشكاوى
                                                         <span id="profileNotificationBadge" class="hidden" style="position:absolute; top:-8px; left:-8px; background:red; color:white; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:0.7rem;">0</span>
@@ -3912,6 +3957,10 @@ html, body {
                                                 }
 
                                                 let allUsersData = {}, currentUser = null, timerInterval = null, isLoaded = false;
+                                                let loadingHintTimer = setTimeout(() => {
+                                                    const status = document.getElementById('loadingStatus');
+                                                    if (!isLoaded && status) status.innerText = 'تحميل بيانات الموظفين والسجلات يستغرق وقتًا؛ تحقق من اتصال الإنترنت وانتظر اكتمال المزامنة.';
+                                                }, 8000);
                                                 let adminTypingBuffer = {}, adminSelectBuffer = {}, editingUserKey = null, soundActive = false;
                                                 let maxBreaksAllowed = 3, maxPrayersAllowed = 2, lastReceivedBroadcastID = localStorage.getItem('last_broadcast_id') || "";
                                                 let currentProfileTarget = null; // الموظف الذي نعرض ملفه حالياً
@@ -4380,9 +4429,25 @@ html, body {
                                                 }
 
                                                 let initialServerTime = Date.now(), initialPerformanceTime = performance.now();
+                                                let isServerTimeSynchronized = false;
+                                                let isDatabaseConnected = false;
+                                                let isActivityWritePending = false;
                                                 db.ref(".info/serverTimeOffset").on("value", (snap) => {
-                                                    initialServerTime = Date.now() + (snap.val() || 0);
+                                                    const offset = snap.val();
+                                                    if (typeof offset !== 'number' || !Number.isFinite(offset)) return;
+                                                    initialServerTime = Date.now() + offset;
                                                     initialPerformanceTime = performance.now();
+                                                    isServerTimeSynchronized = true;
+                                                });
+                                                db.ref(".info/connected").on("value", (snap) => {
+                                                    isDatabaseConnected = snap.val() === true;
+                                                    if (currentUser && currentUser.role !== 'admin') updateUserUI();
+                                                });
+
+                                                window.addEventListener('beforeunload', (event) => {
+                                                    if (!isActivityWritePending) return;
+                                                    event.preventDefault();
+                                                    event.returnValue = '';
                                                 });
 
                                                 function getServerTime() { return initialServerTime + (performance.now() - initialPerformanceTime); }
@@ -4998,7 +5063,7 @@ html, body {
                                                     if (currentUser) {
                                                         renderBroadcastLog(); // ضيف السطر ده هنا عشان أول ما يتعرف عليك يظهر التوجيهات فوراً
                                                     }
-                                                    if (!isLoaded) { isLoaded = true; document.getElementById('loading').style.display = 'none'; document.getElementById('mainContainer').classList.remove('hidden'); checkSavedSession(); }
+                                                    if (!isLoaded) { isLoaded = true; clearTimeout(loadingHintTimer); document.getElementById('loading').style.display = 'none'; document.getElementById('mainContainer').classList.remove('hidden'); checkSavedSession(); }
                                                     if (currentUser) {
                                                         const updatedMe = allUsersData[currentUser.username];
                                                         if(updatedMe) { const r = currentUser.role; currentUser = updatedMe; currentUser.role = r; }
@@ -5045,7 +5110,25 @@ html, body {
 
                                 if(!document.getElementById('tab-reports').classList.contains('hidden')) renderUserReport();
                             }
-                            else { updateUserUI(); updateEmStatus(); updateMeetingStatus(); updateOtStatus(); updatePermStatus(); checkBreakLimit(); checkProfileNotifications(currentUser); }
+                            else {
+                                updateUserUI();
+                                updateEmStatus();
+                                updateMeetingStatus();
+                                updateOtStatus();
+                                updatePermStatus();
+                                checkBreakLimit();
+                                checkProfileNotifications(currentUser);
+                                const reportModal = document.getElementById('myBreakReportModal');
+                                if (reportModal && !reportModal.classList.contains('hidden')) renderMyBreakReport();
+                            }
+                                                    }
+                                                }, (error) => {
+                                                    console.error("فشل تحميل بيانات المستخدمين:", error);
+                                                    if (isLoaded) return;
+                                                    clearTimeout(loadingHintTimer);
+                                                    const loading = document.getElementById('loading');
+                                                    if (loading) {
+                                                        loading.innerHTML = '<div style="color:#fecaca;text-align:center;padding:24px;"><h2>تعذر تحميل بيانات النظام</h2><p>تحقق من الاتصال أو صلاحية الوصول، ثم أعد المحاولة.</p><button class="btn btn-primary" onclick="window.location.reload()">إعادة المحاولة</button></div>';
                                                     }
                                                 });
 
@@ -5061,39 +5144,35 @@ html, body {
                                                     });
                                                 }
 
-                function checkBreakLimit() {
-        if(!currentUser || currentUser.role === 'admin') return false; // الإدارة لا تطبق عليها القيود
-        
-        const box = document.getElementById('breakLimitAlert');
-        // استهداف الزرار اللي بيفتح نافذة اختيار البريك
-        const mainBreakBtn = document.querySelector("button[onclick*='breakPickerModal']");
+                function getBreakLimitMessage(username, usersData) {
+        if (!currentUser || currentUser.role === 'admin' || username !== currentUser.username) return "";
+        const employee = usersData[username] || currentUser;
+        const isSharedBreak = (user) => user && user.isOnBreak && (user.breakType === 'بريك عام' || user.breakType === 'طوارئ');
 
-        let isBlocked = false;
-        let message = "";
-
-        // منطق فحص المجموعات
-        if (currentUser.groupName && currentUser.groupName !== "") {
-            const inMyGroupOnBreak = Object.values(allUsersData).filter(u =>
-                u.groupName === currentUser.groupName &&
-                u.username !== currentUser.username &&
-                u.isOnBreak && (u.breakType === 'بريك عام' || u.breakType === 'طوارئ')
+        if (employee.groupName) {
+            const groupMateOnBreak = Object.values(usersData).some(user =>
+                user && user.username !== username && user.groupName === employee.groupName && isSharedBreak(user)
             );
-            if (inMyGroupOnBreak.length >= 1) {
-                isBlocked = true;
-                message = `يا بطل، زميلك في مجموعة (${currentUser.groupName}) في البريك حالياً. أول ما يرجع الطريق هيكون مفتوح ليك! 💪`;
-            }
-        } else {
-            // منطق الموظفين المستقلين
-            const soloUsersOnBreak = Object.values(allUsersData).filter(u =>
-                (!u.groupName || u.groupName === "") &&
-                u.isOnBreak && (u.breakType === 'بريك عام' || u.breakType === 'طوارئ')
-            ).length;
-
-            if (soloUsersOnBreak >= maxBreaksAllowed) {
-                isBlocked = true;
-                message = `يا بطل، زمايلك كلهم في البريك دلوقتي. استنى حد يرجع عشان نفضل شغالين.. أول ما حد يرجع الطريق هيكون مفتوح ليك! 💪`;
-            }
+            return groupMateOnBreak
+                ? `يا بطل، زميلك في مجموعة (${employee.groupName}) في البريك حالياً. أول ما يرجع الطريق هيكون مفتوح ليك! 💪`
+                : "";
         }
+
+        const soloUsersOnBreak = Object.values(usersData).filter(user =>
+            user && user.username !== username && (!user.groupName || user.groupName === "") && isSharedBreak(user)
+        ).length;
+        const allowedBreaks = Number(maxBreaksAllowed) || 3;
+        return soloUsersOnBreak >= allowedBreaks
+            ? "يا بطل، زمايلك كلهم في البريك دلوقتي. استنى حد يرجع عشان نفضل شغالين.. أول ما حد يرجع الطريق هيكون مفتوح ليك! 💪"
+            : "";
+    }
+
+                function checkBreakLimit() {
+        if(!currentUser || currentUser.role === 'admin') return false;
+        const box = document.getElementById('breakLimitAlert');
+        const mainBreakBtn = document.querySelector("button[onclick*='breakPickerModal']");
+        const message = getBreakLimitMessage(currentUser.username, allUsersData);
+        const isBlocked = Boolean(message);
 
         if (isBlocked) {
             if(box) { box.style.display = 'block'; box.innerHTML = message; }
@@ -5453,6 +5532,10 @@ html, body {
                                 
                                 // تحديث واجهة المستخدم (العداد الدائري، الحالة)
                                 updateUserUI();
+                                const myBreakReport = document.getElementById('myBreakReportModal');
+                                if (myBreakReport && !myBreakReport.classList.contains('hidden') && new Date(getServerTime()).getSeconds() % 10 === 0) {
+                                    renderMyBreakReport();
+                                }
                                 
                                 // مراقبة تنبيه "دورك في الصلاة" والعداد الخاص بالموظف
                                 watchPrayerTurnTimer();
@@ -5507,7 +5590,7 @@ html, body {
                 else if (u.breakType === 'صلاة') { lp += elap; actP++; }
                 else if (u.breakType === 'ميتنج') lm += elap;
                 else if (u.breakType === 'متابع عميل') lf += elap;
-                else if (u.breakType === 'استراحة VIP') lv += elap;
+                else if (u.breakType === 'استراحة VIP' || u.breakType === 'VIP سهرة') lv += elap;
             }
 
             const totalAllowance = (u.allowance || 45) * 60;
@@ -5520,7 +5603,14 @@ html, body {
             const onlineDot = isOnline ? `<span style="color:#10b981;">● متصل</span>` : `<span style="color:#888;">○ أوفلاين</span>`;
 
             // نص الحالة التفصيلي
-            let mainStatusText = u.isOnBreak ? (u.lastReason || u.breakType) : 'متاح للعمل ✅';
+            let mainStatusText = 'متاح للعمل ✅';
+            if (u.isOnBreak) {
+                const startTime = Number(u.lastStartTime);
+                const startLabel = Number.isFinite(startTime) && startTime > 0
+                    ? `بدأ ${new Date(startTime).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}`
+                    : '⚠️ وقت بداية النشاط غير مسجل';
+                mainStatusText = `${u.lastReason || u.breakType}<small style="display:block; font-weight:normal; color:#cbd5e1;">${startLabel}</small>`;
+            }
             const statusColor = u.isOnBreak ? 'var(--danger)' : 'var(--success)';
 
             // رصيد الصلاة
@@ -5611,7 +5701,7 @@ html, body {
                                                             else if (u.breakType === 'صلاة') lp += elap;
                                                             else if (u.breakType === 'ميتنج') lm += elap;
                                                             else if (u.breakType === 'متابع عميل') lf += elap;
-                                                            else if (u.breakType === 'استراحة VIP') lv += elap;
+                                                            else if (u.breakType === 'استراحة VIP' || u.breakType === 'VIP سهرة') lv += elap;
                                                         }
 
                                                         const rem = ((u.allowance || 45) * 60) - lg;
@@ -5638,6 +5728,178 @@ html, body {
                                                         updateText(`vip_${u.username}`, lv);
                                                     });
                                                 }
+
+                    function openMyBreakReport() {
+    if (!currentUser || currentUser.role === 'admin' || MANAGERS.includes(currentUser.username)) {
+        alert("التقرير متاح للموظف المسجل فقط.");
+        return;
+    }
+
+    const modal = document.getElementById('myBreakReportModal');
+    if (!modal) {
+        alert("تعذر فتح التقرير الآن. حدّث الصفحة وحاول مرة أخرى.");
+        return;
+    }
+    const todayParts = getServerDateString().split('/');
+    const today = `${todayParts[2]}-${todayParts[1]}-${todayParts[0]}`;
+    const fromInput = document.getElementById('myBreakReportFrom');
+    const toInput = document.getElementById('myBreakReportTo');
+    if (fromInput && toInput && !fromInput.value && !toInput.value) {
+        fromInput.value = today;
+        toInput.value = today;
+    }
+    modal.classList.remove('hidden');
+    renderMyBreakReport();
+}
+
+function closeMyBreakReport() {
+    const modal = document.getElementById('myBreakReportModal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function renderMyBreakReport() {
+    if (!currentUser || currentUser.role === 'admin' || MANAGERS.includes(currentUser.username)) return;
+
+    const employee = allUsersData[currentUser.username];
+    const tbody = document.getElementById('myBreakReportBody');
+    const summary = document.getElementById('myBreakReportSummary');
+    const dailyBody = document.getElementById('myBreakDailyBody');
+    const from = document.getElementById('myBreakReportFrom')?.value || '';
+    const to = document.getElementById('myBreakReportTo')?.value || '';
+    if (!tbody || !summary || !dailyBody) return;
+
+    if (!employee || employee.username !== currentUser.username) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px;">بيانات التقرير غير متاحة حاليًا.</td></tr>';
+        dailyBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">بيانات التقرير غير متاحة حاليًا.</td></tr>';
+        summary.innerHTML = '';
+        return;
+    }
+
+    if (from && to && from > to) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px;">تاريخ البداية يجب أن يكون قبل تاريخ النهاية.</td></tr>';
+        dailyBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">تحقق من فترة البحث.</td></tr>';
+        summary.innerHTML = '';
+        return;
+    }
+
+    const totals = { break: 0, prayer: 0, vip: 0, oxidation: 0 };
+    const rows = [];
+    const dailyTotals = {};
+    const allowanceSeconds = Math.max(0, Number(employee.allowance) || 45) * 60;
+    const formatReportDuration = (seconds) => {
+        const totalMinutes = Math.floor(Math.max(0, seconds) / 60);
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    };
+    const getDailyTotals = (date, displayDate) => {
+        if (!dailyTotals[date]) {
+            dailyTotals[date] = { displayDate, break: 0 };
+        }
+        return dailyTotals[date];
+    };
+    const sessions = employee.sessions && typeof employee.sessions === 'object' ? employee.sessions : {};
+    const sessionEntries = Object.entries(sessions).filter(([, session]) => session && typeof session === 'object');
+
+    sessionEntries.forEach(([key, session]) => {
+        const dateParts = String(session.date || '').split('/');
+        if (dateParts.length !== 3) return;
+        const isoDate = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+        if ((from && isoDate < from) || (to && isoDate > to)) return;
+
+        const duration = Math.max(0, Number.parseInt(session.duration, 10) || 0);
+        const type = String(session.type || 'نشاط');
+        if (type === 'بريك عام' || type === 'طوارئ') {
+            totals.break += duration;
+            getDailyTotals(isoDate, session.date).break += duration;
+        }
+        else if (type === 'صلاة') totals.prayer += duration;
+        else if (type === 'استراحة VIP' || type === 'VIP سهرة') totals.vip += duration;
+
+        rows.push({
+            date: isoDate,
+            displayDate: session.date,
+            type,
+            reason: String(session.reason || ''),
+            duration,
+            startTime: String(session.startTime || '--'),
+            endTime: String(session.endTime || '--')
+        });
+    });
+
+    const activeStart = Number(employee.lastStartTime);
+    if (employee.isOnBreak && Number.isFinite(activeStart) && activeStart > 0) {
+        const startedAt = new Date(activeStart);
+        const isoDate = `${startedAt.getFullYear()}-${String(startedAt.getMonth() + 1).padStart(2, '0')}-${String(startedAt.getDate()).padStart(2, '0')}`;
+        if ((!from || isoDate >= from) && (!to || isoDate <= to)) {
+            const duration = Math.max(0, Math.floor((getServerTime() - activeStart) / 1000));
+            const type = String(employee.breakType || 'نشاط');
+            if (type === 'بريك عام' || type === 'طوارئ') {
+                totals.break += duration;
+                getDailyTotals(isoDate, startedAt.toLocaleDateString('ar-EG')).break += duration;
+            }
+            else if (type === 'صلاة') totals.prayer += duration;
+            else if (type === 'استراحة VIP' || type === 'VIP سهرة') totals.vip += duration;
+            rows.push({
+                date: isoDate,
+                displayDate: startedAt.toLocaleDateString('ar-EG'),
+                type: `جاري الآن: ${type}`,
+                reason: String(employee.lastReason || ''),
+                duration,
+                startTime: startedAt.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+                endTime: '—'
+            });
+        }
+    }
+
+    Object.values(dailyTotals).forEach((day) => {
+        day.allowance = allowanceSeconds;
+        day.oxidation = Math.max(0, day.break - allowanceSeconds);
+        totals.oxidation += day.oxidation;
+    });
+
+    rows.sort((a, b) => b.date.localeCompare(a.date) || b.startTime.localeCompare(a.startTime));
+    const summaryCards = [
+        ['البريك والطوارئ', totals.break, '#f87171'],
+        ['الأكسدة', totals.oxidation, '#fb7185'],
+        ['رصيد البريك اليومي', allowanceSeconds, '#a78bfa'],
+        ['الصلاة', totals.prayer, '#38bdf8']
+    ];
+    if (employee.isVIP) summaryCards.push(['VIP', totals.vip, '#fbbf24']);
+    summary.innerHTML = summaryCards.map(([label, seconds, color]) => `
+        <div style="background:rgba(0,0,0,0.25); border:1px solid ${color}; border-radius:14px; padding:12px; text-align:center;">
+            <small>${label}</small><div style="font-size:1.2rem; font-weight:bold; color:${color};">${formatReportDuration(seconds)}</div>
+        </div>`).join('');
+
+    const dailyEntries = Object.entries(dailyTotals).sort(([dateA], [dateB]) => dateB.localeCompare(dateA));
+    if (dailyEntries.length === 0) {
+        dailyBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:#94a3b8;">لا يوجد بريك أو أكسدة في الفترة المحددة.</td></tr>';
+    } else {
+        dailyBody.innerHTML = dailyEntries.map(([, day]) => `
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+                <td>${escapeHtml(day.displayDate)}</td>
+                <td>${formatReportDuration(day.break)}</td>
+                <td>${formatReportDuration(day.allowance)}</td>
+                <td style="font-weight:bold; color:${day.oxidation > 0 ? '#fb7185' : '#10b981'};">${formatReportDuration(day.oxidation)}${day.oxidation > 0 ? ' ⚠️' : ' ✅'}</td>
+            </tr>`).join('');
+    }
+
+    if (rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#94a3b8;">لا توجد سجلات بريك في الفترة المحددة.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = rows.map((row) => `
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+            <td>${escapeHtml(row.displayDate)}</td>
+            <td style="text-align:right;">
+                <b>${escapeHtml(row.type)}</b>
+                <div style="color:#94a3b8; font-size:0.8rem;">${escapeHtml(row.startTime)} – ${escapeHtml(row.endTime)}</div>
+                ${row.reason ? `<small style="color:#fbbf24;">السبب: ${escapeHtml(row.reason)}</small>` : ''}
+            </td>
+            <td style="font-weight:bold;">${formatReportDuration(row.duration)}</td>
+        </tr>`).join('');
+}
 
                     function renderUserReport() {
     const un = document.getElementById('reportUserSelect').value; 
@@ -5756,14 +6018,7 @@ html, body {
 
                     console.log("جاري محاولة بدء بريك للموظف:", un, "نوع:", type);
 
-                    // 2. تحديث مباشر لقاعدة البيانات بدون قيود (المشرف له الأولوية)
-                    db.ref('users/' + un).update({
-                        isOnBreak: true,
-                        breakType: type,
-                        lastStartTime: getServerTime(),
-                        lastReason: reason
-                    })
-                    .then(() => {
+                    beginUserActivity(un, type, reason, () => {
                         console.log("✅ تم التحديث في قاعدة البيانات بنجاح");
                         
                         // 3. تحديث الواجهة فوراً
@@ -5771,57 +6026,8 @@ html, body {
                             renderMonitorTable(); 
                         }
                         
-                        // 4. إشارة تحديث للكل (لو الدالة موجودة)
-                        if (typeof triggerGlobalRefresh === "function") {
-                            try { triggerGlobalRefresh(); } catch(e) { console.log("Refresh signal error ignored"); }
-                        }
-                    })
-                    .catch((error) => {
-                        console.error("❌ فشل التحديث في قاعدة البيانات:", error);
-                        alert("فشل البدء: " + error.message);
                     });
                 };
-                window.adminStop = (un) => {
-                db.ref('users/' + un).once('value', (snap) => {
-                    const u = snap.val();
-                    if (!u || !u.lastStartTime) return;
-
-                    const duration = Math.floor((getServerTime() - u.lastStartTime) / 1000);
-                    const startTimeStr = new Date(u.lastStartTime).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
-
-                    // سجل في الأرشيف
-                    db.ref('users/' + un + '/sessions').push({
-                        date: getServerDateString(),
-                        type: u.breakType,
-                        reason: u.lastReason || 'إيقاف إداري بواسطة المشرف',
-                        duration: duration,
-                        startTime: startTimeStr,
-                        endTime: getServerTimeString()
-                    });
-
-                    const updates = {
-                        isOnBreak: false,
-                        lastStartTime: null,
-                        lastEndedTime: getServerTime(),
-                        lastEndedType: u.breakType,
-                        // التعديل السحري هنا:
-                        emRequest: null // مسح طلب الطوارئ تماماً لضمان عدم الخروج مرة أخرى بدون إذن
-                    };
-
-                    if (u.breakType === 'بريك عام' || u.breakType === 'طوارئ') updates.usedSeconds = (u.usedSeconds || 0) + duration;
-                    else if (u.breakType === 'صلاة') updates.prayerSeconds = (u.prayerSeconds || 0) + duration;
-                    else if (u.breakType === 'ميتنج') { updates.meetingSeconds = (u.meetingSeconds || 0) + duration; updates.meetingRequest = null; }
-                    else if (u.breakType === 'متابع عميل') updates.followUpSeconds = (u.followUpSeconds || 0) + duration;
-                    else if (u.breakType === 'استراحة VIP') updates.vipSeconds = (u.vipSeconds || 0) + duration;
-
-                    db.ref('users/' + un).update(updates).then(() => {
-                        if (u.breakType === 'صلاة') removeFromQueueByUsername(un);
-                        triggerGlobalRefresh();
-                        alert("تم إيقاف النشاط للموظف ومسح تصريح الطوارئ بنجاح ✅");
-                    });
-                });
-            };
-
                     function openPrayerHistory() {
                         document.getElementById('prayerHistoryModal').classList.remove('hidden');
                         const content = document.getElementById('prayerHistoryContent');
@@ -5963,7 +6169,14 @@ html, body {
                     }
 
     function startMyBreak(t) {
-        if (currentUser.isOnBreak) return;
+        if (!currentUser) {
+            alert("تعذر تحديد حساب الموظف لبدء النشاط.");
+            return;
+        }
+        if (currentUser.isOnBreak) {
+            alert("أنت مسجل بالفعل في نشاط؛ لن يتم تصفير عداده.");
+            return;
+        }
 
         // --- حماية نافذة الصلاة ---
         if (t === 'صلاة') {
@@ -5988,14 +6201,13 @@ html, body {
             return;
         }
 
-        db.ref('users/' + currentUser.username).update({
-            isOnBreak: true,
-            breakType: t,
-            lastStartTime: getServerTime(),
-            lastReason: reasonValue || t
-        }).then(() => {
+        beginUserActivity(currentUser.username, t, reasonValue || t, () => {
             // إذا بدأ صلاة، نحدث توقيت الـ 10 دقائق للي بعده
-            if(t === 'صلاة') db.ref('settings/currentTurnStartTime').set(getServerTime());
+            if(t === 'صلاة') {
+        db.ref('settings/currentTurnStartTime').set(getServerTime()).catch((error) => {
+            console.error("فشل تحديث توقيت دور الصلاة:", error);
+        });
+            }
             
             // إغلاق أي نافذة اختيار مفتوحة
             document.getElementById('prayerTypePickerModal').classList.add('hidden');
@@ -6009,7 +6221,18 @@ html, body {
     const u = currentUser;
 
     // التأكد أن المستخدم مسجل دخول وله توقيت بداية
-    if (!u || !u.lastStartTime) return;
+          if (!u) {
+              alert("تعذر تحديد حساب الموظف لإنهاء النشاط.");
+              return;
+          }
+          if (!u.isOnBreak || !Number.isFinite(Number(u.lastStartTime)) || Number(u.lastStartTime) <= 0) {
+              alert("بيانات بداية النشاط غير سليمة؛ لم يتم تغيير أي عداد. أبلغ المشرف للتحقق.");
+              return;
+          }
+          if (!isDatabaseConnected) {
+              alert("الاتصال بقاعدة البيانات مقطوع. لن ننهي النشاط حتى لا يرجع بعد تحديث الصفحة؛ انتظر عودة الاتصال ثم حاول مرة أخرى.");
+              return;
+          }
 
     // --- 1. منطقة التحكم في الموبايل ---
     if (device === "mobile" && u.role !== 'admin') {
@@ -6034,126 +6257,6 @@ html, body {
     // --- 3. الإنهاء التلقائي لبقية الأنشطة (بريك، ميتنج، سهرة، الخ) ---
     finalizeStopBreak(false); 
 }
-
-// الدالة المسؤولة عن تحديث قاعدة البيانات (يجب أن تكون موجودة بجانبها)
-function finalizeStopBreak(didFinishPrayer) {
-    const u = currentUser;
-    if (!u || !u.lastStartTime) return;
-
-    const now = getServerTime();
-    const duration = Math.floor((now - u.lastStartTime) / 1000);
-    const startTimeStr = new Date(u.lastStartTime).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
-    const endTimeStr = getServerTimeString();
-
-    // 1. تسجيل الجلسة في الأرشيف
-    db.ref('users/' + u.username + '/sessions').push({
-        date: getServerDateString(),
-        type: u.breakType,
-        reason: u.lastReason || 'نشاط عادي',
-        duration: duration,
-        startTime: startTimeStr,
-        endTime: endTimeStr
-    });
-
-    // 2. تحضير التحديثات لعدادات الموظف
-    const updates = {
-        isOnBreak: false,
-        lastStartTime: null,
-        lastEndedTime: now,
-        lastEndedType: u.breakType,
-        emRequest: null,      // مسح طلبات الطوارئ
-        meetingRequest: null  // مسح طلبات الاجتماع
-    };
-
-    // 3. تحديث العدادات بناءً على نوع النشاط
-    if (u.breakType === 'صلاة') {
-        updates.prayerSeconds = (u.prayerSeconds || 0) + duration;
-        updates.prayerCountToday = (u.prayerCountToday || 0) + 1;
-        removeFromQueueByUsername(u.username); // حذفه من طابور الصلاة
-    } 
-    else if (u.breakType === 'بريك عام' || u.breakType === 'طوارئ') {
-        updates.usedSeconds = (u.usedSeconds || 0) + duration;
-    }
-    else if (u.breakType === 'ميتنج') {
-        updates.meetingSeconds = (u.meetingSeconds || 0) + duration;
-    }
-    else if (u.breakType === 'متابع عميل') {
-        updates.followUpSeconds = (u.followUpSeconds || 0) + duration;
-    }
-    else if (u.breakType === 'استراحة VIP' || u.breakType === 'VIP سهرة') {
-        updates.vipSeconds = (u.vipSeconds || 0) + duration;
-    }
-
-    // 4. تنفيذ التحديث في Firebase
-    db.ref('users/' + u.username).update(updates).then(() => {
-        // تصفير خانة السبب وإخفاء النوافذ
-        const reasonInput = document.getElementById('breakReason');
-        if(reasonInput) reasonInput.value = ""; 
-        
-        const prayerModal = document.getElementById('prayerCheckModal');
-        if(prayerModal) prayerModal.classList.add('hidden');
-        
-        if (typeof triggerGlobalRefresh === "function") triggerGlobalRefresh();
-        
-        console.log("تم إنهاء النشاط بنجاح ✅");
-    });
-}
-            function finalizeStopBreak(didFinishPrayer) {
-                const u = currentUser;
-                if (!u.lastStartTime) return;
-
-                const d = Math.floor((getServerTime() - u.lastStartTime) / 1000);
-                const startTimeStr = new Date(u.lastStartTime).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
-                const endTimeStr = getServerTimeString();
-
-                db.ref('users/' + u.username + '/sessions').push({
-                    date: getServerDateString(),
-                    type: u.breakType,
-                    reason: u.lastReason || 'نشاط عادي',
-                    duration: d,
-                    startTime: startTimeStr,
-                    endTime: endTimeStr
-                });
-
-                const updates = {
-                    isOnBreak: false,
-                    lastStartTime: null,
-                    lastEndedTime: getServerTime(),
-                    lastEndedType: u.breakType,
-                    // مسح طلبات الطوارئ والاجتماعات لضمان طلب إذن جديد في المرة القادمة
-                    emRequest: null,
-                    meetingRequest: null 
-                };
-
-                if (u.breakType === 'صلاة') {
-                    updates.prayerSeconds = (u.prayerSeconds || 0) + d;
-                    updates.prayerCountToday = (u.prayerCountToday || 0) + 1;
-                    removeFromQueueByUsername(u.username);
-                } 
-                else if (u.breakType === 'بريك عام' || u.breakType === 'طوارئ') {
-                    updates.usedSeconds = (u.usedSeconds || 0) + d;
-                }
-                else if (u.breakType === 'ميتنج') {
-                    updates.meetingSeconds = (u.meetingSeconds || 0) + d;
-                }
-                else if (u.breakType === 'متابع عميل') {
-                    updates.followUpSeconds = (u.followUpSeconds || 0) + d;
-                }
-                else if (u.breakType === 'استراحة VIP') {
-                    updates.vipSeconds = (u.vipSeconds || 0) + d;
-                }
-
-                db.ref('users/' + u.username).update(updates).then(() => {
-                    document.getElementById('breakReason').value = "";
-                    if(document.getElementById('prayerCheckModal')) document.getElementById('prayerCheckModal').classList.add('hidden');
-                });
-            }
-                                                // دالة التعامل مع ضغطة الزر في نافذة الصلاة
-                                                function confirmPrayerStatus(didPray) {
-                                                    finalizeStopBreak(didPray);
-                                                }
-
-                                            
 
                                                 // دالة مساعدة لحذف الموظف من الطابور باسم المستخدم
                                                 function removeFromQueueByUsername(username) {
@@ -6253,6 +6356,13 @@ function finalizeStopBreak(didFinishPrayer) {
                                                             const mobileWarning = document.querySelector('.mobile-only-warning');
 
                                                     }
+                                                    [normalControls, stopArea, vipArea, followArea].forEach((area) => {
+                                                        if (!area) return;
+                                                        area.querySelectorAll('button').forEach((button) => {
+                                                            button.disabled = isActivityWritePending;
+                                                            button.title = isActivityWritePending ? "جاري تأكيد الحفظ في قاعدة البيانات؛ لا تحدّث الصفحة" : "";
+                                                        });
+                                                    });
 
                                                     // --- إضافة منطق الطابور (الحالة والتحكم) ---
                                                     // --- التعديل الجديد لمنطق الطابور المرن ---
@@ -6273,8 +6383,27 @@ function finalizeStopBreak(didFinishPrayer) {
                                                     if (u.isOnBreak) {
                                                         welcomeArea.innerHTML = "";
                                                         msg.innerText = "أنت الآن في: " + u.breakType;
-                                                        const elap = Math.floor((getServerTime() - u.lastStartTime) / 1000);
-                                                        document.getElementById('elapsedTime').innerText = `مدة البريك الحالية: ${formatTime(elap)}`;
+                                                        const elapsedElement = document.getElementById('elapsedTime');
+                                                        const startTime = Number(u.lastStartTime);
+                                                        const hasValidStartTime = Number.isFinite(startTime) && startTime > 0;
+                                                        const elap = hasValidStartTime
+                                                            ? Math.max(0, Math.floor((getServerTime() - startTime) / 1000))
+                                                            : 0;
+                                                        if (elapsedElement) {
+                                                            if (!hasValidStartTime) {
+                                                                elapsedElement.innerText = "⚠️ مشكلة في وقت بداية النشاط؛ أبلغ المشرف ولا تبدأ نشاطًا جديدًا.";
+                                                                elapsedElement.style.color = "#f87171";
+                                                            } else {
+                                                                const startedAt = new Date(startTime).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+                                                                const connectionStatus = isActivityWritePending
+                                                                    ? "⏳ جارٍ تأكيد الحفظ؛ لا تُحدّث الصفحة"
+                                                                    : isDatabaseConnected
+                                                                        ? "☁️ متصل بقاعدة البيانات"
+                                                                        : "⚠️ الاتصال غير متاح؛ لا تُحدّث الصفحة حتى يعود";
+                                                                elapsedElement.innerText = `المدة: ${formatTime(elap)} · بدأ ${startedAt} · ${connectionStatus}`;
+                                                                elapsedElement.style.color = isActivityWritePending ? "#fbbf24" : (isDatabaseConnected ? "#94a3b8" : "#f87171");
+                                                            }
+                                                        }
 
                                                         // لو الموظف في حالة صلاة
                                                         if (u.breakType === 'صلاة') {
@@ -6316,14 +6445,15 @@ if (sohraBtn) {
                                                             }
                                                         }
                                                         // --- منطق البريك العام (الأكسدة) ---
-                                                        else if (u.breakType === 'بريك عام' || u.breakType === 'طوارئ' || u.breakType === 'استراحة VIP') {
-                                                            const rem = allowTotal - ((u.usedSeconds || 0) + (u.breakType === 'استراحة VIP' ? 0 : elap));
+                                                        else if (u.breakType === 'بريك عام' || u.breakType === 'طوارئ' || u.breakType === 'استراحة VIP' || u.breakType === 'VIP سهرة') {
+                                                                                                    const isVipBreak = u.breakType === 'استراحة VIP' || u.breakType === 'VIP سهرة';
+                                                                                                    const rem = allowTotal - ((u.usedSeconds || 0) + (isVipBreak ? 0 : elap));
         updateLockScreenTimer(rem, u.breakType);
 
                                                             let pct = (rem / allowTotal); if (pct < 0) pct = 0;
                                                             circle.style.strokeDashoffset = circ - (pct * circ);
 
-                                                            if (u.breakType === 'استراحة VIP') {
+                                                            if (isVipBreak) {
                                                                 timerText.innerText = formatTime(elap);
                                                                 lbl.innerText = "مدة الـ VIP";
                                                                 circle.style.stroke = "#ffd700"; // لون ذهبي
@@ -6350,6 +6480,15 @@ if (sohraBtn) {
                                                         }
                                                     } else {
                                                         stopAlarm();
+                                                        const elapsedElement = document.getElementById('elapsedTime');
+                                                        if (elapsedElement) {
+                                                            elapsedElement.innerText = isActivityWritePending
+                                                                ? "⏳ جارٍ تأكيد الحفظ؛ لا تُحدّث الصفحة"
+                                                                : isDatabaseConnected
+                                                                    ? "☁️ متصل بقاعدة البيانات"
+                                                                    : "⚠️ غير متصل بقاعدة البيانات؛ لن تُحفظ تغييرات الآن";
+                                                            elapsedElement.style.color = isActivityWritePending ? "#fbbf24" : (isDatabaseConnected ? "#94a3b8" : "#f87171");
+                                                        }
                                                         const rem = allowTotal - (u.usedSeconds || 0);
                                                         
                                                         timerText.innerText = rem >= 0 ? formatTime(rem) : "00:00";
@@ -6474,7 +6613,22 @@ if (sohraBtn) {
     }
 
                                                 function renderAdminEmRequests() { const tb = document.getElementById('adminEmBody'); tb.innerHTML = ''; let c = 0; Object.values(allUsersData).forEach(u => { if(u.emRequest && u.emRequest.status === 'قيد الانتظار') { c++; tb.innerHTML += `<tr><td>${u.realName}</td><td>${u.emRequest.reason}</td><td>${new Date(u.emRequest.timestamp).toLocaleTimeString()}</td><td><button onclick="handleEm('${u.username}', true)" class="btn btn-success btn-sm">✔</button><button onclick="handleEm('${u.username}', false)" class="btn btn-danger btn-sm">✖</button></td></tr>`; } }); document.getElementById('emBadge').innerText = c; c > 0 ? document.getElementById('emBadge').classList.remove('hidden') : document.getElementById('emBadge').classList.add('hidden'); }
-                                                window.handleEm = (un, app) => { if(app) db.ref('users/'+un).update({ isOnBreak: true, breakType: 'طوارئ', lastStartTime: getServerTime(), lastReason: allUsersData[un].emRequest.reason, 'emRequest/status': 'تم القبول' }); else db.ref(`users/${un}/emRequest`).update({ status: 'رُفض' }); triggerGlobalRefresh(); };
+                                                window.handleEm = (un, app) => {
+                                                    if (app) {
+                                                        const request = allUsersData[un] && allUsersData[un].emRequest;
+                                                        beginUserActivity(un, 'طوارئ', request ? request.reason : 'طلب طوارئ', () => {
+                                                            db.ref(`users/${un}/emRequest/status`).set('تم القبول').catch((error) => {
+                                                                console.error("فشل تحديث طلب الطوارئ:", error);
+                                                                alert("بدأ النشاط لكن تعذر تحديث حالة الطلب: " + error.message);
+                                                            });
+                                                        });
+                                                    } else {
+                                                        db.ref(`users/${un}/emRequest`).update({ status: 'رُفض' }).then(() => triggerGlobalRefresh()).catch((error) => {
+                                                            console.error("فشل رفض طلب الطوارئ:", error);
+                                                            alert("تعذر رفض الطلب: " + error.message);
+                                                        });
+                                                    }
+                                                };
 
                                                 // دالة إرسال طلب الاستأذان (معدلة)
                                                 function sendPermRequest() {
@@ -6581,7 +6735,22 @@ if (sohraBtn) {
                                                 }
 
                                                 function renderAdminMeetingRequests() { const tb = document.getElementById('adminMeetBody'); tb.innerHTML = ''; let c = 0; Object.values(allUsersData).forEach(u => { if(u.meetingRequest && u.meetingRequest.status === 'قيد الانتظار') { c++; tb.innerHTML += `<tr><td>${u.realName}</td><td>${u.meetingRequest.reason}</td><td>${new Date(u.meetingRequest.timestamp).toLocaleTimeString()}</td><td><button onclick="handleMeeting('${u.username}', true)" class="btn btn-success btn-sm">✔</button><button onclick="handleMeeting('${u.username}', false)" class="btn btn-danger btn-sm">✖</button></td></tr>`; } }); document.getElementById('meetBadge').innerText = c; c > 0 ? document.getElementById('meetBadge').classList.remove('hidden') : document.getElementById('meetBadge').classList.add('hidden'); }
-                                                window.handleMeeting = (un, app) => { if(app) db.ref('users/'+un).update({ isOnBreak: true, breakType: 'ميتنج', lastStartTime: getServerTime(), lastReason: allUsersData[un].meetingRequest.reason, 'meetingRequest/status': 'تم القبول' }); else db.ref(`users/${un}/meetingRequest`).update({ status: 'رُفض' }); triggerGlobalRefresh(); };
+                                                window.handleMeeting = (un, app) => {
+                                                    if (app) {
+                                                        const request = allUsersData[un] && allUsersData[un].meetingRequest;
+                                                        beginUserActivity(un, 'ميتنج', request ? request.reason : 'اجتماع', () => {
+                                                            db.ref(`users/${un}/meetingRequest/status`).set('تم القبول').catch((error) => {
+                                                                console.error("فشل تحديث طلب الاجتماع:", error);
+                                                                alert("بدأ النشاط لكن تعذر تحديث حالة الطلب: " + error.message);
+                                                            });
+                                                        });
+                                                    } else {
+                                                        db.ref(`users/${un}/meetingRequest`).update({ status: 'رُفض' }).then(() => triggerGlobalRefresh()).catch((error) => {
+                                                            console.error("فشل رفض طلب الاجتماع:", error);
+                                                            alert("تعذر رفض الطلب: " + error.message);
+                                                        });
+                                                    }
+                                                };
                                                 
                                                 function sendOtRequest() { const h = document.getElementById('otHoursInput').value; if(!h) return; db.ref('users/'+currentUser.username+'/otRequest').set({ hours: h, status: 'قيد الانتظار', timestamp: getServerTime() }); }
                                                 
@@ -7808,26 +7977,63 @@ if (sohraBtn) {
                     window.isConvertingPrayer = true;
 
                     const u = currentUser;
-                    const prayerLimitSeconds = 900; 
+                    if (!u || !isServerTimeSynchronized) {
+                        window.isConvertingPrayer = false;
+                        return;
+                    }
 
                     // إيقاف أي أصوات تنبيه سابقة
                     stopAlarm();
 
-                    const updates = {
-                        prayerCountToday: (u.prayerCountToday || 0) + 1,
-                        prayerSeconds: 900, // تسجيل إنه استهلك الـ 15 كاملة
-                        breakType: 'بريك عام', 
-                        lastStartTime: getServerTime(), // إعادة تشغيل التايمر ليحسب "أكسدة" من اللحظة دي
-                        lastReason: 'تحويل تلقائي (انتهاء وقت الصلاة) 🕌'
-                    };
+                    const userRef = db.ref('users/' + u.username);
+                    const sessionKey = userRef.child('sessions').push().key;
 
-                    // الأهم: حذفه من الطابور فوراً لفتح الطريق لغيره
-                    removeFromQueueByUsername(u.username);
+                    userRef.transaction((user) => {
+                        if (!user || !user.isOnBreak || user.breakType !== 'صلاة') return;
 
-                    db.ref('users/' + u.username).update(updates).then(() => {
+                        const startedAt = Number(user.lastStartTime);
+                        if (!Number.isFinite(startedAt) || startedAt <= 0) return;
+
+                        const now = getServerTime();
+                        const elapsed = Math.max(0, Math.floor((now - startedAt) / 1000));
+                        const previousPrayerSeconds = Number(user.prayerSeconds) || 0;
+                        const prayerLimit = Math.max(0, Number(user.prayerLimit) || 0);
+                        const prayerDuration = Math.min(elapsed, Math.max(0, prayerLimit - previousPrayerSeconds));
+                        const prayerEndedAt = startedAt + prayerDuration * 1000;
+
+                        if (prayerDuration > 0) {
+                            const sessionEnd = new Date(prayerEndedAt);
+                            const sessionStart = new Date(startedAt);
+                            const date = `${String(sessionEnd.getDate()).padStart(2, '0')}/${String(sessionEnd.getMonth() + 1).padStart(2, '0')}/${sessionEnd.getFullYear()}`;
+                            user.sessions = user.sessions && typeof user.sessions === 'object' ? user.sessions : {};
+                            user.sessions[sessionKey] = {
+                                date,
+                                type: 'صلاة',
+                                reason: user.lastReason || 'صلاة',
+                                duration: prayerDuration,
+                                startTime: sessionStart.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+                                endTime: sessionEnd.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
+                            };
+                            user.prayerSeconds = previousPrayerSeconds + prayerDuration;
+                            user.prayerCountToday = (Number(user.prayerCountToday) || 0) + 1;
+                        }
+
+                        user.breakType = 'بريك عام';
+                        user.lastStartTime = prayerEndedAt;
+                        user.lastReason = 'تحويل تلقائي (انتهاء وقت الصلاة) 🕌';
+                        return user;
+                    }, (error, committed) => {
                         window.isConvertingPrayer = false;
+                        if (error) {
+                            console.error("فشل تحويل الصلاة إلى بريك:", error);
+                            alert("تعذر تحويل الصلاة تلقائياً: " + error.message);
+                            return;
+                        }
+                        if (!committed) return;
+
+                        removeFromQueueByUsername(u.username);
                         alert("⚠️ انتهى وقت الصلاة! تم تحويلك للبريك العام وحذفك من الطابور لفتح الدور لزملائك.");
-                    });
+                    }, false);
                 }
 
                         /* ==========================================
@@ -10058,61 +10264,12 @@ if (sohraBtn) {
 
                     console.log("محاولة بدء نشاط لـ:", un, "النوع:", type);
 
-                    // تحديث قاعدة البيانات فوراً
-                    db.ref('users/' + un).update({
-                        isOnBreak: true,
-                        breakType: type,
-                        lastStartTime: getServerTime(),
-                        lastReason: reason
-                    })
-                    .then(() => {
+                    beginUserActivity(un, type, reason, () => {
                         alert("✅ تم بدء الـ " + type + " للموظف بنجاح");
-                        if (typeof triggerGlobalRefresh === "function") triggerGlobalRefresh();
-                    })
-                    .catch((error) => {
-                        console.error("Error:", error);
-                        alert("حدث خطأ في قاعدة البيانات: " + error.message);
                     });
                 }
             window.adminStop = (un) => {
-                db.ref('users/' + un).once('value', (snap) => {
-                    const u = snap.val();
-                    if (!u || !u.lastStartTime) return;
-
-                    const duration = Math.floor((getServerTime() - u.lastStartTime) / 1000);
-                    const startTimeStr = new Date(u.lastStartTime).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
-
-                    // سجل في الأرشيف
-                    db.ref('users/' + un + '/sessions').push({
-                        date: getServerDateString(),
-                        type: u.breakType,
-                        reason: u.lastReason || 'إيقاف إداري بواسطة المشرف',
-                        duration: duration,
-                        startTime: startTimeStr,
-                        endTime: getServerTimeString()
-                    });
-
-                    const updates = {
-                        isOnBreak: false,
-                        lastStartTime: null,
-                        lastEndedTime: getServerTime(),
-                        lastEndedType: u.breakType,
-                        // التعديل السحري هنا:
-                        emRequest: null // مسح طلب الطوارئ تماماً لضمان عدم الخروج مرة أخرى بدون إذن
-                    };
-
-                    if (u.breakType === 'بريك عام' || u.breakType === 'طوارئ') updates.usedSeconds = (u.usedSeconds || 0) + duration;
-                    else if (u.breakType === 'صلاة') updates.prayerSeconds = (u.prayerSeconds || 0) + duration;
-                    else if (u.breakType === 'ميتنج') { updates.meetingSeconds = (u.meetingSeconds || 0) + duration; updates.meetingRequest = null; }
-                    else if (u.breakType === 'متابع عميل') updates.followUpSeconds = (u.followUpSeconds || 0) + duration;
-                    else if (u.breakType === 'استراحة VIP') updates.vipSeconds = (u.vipSeconds || 0) + duration;
-
-                    db.ref('users/' + un).update(updates).then(() => {
-                        if (u.breakType === 'صلاة') removeFromQueueByUsername(un);
-                        triggerGlobalRefresh();
-                        alert("تم إيقاف النشاط للموظف ومسح تصريح الطوارئ بنجاح ✅");
-                    });
-                });
+                completeUserActivity(un, true);
             };
                 // --- دالة الحفظ الموحدة (إضافة وتعديل) ---
             window.saveUser = function() {
@@ -10233,33 +10390,41 @@ const isSohra = document.getElementById('isSohraBreak').checked;
             // 1. معالجة طلبات الطوارئ
             function handleEm(un, app) {
                 if (app) {
-                    db.ref('users/' + un).update({
-                        isOnBreak: true,
-                        breakType: 'طوارئ',
-                        lastStartTime: getServerTime(),
-                        lastReason: allUsersData[un].emRequest.reason,
-                        'emRequest/status': 'تم القبول'
+                    const request = allUsersData[un] && allUsersData[un].emRequest;
+                    beginUserActivity(un, 'طوارئ', request ? request.reason : 'طلب طوارئ', () => {
+                        db.ref(`users/${un}/emRequest/status`).set('تم القبول').catch((error) => {
+                            console.error("فشل تحديث طلب الطوارئ:", error);
+                            alert("بدأ النشاط لكن تعذر تحديث حالة الطلب: " + error.message);
+                        });
                     });
                 } else {
-                    db.ref(`users/${un}/emRequest`).update({ status: 'رُفض' });
+                    db.ref(`users/${un}/emRequest`).update({ status: 'رُفض' }).then(() => {
+                        if (typeof triggerGlobalRefresh === "function") triggerGlobalRefresh();
+                    }).catch((error) => {
+                        console.error("فشل رفض طلب الطوارئ:", error);
+                        alert("تعذر رفض الطلب: " + error.message);
+                    });
                 }
-                if (typeof triggerGlobalRefresh === "function") triggerGlobalRefresh();
             }
 
             // 2. معالجة طلبات الاجتماعات
             function handleMeeting(un, app) {
                 if (app) {
-                    db.ref('users/' + un).update({
-                        isOnBreak: true,
-                        breakType: 'ميتنج',
-                        lastStartTime: getServerTime(),
-                        lastReason: allUsersData[un].meetingRequest.reason,
-                        'meetingRequest/status': 'تم القبول'
+                    const request = allUsersData[un] && allUsersData[un].meetingRequest;
+                    beginUserActivity(un, 'ميتنج', request ? request.reason : 'اجتماع', () => {
+                        db.ref(`users/${un}/meetingRequest/status`).set('تم القبول').catch((error) => {
+                            console.error("فشل تحديث طلب الاجتماع:", error);
+                            alert("بدأ النشاط لكن تعذر تحديث حالة الطلب: " + error.message);
+                        });
                     });
                 } else {
-                    db.ref(`users/${un}/meetingRequest`).update({ status: 'رُفض' });
+                    db.ref(`users/${un}/meetingRequest`).update({ status: 'رُفض' }).then(() => {
+                        if (typeof triggerGlobalRefresh === "function") triggerGlobalRefresh();
+                    }).catch((error) => {
+                        console.error("فشل رفض طلب الاجتماع:", error);
+                        alert("تعذر رفض الطلب: " + error.message);
+                    });
                 }
-                if (typeof triggerGlobalRefresh === "function") triggerGlobalRefresh();
             }
 
             // 3. معالجة طلبات الإضافي
@@ -11529,54 +11694,6 @@ const isSohra = document.getElementById('isSohraBreak').checked;
         console.log("تم بدء النشاط بسب: " + selectedReason);
         
     }
-    // 1. دالة إنهاء النشاط المعدلة (تم إضافة فحص الأمان)
-    window.finalizeStopBreak = function(didFinishPrayer) {
-        const u = currentUser;
-        if (!u || !u.lastStartTime) return;
-
-        const d = Math.floor((getServerTime() - u.lastStartTime) / 1000);
-        const startTimeStr = new Date(u.lastStartTime).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
-        const endTimeStr = getServerTimeString();
-
-        db.ref('users/' + u.username + '/sessions').push({
-            date: getServerDateString(),
-            type: u.breakType,
-            reason: u.lastReason || 'نشاط عادي',
-            duration: d,
-            startTime: startTimeStr,
-            endTime: endTimeStr
-        });
-
-        const updates = {
-            isOnBreak: false,
-            lastStartTime: null,
-            lastEndedTime: getServerTime(),
-            lastEndedType: u.breakType,
-            emRequest: null,
-            meetingRequest: null 
-        };
-
-        if (u.breakType === 'صلاة') {
-            updates.prayerSeconds = (u.prayerSeconds || 0) + d;
-            updates.prayerCountToday = (u.prayerCountToday || 0) + 1;
-            removeFromQueueByUsername(u.username);
-        } 
-        else if (u.breakType === 'بريك عام' || u.breakType === 'طوارئ') updates.usedSeconds = (u.usedSeconds || 0) + d;
-        else if (u.breakType === 'ميتنج') updates.meetingSeconds = (u.meetingSeconds || 0) + d;
-        else if (u.breakType === 'متابع عميل') updates.followUpSeconds = (u.followUpSeconds || 0) + d;
-        else if (u.breakType === 'استراحة VIP') updates.vipSeconds = (u.vipSeconds || 0) + d;
-
-        db.ref('users/' + u.username).update(updates).then(() => {
-            // الفحص الآمن هنا لمنع خطأ الـ null
-            const rInput = document.getElementById('breakReason');
-            if(rInput) rInput.value = ""; 
-            
-            if(document.getElementById('prayerCheckModal')) {
-                document.getElementById('prayerCheckModal').classList.add('hidden');
-            }
-        });
-    };
-
     // 2. دوال الاختيار التفصيلي المعدلة
     window.confirmDetailedBreak = function(detailedReason) {
         // 1. إذا كان الاختيار هو الحمام
@@ -11658,85 +11775,331 @@ const isSohra = document.getElementById('isSohraBreak').checked;
         } else {
             // لو داس "لا، لسه" (الموظف عاوز يرجع لعداد الـ 10 دقائق البرتقالي)
             const u = currentUser;
-            if (!u) return;
+            if (!u || !u.isOnBreak || u.breakType !== 'صلاة') {
+                alert("حالة الصلاة تغيرت بالفعل؛ حدّث البيانات قبل المحاولة مرة أخرى.");
+                return;
+            }
+            if (!isServerTimeSynchronized || !isDatabaseConnected) {
+                alert("الاتصال أو مزامنة الساعة غير متاحين؛ لم تتغير حالة الصلاة. انتظر عودة الاتصال ثم حاول مرة أخرى.");
+                return;
+            }
+            if (isActivityWritePending) {
+                alert("هناك تحديث نشاط قيد الحفظ؛ انتظر تأكيده قبل المحاولة مرة أخرى.");
+                return;
+            }
 
-            const updates = {};
-            
-            // تصحيح المسارات: لازم نحدث بيانات الموظف جوه فولدر users
-            updates['users/' + u.username + '/isOnBreak'] = false;
-            updates['users/' + u.username + '/lastStartTime'] = null;
-            updates['users/' + u.username + '/breakType'] = "";
-            
-            // تصفير عداد الـ 10 دقائق (الدور) العالمي
-            updates['settings/turnTimer/startTime'] = getServerTime();
-            updates['settings/turnTimer/pausedElapsed'] = 0;
-
-            db.ref().update(updates).then(() => {
-                // إخفاء نافذة التأكيد
-                const modal = document.getElementById('prayerCheckModal');
-                if (modal) modal.classList.add('hidden');
-                
-                // إخفاء زر الإيقاف وإظهار أزرار التحكم (للتأكيد)
-                const stopArea = document.getElementById('stopArea');
-                const controlsArea = document.getElementById('controlsArea');
-                if(stopArea) stopArea.classList.add('hidden');
-                if(controlsArea) controlsArea.classList.remove('hidden');
-
-                console.log("تمت العودة لعداد الـ 10 دقائق وتصفيره بنجاح ✅");
-            }).catch(err => {
-                console.error("خطأ في العودة للدور:", err);
-                alert("حدث خطأ، حاول مرة أخرى");
-            });
+            pausePrayerActivityForQueue(u.username);
         }
     };
 
-    // 2. دالة إنهاء النشاط (النسخة الآمنة)
-    window.finalizeStopBreak = function(didFinishPrayer) {
-        const u = currentUser;
-        if (!u || !u.lastStartTime) return;
+    function pausePrayerActivityForQueue(username) {
+        if (!isServerTimeSynchronized || !isDatabaseConnected || isActivityWritePending) {
+            alert("تعذر حفظ العودة من الصلاة: تأكد من الاتصال بقاعدة البيانات ثم حاول مرة أخرى.");
+            return;
+        }
 
-        const d = Math.floor((getServerTime() - u.lastStartTime) / 1000);
-        const startTimeStr = new Date(u.lastStartTime).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
-        const endTimeStr = getServerTimeString();
+        const userRef = db.ref('users/' + username);
+        const prayerSessionKey = userRef.child('sessions').push().key;
+        const breakSessionKey = userRef.child('sessions').push().key;
+        isActivityWritePending = true;
 
-        const updates = {
-            isOnBreak: false,
-            lastStartTime: null,
-            lastEndedTime: getServerTime(),
-            lastEndedType: u.breakType,
-            emRequest: null,
-            meetingRequest: null 
+        userRef.transaction((user) => {
+            if (!user || !user.isOnBreak || user.breakType !== 'صلاة') return;
+
+            const startTime = Number(user.lastStartTime);
+            if (!Number.isFinite(startTime) || startTime <= 0) return;
+
+            const endTime = getServerTime();
+            const duration = Math.max(0, Math.floor((endTime - startTime) / 1000));
+            const prayerSeconds = Number(user.prayerSeconds) || 0;
+            const prayerLimit = Math.max(0, Number(user.prayerLimit) || 0);
+            const prayerDuration = Math.min(duration, Math.max(0, prayerLimit - prayerSeconds));
+            const breakDuration = duration - prayerDuration;
+            user.sessions = user.sessions && typeof user.sessions === 'object' ? user.sessions : {};
+
+            const saveSession = (key, type, reason, start, end, seconds) => {
+                const startedAt = new Date(start);
+                const endedAt = new Date(end);
+                const date = `${String(endedAt.getDate()).padStart(2, '0')}/${String(endedAt.getMonth() + 1).padStart(2, '0')}/${endedAt.getFullYear()}`;
+                user.sessions[key] = {
+                    date,
+                    type,
+                    reason,
+                    duration: seconds,
+                    startTime: startedAt.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+                    endTime: endedAt.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
+                };
+            };
+
+            if (prayerDuration > 0) {
+                user.prayerSeconds = prayerSeconds + prayerDuration;
+                saveSession(prayerSessionKey, 'صلاة', user.lastReason || 'صلاة غير مكتملة', startTime, startTime + prayerDuration * 1000, prayerDuration);
+            }
+            if (breakDuration > 0) {
+                user.usedSeconds = (Number(user.usedSeconds) || 0) + breakDuration;
+                saveSession(breakSessionKey, 'بريك عام', 'انتهاء رصيد الصلاة - بريك عام', startTime + prayerDuration * 1000, endTime, breakDuration);
+            }
+
+            user.isOnBreak = false;
+            user.lastStartTime = null;
+            user.breakType = "";
+            user.lastEndedTime = endTime;
+            user.lastEndedType = 'عودة من الصلاة';
+            return user;
+        }, (error, wasCommitted) => {
+            if (error || !wasCommitted) {
+                isActivityWritePending = false;
+                if (error) {
+                    console.error("فشل حفظ وقت الصلاة غير المكتملة:", error);
+                    alert("تعذر حفظ وقت الصلاة والعودة للعمل: " + error.message);
+                } else {
+                    alert("حالة الصلاة تغيرت بالفعل؛ لم يتم تعديل الوقت.");
+                }
+                if (currentUser && currentUser.role !== 'admin') updateUserUI();
+                return;
+            }
+
+            db.ref('settings/turnTimer').update({
+                startTime: getServerTime(),
+                pausedElapsed: 0
+            }).then(() => {
+                isActivityWritePending = false;
+                const modal = document.getElementById('prayerCheckModal');
+                if (modal) modal.classList.add('hidden');
+                if (currentUser && currentUser.role !== 'admin') updateUserUI();
+            }).catch((settingsError) => {
+                isActivityWritePending = false;
+                console.error("تم حفظ وقت الصلاة لكن تعذر تحديث مؤقت الدور:", settingsError);
+                alert("تم حفظ وقت الصلاة والعودة للعمل، لكن مؤقت الدور لم يتحدث: " + settingsError.message);
+                const modal = document.getElementById('prayerCheckModal');
+                if (modal) modal.classList.add('hidden');
+                if (currentUser && currentUser.role !== 'admin') updateUserUI();
+            });
+        }, false);
+    }
+
+    let activityLoadingHideTimer = null;
+    let activityLoadingStartedAt = 0;
+
+    function setActivityLoading(isLoading, message) {
+        const overlay = document.getElementById('activityLoading');
+        const status = document.getElementById('activityLoadingStatus');
+        if (!overlay) return;
+        if (status && message) status.innerText = message;
+        if (activityLoadingHideTimer !== null) {
+            clearTimeout(activityLoadingHideTimer);
+            activityLoadingHideTimer = null;
+        }
+
+        if (isLoading) {
+            activityLoadingStartedAt = Date.now();
+            overlay.style.display = 'flex';
+            overlay.setAttribute('aria-hidden', 'false');
+            overlay.setAttribute('aria-busy', 'true');
+            return;
+        }
+
+        const minimumVisibleTime = 350;
+        const remainingVisibleTime = Math.max(0, minimumVisibleTime - (Date.now() - activityLoadingStartedAt));
+        const hideOverlay = () => {
+            overlay.style.display = 'none';
+            overlay.setAttribute('aria-hidden', 'true');
+            overlay.setAttribute('aria-busy', 'false');
+            activityLoadingStartedAt = 0;
+            activityLoadingHideTimer = null;
         };
 
-        if (u.breakType === 'صلاة') {
-            updates.prayerSeconds = (u.prayerSeconds || 0) + d;
-            updates.prayerCountToday = (u.prayerCountToday || 0) + 1;
-            removeFromQueueByUsername(u.username);
-        } 
-        else if (u.breakType === 'بريك عام' || u.breakType === 'طوارئ') updates.usedSeconds = (u.usedSeconds || 0) + d;
-        else if (u.breakType === 'ميتنج') updates.meetingSeconds = (u.meetingSeconds || 0) + d;
-        else if (u.breakType === 'متابع عميل') updates.followUpSeconds = (u.followUpSeconds || 0) + d;
-        else if (u.breakType === 'استراحة VIP') updates.vipSeconds = (u.vipSeconds || 0) + d;
+        if (remainingVisibleTime > 0) {
+            activityLoadingHideTimer = setTimeout(hideOverlay, remainingVisibleTime);
+        } else {
+            hideOverlay();
+        }
+    }
 
-        db.ref('users/' + u.username).update(updates).then(() => {
-            db.ref('users/' + u.username + '/sessions').push({
-                date: getServerDateString(),
-                type: u.breakType,
-                reason: u.lastReason || 'نشاط عادي',
-                duration: d,
-                startTime: startTimeStr,
-                endTime: endTimeStr
-            });
-
-            // تصفير الخانة بأمان
-            const rInput = document.getElementById('breakReason');
-            if(rInput) rInput.value = ""; 
-            
-            if(document.getElementById('prayerCheckModal')) {
-                document.getElementById('prayerCheckModal').classList.add('hidden');
+    function beginUserActivity(username, type, reason, onSuccess) {
+        if (!isServerTimeSynchronized) {
+            alert("⏳ جاري مزامنة ساعة النظام، حاول مرة أخرى بعد لحظات.");
+            return;
+        }
+        if (!isDatabaseConnected) {
+            alert("الاتصال بقاعدة البيانات مقطوع؛ لم يبدأ النشاط. انتظر عودة الاتصال ثم حاول مرة أخرى.");
+            return;
+        }
+        if (isActivityWritePending) {
+            alert("هناك تحديث نشاط قيد الحفظ؛ انتظر تأكيده قبل المحاولة مرة أخرى.");
+            return;
+        }
+        if (type === 'بريك عام' || type === 'طوارئ') {
+            const limitMessage = getBreakLimitMessage(username, allUsersData);
+            if (limitMessage) {
+                alert(limitMessage + "\nلم يبدأ البريك؛ انتظر حتى يتاح الدور.");
+                checkBreakLimit();
+                return;
             }
-            if (typeof triggerGlobalRefresh === "function") triggerGlobalRefresh();
-        });
+        }
+
+        isActivityWritePending = true;
+        const showActivityLoading = Boolean(currentUser);
+        if (showActivityLoading) setActivityLoading(true, 'جارٍ بدء البريك وحفظه...');
+        db.ref('users/' + username).transaction((user) => {
+            if (!user || user.isOnBreak) return;
+
+            user.isOnBreak = true;
+            user.breakType = type;
+            user.lastStartTime = getServerTime();
+            user.lastReason = reason || type;
+            return user;
+        }, (error, committed) => {
+            isActivityWritePending = false;
+            if (showActivityLoading) setActivityLoading(false);
+            if (error) {
+                console.error("فشل بدء النشاط:", error);
+                alert("تعذر بدء النشاط: " + error.message);
+                if (currentUser && currentUser.role !== 'admin') updateUserUI();
+                return;
+            }
+            if (!committed) {
+                alert("هذا الموظف مسجل بالفعل في نشاط آخر. حدّث الصفحة للتحقق من حالته.");
+                if (currentUser && currentUser.role !== 'admin') updateUserUI();
+                return;
+            }
+            if (currentUser && currentUser.role !== 'admin') updateUserUI();
+            if (typeof onSuccess === "function") onSuccess();
+        }, false);
+    }
+
+    function completeUserActivity(username, isAdminAction = false) {
+        if (!isServerTimeSynchronized) {
+            alert("⏳ جاري مزامنة ساعة النظام، حاول مرة أخرى بعد لحظات.");
+            return;
+        }
+        if (!isDatabaseConnected) {
+            alert("الاتصال بقاعدة البيانات مقطوع؛ لم يُنهَ النشاط. انتظر عودة الاتصال حتى لا يرجع النشاط بعد تحديث الصفحة.");
+            return;
+        }
+        if (isActivityWritePending) {
+            alert("هناك تحديث نشاط قيد الحفظ؛ انتظر تأكيده قبل المحاولة مرة أخرى.");
+            return;
+        }
+        if (!username) {
+            alert("تعذر تحديد الموظف لإنهاء النشاط.");
+            return;
+        }
+
+        isActivityWritePending = true;
+        const showActivityLoading = Boolean(currentUser);
+        if (showActivityLoading) setActivityLoading(true, 'جارٍ إنهاء البريك وحفظ التقرير...');
+        if (currentUser && currentUser.role !== 'admin') updateUserUI();
+        const userRef = db.ref('users/' + username);
+        const sessionKey = userRef.child('sessions').push().key;
+        const overflowSessionKey = userRef.child('sessions').push().key;
+        let completedType = "";
+
+        userRef.transaction((user) => {
+            if (!user || !user.isOnBreak) return;
+
+            const startTime = Number(user.lastStartTime);
+            if (!Number.isFinite(startTime) || startTime <= 0) return;
+
+            const completedAt = getServerTime();
+            completedType = user.breakType || "";
+            const duration = Math.max(0, Math.floor((completedAt - startTime) / 1000));
+            user.sessions = user.sessions && typeof user.sessions === 'object' ? user.sessions : {};
+            const saveSession = (key, type, reason, start, end, seconds) => {
+                const startedAt = new Date(start);
+                const endedAt = new Date(end);
+                const date = `${String(endedAt.getDate()).padStart(2, '0')}/${String(endedAt.getMonth() + 1).padStart(2, '0')}/${endedAt.getFullYear()}`;
+                user.sessions[key] = {
+                    date,
+                    type,
+                    reason,
+                    duration: seconds,
+                    startTime: startedAt.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+                    endTime: endedAt.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
+                };
+            };
+
+            if (completedType === 'صلاة') {
+                const previousPrayerSeconds = Number(user.prayerSeconds) || 0;
+                const prayerLimit = Math.max(0, Number(user.prayerLimit) || 0);
+                const prayerDuration = Math.min(duration, Math.max(0, prayerLimit - previousPrayerSeconds));
+                const breakDuration = duration - prayerDuration;
+
+                if (prayerDuration > 0) {
+                    user.prayerSeconds = previousPrayerSeconds + prayerDuration;
+                    user.prayerCountToday = (Number(user.prayerCountToday) || 0) + 1;
+                    saveSession(sessionKey, completedType, user.lastReason || 'صلاة', startTime, startTime + prayerDuration * 1000, prayerDuration);
+                }
+                if (breakDuration > 0) {
+                    const previousBreakSeconds = Number(user.usedSeconds);
+                    user.usedSeconds = (Number.isFinite(previousBreakSeconds) ? previousBreakSeconds : 0) + breakDuration;
+                    saveSession(overflowSessionKey, 'بريك عام', 'انتهاء رصيد الصلاة - بريك عام', startTime + prayerDuration * 1000, completedAt, breakDuration);
+                }
+            } else {
+            const counterByType = {
+                'بريك عام': 'usedSeconds',
+                'طوارئ': 'usedSeconds',
+                'ميتنج': 'meetingSeconds',
+                'متابع عميل': 'followUpSeconds',
+                'استراحة VIP': 'vipSeconds',
+                'VIP سهرة': 'vipSeconds'
+            };
+            const counter = counterByType[completedType];
+
+            if (counter) {
+                const previousValue = Number(user[counter]);
+                user[counter] = (Number.isFinite(previousValue) ? previousValue : 0) + duration;
+            }
+                saveSession(
+                    sessionKey,
+                    completedType,
+                    user.lastReason || (isAdminAction ? 'إيقاف إداري بواسطة المشرف' : 'نشاط عادي'),
+                    startTime,
+                    completedAt,
+                    duration
+                );
+            }
+
+            user.isOnBreak = false;
+            user.lastStartTime = null;
+            user.lastEndedTime = completedAt;
+            user.lastEndedType = completedType;
+            user.emRequest = null;
+            user.meetingRequest = null;
+            return user;
+        }, (error, committed) => {
+            isActivityWritePending = false;
+            if (showActivityLoading) setActivityLoading(false);
+            if (error) {
+                console.error("فشل إنهاء النشاط:", error);
+                alert("تعذر إنهاء النشاط: " + error.message);
+                if (currentUser && currentUser.role !== 'admin') updateUserUI();
+                return;
+            }
+            if (!committed) {
+                alert("النشاط منتهٍ بالفعل أو لا يوجد وقت بداية صالح؛ لم يتم تسجيل خصم إضافي.");
+                if (currentUser && currentUser.role !== 'admin') updateUserUI();
+                return;
+            }
+
+            if (completedType === 'صلاة') removeFromQueueByUsername(username);
+            if (username === (currentUser && currentUser.username)) {
+                const reasonInput = document.getElementById('breakReason');
+                if (reasonInput) reasonInput.value = "";
+                const prayerModal = document.getElementById('prayerCheckModal');
+                if (prayerModal) prayerModal.classList.add('hidden');
+            }
+            if (isAdminAction) alert("تم إيقاف النشاط وتسجيل مدته بنجاح ✅");
+            if (currentUser && currentUser.role !== 'admin') updateUserUI();
+        }, false);
+    }
+
+    window.finalizeStopBreak = function() {
+        if (!currentUser) {
+            alert("تعذر تحديد حساب الموظف لإنهاء النشاط.");
+            return;
+        }
+        completeUserActivity(currentUser.username);
     };
     // مراقبة إشارة تسجيل الخروج الإجباري من الإدارة
     function listenForRemoteLogout(username) {
@@ -12731,19 +13094,10 @@ function activateSohraViaCode() {
         return;
     }
 
-    // التنفيذ الفوري في قاعدة البيانات
-    const now = getServerTime();
-    db.ref('users/' + u.username).update({
-        isOnBreak: true,
-        breakType: 'VIP سهرة',
-        lastStartTime: now,
-        lastReason: "تفعيل ذاتي بكود الشات #سهرة 🌙"
-    }).then(() => {
+    beginUserActivity(u.username, 'VIP سهرة', "تفعيل ذاتي بكود الشات #سهرة 🌙", () => {
         // رسالة تأكيد من عثمان الرخم تظهر للجميع في المحادثة
         sendBotMessage(`✅ أبشر يا ${u.realName || u.username}! تم تفعيل (بريك السهرة VIP) لك بنجاح. \n ليلة سعيدة وعودة ممتعة! 🌙`);
         
-        // تحديث الشاشة فوراً عند المشرف وعند الموظف
-        if (typeof triggerGlobalRefresh === "function") triggerGlobalRefresh();
     });
 }
 
@@ -12771,20 +13125,10 @@ function checkChatCommands(msgText, senderUsername) {
             // التحقق هل هو متاح حالياً (مش في بريك تاني)
             if (!currentUser.isOnBreak) {
                 
-                const now = getServerTime();
-                
-                // تحديث حالة الموظف فوراً في السيرفر
-                db.ref('users/' + currentUser.username).update({
-                    isOnBreak: true,
-                    breakType: 'VIP سهرة', // النوع المسجل في التقارير
-                    lastStartTime: now,
-                    lastReason: "تفعيل ذاتي عبر كود الشات 🌙"
-                }).then(() => {
+                beginUserActivity(currentUser.username, 'VIP سهرة', "تفعيل ذاتي عبر كود الشات 🌙", () => {
                     // رد تأكيدي من عثمان في الشات ليعرف الجميع أنك في بريك
                     sendBotMessage(`✅ تم تفعيل (بريك السهرة VIP) بنجاح للموظف: ${currentUser.realName || currentUser.username}. \n نوم العوافي يا بطل! 🌙`);
                     
-                    // تحديث واجهة المستخدم فوراً
-                    if (typeof triggerGlobalRefresh === "function") triggerGlobalRefresh();
                 });
 
             } else {
@@ -14322,19 +14666,15 @@ function activateSohraImmediately() {
     }
 
     // 3. تنفيذ التفعيل الفوري
-    const now = getServerTime();
-    db.ref('users/' + u.username).update({
-        isOnBreak: true,
-        breakType: 'VIP سهرة',
-        lastStartTime: now,
-        lastReason: "تفعيل تلقائي بكود الشات #سهرة 🌙",
-        isSohra: true // السيستم هيعلم "صح" لنفسه أوتوماتيك أول ما الموظف يكتب الكود
-    }).then(() => {
+    beginUserActivity(u.username, 'VIP سهرة', "تفعيل تلقائي بكود الشات #سهرة 🌙", () => {
+        db.ref('users/' + u.username + '/isSohra').set(true).then(() => {
         // تأكيد التفعيل في الشات بصوت عثمان
         sendBotMessage(`✅ أبشر يا ${u.realName || u.username}! تم تفعيل بريك السهرة (VIP) لك فوراً.. ليلة سعيدة! 🌙`);
         
-        // تحديث الواجهة والعدادات عند الموظف والأدمن
-        if (typeof triggerGlobalRefresh === "function") triggerGlobalRefresh();
+        }).catch((error) => {
+            console.error("فشل حفظ صلاحية بريك السهرة:", error);
+            alert("تم بدء البريك، لكن تعذر حفظ صلاحية السهرة: " + error.message);
+        });
     });
 }
 function shareFilmGameLink() {
