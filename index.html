@@ -1078,6 +1078,33 @@
                                                     }
                                                     .prayer-toggle-btn:hover { padding-left: 5px; }
 
+                                                    .daily-notes-toggle {
+                                                        position: fixed;
+                                                        top: 15%;
+                                                        left: 44px;
+                                                        width: 40px;
+                                                        height: 50px;
+                                                        padding: 0;
+                                                        border: 0;
+                                                        border-radius: 0 10px 10px 0;
+                                                        background: var(--primary);
+                                                        color: white;
+                                                        z-index: 8001;
+                                                        display: flex;
+                                                        align-items: center;
+                                                        justify-content: center;
+                                                        cursor: pointer;
+                                                        box-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+                                                        font: inherit;
+                                                        font-size: 1.2rem;
+                                                        transition: 0.3s;
+                                                    }
+                                                    .daily-notes-toggle:hover { padding-left: 5px; }
+                                                    .daily-notes-toggle.prayer-open {
+                                                        top: calc(14% - 10px);
+                                                        left: 254px;
+                                                    }
+
                                                     /* كلاس التفعيل للإظهار */
                                                     .prayer-widget.active { transform: translateX(0); }
                                                     .prayer-toggle-btn.active { left: 220px; border-radius: 50%; width: 30px; height: 30px; top: 14%; }
@@ -1139,6 +1166,8 @@
                                                         .prayer-widget { top: auto; bottom: 80px; left: 10px; transform: translateX(-250px); }
                                                         .prayer-toggle-btn { top: auto; bottom: 100px; }
                                                         .prayer-toggle-btn.active { top: auto; bottom: 280px; left: 210px; }
+                                                        .daily-notes-toggle { top: auto; left: 44px; bottom: 100px; }
+                                                        .daily-notes-toggle.prayer-open { top: auto; left: 244px; bottom: 270px; }
                                                     }
 
                                                     /* أنيميشن الرقص لزرار الملف */
@@ -1858,6 +1887,12 @@
         background: linear-gradient(135deg, var(--employee-button-background), var(--primary)) !important;
         color: var(--employee-button-text) !important;
         border-color: var(--employee-button-background) !important;
+    }
+
+    #employeeSection .daily-notes-toggle {
+        background: var(--primary) !important;
+        color: white !important;
+        border: 0 !important;
     }
 
     #employeeSection .btn-success {
@@ -3492,9 +3527,10 @@ html, body {
                                                             <button type="button" class="btn btn-dark btn-sm" onclick="resetPersonalTheme()">استعادة الألوان الافتراضية</button>
                                                         </div>
                                                     </details>
-                                                    <section class="cs-call-card">
+                                                    <button type="button" onclick="openDailyNotes()" class="daily-notes-toggle" aria-label="فتح سجل اليومي" title="سجل اليومي">📑</button>
+                                                    <section id="csContactCard" class="cs-call-card">
                                                         <h3 style="margin:0 0 8px; color:var(--accent);">📨 تواصل مع خدمة العملاء</h3>
-                                                        <p style="margin:0 0 14px; color:#cbd5e1;">سيتم توجيه المكالمة تلقائيًا، وإذا اعتذر الموظف تنتقل لزميله حتى يقبلها أحد. ويمكن للموظف طلب دقيقة ثم يظهر له الطلب مرة أخرى.</p>
+                                                        <p style="margin:0 0 14px; color:#cbd5e1;">سيتم توجيه المكالمة تلقائيًا، وإذا اعتذر الموظف تنتقل لزميله. ولو اعتذر الجميع تظهر في صندوق مشترك ليستلمها أول موظف متاح. ويمكن للموظف طلب دقيقة ثم يظهر له الطلب مرة أخرى.</p>
                                                         <div id="csApprovalTargetStatus" style="margin-bottom:10px; color:#94a3b8;" aria-live="polite">جاري تحميل موظفي خدمة العملاء...</div>
                                                         <button id="submitCsApprovalRequestBtn" onclick="submitCsApprovalRequest()" class="btn btn-primary" style="width:100%; padding:16px; font-weight:bold;">📞 إرسال المكالمة</button>
                                                         <details class="cs-call-stats">
@@ -3505,6 +3541,22 @@ html, body {
                                                         </details>
                                                         <div id="myCsApprovalRequests" aria-live="polite" style="margin-top:14px;"></div>
                                                     </section>
+                                                    <div id="dailyNotesModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="dailyNotesTitle" style="position:fixed; inset:0; z-index:20010; background:rgba(2,6,23,0.88); display:flex; align-items:center; justify-content:center; padding:16px;">
+                                                        <div style="width:min(100%,620px); max-height:90vh; overflow:auto; padding:20px; border:1px solid #6366f1; border-radius:18px; background:#1e293b; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+                                                            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px;">
+                                                                <h3 id="dailyNotesTitle" style="margin:0; color:#818cf8;">📝 سجل اليومي</h3>
+                                                                <button type="button" onclick="closeDailyNotes()" class="btn btn-dark btn-sm">إغلاق ✖</button>
+                                                            </div>
+                                                            <label for="dailyNoteDate" style="display:block; margin-bottom:6px; color:#cbd5e1;">التاريخ</label>
+                                                            <input type="date" id="dailyNoteDate" class="form-control-glass" style="margin:0 0 12px;" onchange="loadDailyNoteForDate()">
+                                                            <textarea id="dailyNoteText" class="form-control-glass" rows="6" placeholder="اكتب ملاحظات هذا اليوم هنا..." style="margin:0; resize:vertical;"></textarea>
+                                                            <button id="saveDailyNoteBtn" type="button" onclick="saveDailyNote()" class="btn btn-primary" style="width:100%; margin-top:12px; padding:12px; font-weight:bold;">💾 حفظ ملاحظة اليوم</button>
+                                                            <h4 style="margin:18px 0 8px; color:#cbd5e1;">الأيام المسجلة</h4>
+                                                            <div id="dailyNotesList" aria-live="polite" style="max-height:220px; overflow:auto;">
+                                                                <div style="color:#94a3b8;">لا توجد أيام مسجلة بعد.</div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                     <!-- الهيدر الجديد المنظم -->
                                                     <!-- صف الأزرار العلوي للموظف المحدث -->
                                                     <button onclick="openMyBreakReport()" class="btn btn-primary btn-sm" style="margin-top:8px; border:1px solid #38bdf8; color:#38bdf8;">
@@ -4268,6 +4320,7 @@ html, body {
 
                                                 let allUsersData = {}, currentUser = null, timerInterval = null, isLoaded = false;
                                                 let csApprovalRequests = {};
+                                                let myDailyNotes = {};
                                                 let csApprovalExpiryTimer = null;
                                                 let csApprovalSoundUnlocked = false;
                                                 let loadingHintTimer = setTimeout(() => {
@@ -4741,6 +4794,106 @@ html, body {
                                                     return div.innerHTML;
                                                 }
 
+                                                function getDailyNoteDateLabel(dateKey) {
+                                                    return dateKey.split('-').reverse().join('/');
+                                                }
+
+                                                function renderDailyNotes() {
+                                                    const list = document.getElementById('dailyNotesList');
+                                                    if (!list) return;
+                                                    const entries = Object.entries(myDailyNotes || {})
+                                                        .filter(([date, note]) => /^\d{4}-\d{2}-\d{2}$/.test(date) && note && typeof note === 'object')
+                                                        .sort(([dateA], [dateB]) => dateB.localeCompare(dateA));
+                                                    list.innerHTML = entries.length
+                                                        ? entries.map(([date, note]) => `
+                                                            <button type="button" onclick="selectDailyNote(this.dataset.noteDate)" data-note-date="${escapeHtml(date)}" style="display:block; width:100%; text-align:right; padding:10px 12px; margin-top:7px; border:1px solid rgba(148,163,184,0.2); border-radius:10px; background:rgba(15,23,42,0.7); color:#e2e8f0; cursor:pointer;">
+                                                                <strong style="color:#a5b4fc;">${escapeHtml(getDailyNoteDateLabel(date))}</strong>
+                                                                <div style="margin-top:5px; white-space:pre-wrap; overflow-wrap:anywhere; color:#cbd5e1;">${escapeHtml(note.note || '')}</div>
+                                                            </button>
+                                                        `).join('')
+                                                        : '<div style="color:#94a3b8; padding:8px 0;">لا توجد أيام مسجلة بعد.</div>';
+                                                }
+
+                                                function loadDailyNoteForDate() {
+                                                    const dateInput = document.getElementById('dailyNoteDate');
+                                                    const noteInput = document.getElementById('dailyNoteText');
+                                                    if (!dateInput || !noteInput) return;
+                                                    const note = myDailyNotes[dateInput.value];
+                                                    noteInput.value = note && typeof note.note === 'string' ? note.note : '';
+                                                }
+
+                                                function selectDailyNote(date) {
+                                                    const dateInput = document.getElementById('dailyNoteDate');
+                                                    if (!dateInput || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+                                                    dateInput.value = date;
+                                                    loadDailyNoteForDate();
+                                                }
+
+                                                async function openDailyNotes() {
+                                                    if (!currentUser || currentUser.role === 'admin') {
+                                                        alert('سجل اليومي متاح للموظفين فقط.');
+                                                        return;
+                                                    }
+                                                    const modal = document.getElementById('dailyNotesModal');
+                                                    const dateInput = document.getElementById('dailyNoteDate');
+                                                    const list = document.getElementById('dailyNotesList');
+                                                    if (!modal || !dateInput || !list) return;
+                                                    const today = new Date(getServerTime());
+                                                    dateInput.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+                                                    document.getElementById('dailyNoteText').value = '';
+                                                    modal.classList.remove('hidden');
+                                                    list.innerHTML = '<div style="color:#94a3b8;">جاري تحميل الأيام المسجلة...</div>';
+                                                    try {
+                                                        const snapshot = await db.ref(`users/${currentUser.username}/dailyNotes`).once('value');
+                                                        myDailyNotes = snapshot.val() || {};
+                                                        renderDailyNotes();
+                                                        loadDailyNoteForDate();
+                                                    } catch (error) {
+                                                        console.error('فشل تحميل السجل اليومي:', error);
+                                                        list.innerHTML = '<div style="color:#fb7185;">تعذر تحميل الأيام المسجلة.</div>';
+                                                        alert(`تعذر تحميل السجل اليومي: ${error.message}`);
+                                                    }
+                                                }
+
+                                                function closeDailyNotes() {
+                                                    const modal = document.getElementById('dailyNotesModal');
+                                                    if (modal) modal.classList.add('hidden');
+                                                }
+
+                                                async function saveDailyNote() {
+                                                    if (!currentUser || currentUser.role === 'admin') {
+                                                        alert('سجل اليومي متاح للموظفين فقط.');
+                                                        return;
+                                                    }
+                                                    if (!isDatabaseConnected) {
+                                                        alert('الاتصال بقاعدة البيانات مقطوع. حاول مرة أخرى بعد عودة الاتصال.');
+                                                        return;
+                                                    }
+                                                    const date = document.getElementById('dailyNoteDate').value;
+                                                    const noteText = document.getElementById('dailyNoteText').value.trim();
+                                                    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !noteText) {
+                                                        alert('اختار التاريخ واكتب ملاحظة قبل الحفظ.');
+                                                        return;
+                                                    }
+                                                    const button = document.getElementById('saveDailyNoteBtn');
+                                                    const originalText = button.innerText;
+                                                    button.disabled = true;
+                                                    button.innerText = 'جاري الحفظ...';
+                                                    const note = { note: noteText, updatedAt: getServerTime() };
+                                                    try {
+                                                        await db.ref(`users/${currentUser.username}/dailyNotes/${date}`).set(note);
+                                                        myDailyNotes[date] = note;
+                                                        renderDailyNotes();
+                                                        alert('تم حفظ ملاحظة اليوم بنجاح.');
+                                                    } catch (error) {
+                                                        console.error('فشل حفظ السجل اليومي:', error);
+                                                        alert(`تعذر حفظ ملاحظة اليوم: ${error.message}`);
+                                                    } finally {
+                                                        button.disabled = false;
+                                                        button.innerText = originalText;
+                                                    }
+                                                }
+
                                                 function updateCsApprovalRing() {
                                                     const ring = document.getElementById('csApprovalRing');
                                                     if (!ring) return;
@@ -4755,7 +4908,8 @@ html, body {
                                                             request.status === 'pending' &&
                                                             request.requesterUsername !== currentUser.username &&
                                                             (!request.assignedTo || request.assignedTo === currentUser.username) &&
-                                                            !(request.declinedBy && request.declinedBy[currentUser.username]) &&
+                                                            (!(request.declinedBy && request.declinedBy[currentUser.username]) || request.poolAvailable === true) &&
+                                                            Number(request.mutedUntilBy && request.mutedUntilBy[currentUser.username] || 0) <= getServerTime() &&
                                                             Number(request.snoozedUntil || 0) <= getServerTime()
                                                         )
                                                     );
@@ -4879,7 +5033,14 @@ html, body {
                                                             ? Math.min(nearest, expiresAt)
                                                             : nearest;
                                                     }, Infinity);
-                                                    const nextExpiry = Math.min(resolvedExpiry, snoozeExpiry);
+                                                    const muteExpiry = entries.reduce((nearest, [, request]) => {
+                                                        if (request.status !== 'pending' || request.poolAvailable !== true || request.assignedTo) return nearest;
+                                                        const expiresAt = Number(request.mutedUntilBy && request.mutedUntilBy[currentUser.username] || 0);
+                                                        return Number.isFinite(expiresAt) && expiresAt > now
+                                                            ? Math.min(nearest, expiresAt)
+                                                            : nearest;
+                                                    }, Infinity);
+                                                    const nextExpiry = Math.min(resolvedExpiry, snoozeExpiry, muteExpiry);
                                                     if (csApprovalExpiryTimer) clearTimeout(csApprovalExpiryTimer);
                                                     if (Number.isFinite(nextExpiry)) {
                                                         csApprovalExpiryTimer = setTimeout(renderCsApprovalRequests, nextExpiry - now);
@@ -4892,6 +5053,7 @@ html, body {
                                                     if (ownRequestsContainer) {
                                                         ownRequestsContainer.innerHTML = ownRequests.length
                                                             ? ownRequests.map(([, request]) => {
+                                                                const isSharedPool = request.poolAvailable === true && !request.assignedTo;
                                                                 const hasBeenTransferred = request.status === 'pending' && Object.keys(request.declinedBy || {}).length > 0;
                                                                 const isSnoozed = request.status === 'pending' && Number(request.snoozedUntil) > now;
                                                                 const status = request.status === 'approved'
@@ -4900,6 +5062,8 @@ html, body {
                                                                         ? '<span style="color:#fb7185;font-weight:bold;">لأ ❌</span>'
                                                                         : isSnoozed
                                                                             ? '<span style="color:#fbbf24;font-weight:bold;">خدمة العملاء طلبت دقيقة — الطلب هيرجع لها بعد قليل ⏳</span>'
+                                                                        : isSharedPool
+                                                                            ? '<span style="color:#38bdf8;font-weight:bold;">المكالمة في صندوق المكالمات المتاحة — أول موظف يستلمها هيتابعها 📥</span>'
                                                                         : hasBeenTransferred
                                                                             ? '<span style="color:#fbbf24;font-weight:bold;">اترسل لموظف خدمة عملاء تاني — في انتظار الرد ⏳</span>'
                                                                             : '<span style="color:#fbbf24;font-weight:bold;">في انتظار الرد ⏳</span>';
@@ -4909,7 +5073,9 @@ html, body {
                                                                     ? new Date(Number(request.snoozedUntil)).toLocaleTimeString('ar-EG')
                                                                     : '';
                                                                 const response = request.status === 'pending'
-                                                                    ? `<div style="color:#cbd5e1; margin-top:5px;">${isSnoozed
+                                                                    ? `<div style="color:#cbd5e1; margin-top:5px;">${isSharedPool
+                                                                        ? 'متاحة لكل موظفي خدمة العملاء للاستلام.'
+                                                                        : isSnoozed
                                                                         ? `طلب ${escapeHtml(request.snoozedBy || 'موظف خدمة العملاء')} دقيقة — هيرجع له الطلب الساعة ${escapeHtml(snoozedTime)}`
                                                                         : `موجّه إلى: ${escapeHtml(request.assignedToName || 'خدمة العملاء')}`}</div>`
                                                                     : `<div style="color:#cbd5e1; margin-top:5px;">رد ${escapeHtml(request.respondedBy || 'خدمة العملاء')} ${time ? `— ${escapeHtml(time)}` : ''}</div>`;
@@ -4926,6 +5092,7 @@ html, body {
                                                         const receivedCount = entries.filter(([, request]) =>
                                                             request.requesterUsername !== currentUser.username &&
                                                             (request.assignedTo === currentUser.username ||
+                                                                request.poolAvailable === true ||
                                                                 Boolean(request.declinedBy && request.declinedBy[currentUser.username]) ||
                                                                 request.respondedByUsername === currentUser.username)
                                                         ).length;
@@ -4939,8 +5106,10 @@ html, body {
                                                         const pending = entries.filter(([, request]) =>
                                                             request.status === 'pending' &&
                                                             request.requesterUsername !== currentUser.username &&
-                                                            (!request.assignedTo || request.assignedTo === currentUser.username) &&
-                                                            !(request.declinedBy && request.declinedBy[currentUser.username])
+                                                            (request.assignedTo === currentUser.username ||
+                                                                (request.poolAvailable === true && !request.assignedTo)) &&
+                                                            (!(request.declinedBy && request.declinedBy[currentUser.username]) ||
+                                                                (request.poolAvailable === true && !request.assignedTo))
                                                         );
                                                         const count = document.getElementById('csApprovalPendingCount');
                                                         if (count) {
@@ -4954,18 +5123,26 @@ html, body {
                                                                 const time = request.timestamp ? new Date(Number(request.timestamp)).toLocaleString('ar-EG') : '';
                                                                 const snoozedUntil = Number(request.snoozedUntil || 0);
                                                                 const isSnoozed = snoozedUntil > now;
+                                                                const isSharedPool = request.poolAvailable === true && !request.assignedTo;
+                                                                const mutedUntil = Number(request.mutedUntilBy && request.mutedUntilBy[currentUser.username] || 0);
+                                                                const isMutedForMe = isSharedPool && mutedUntil > now;
+                                                                const actions = isSharedPool
+                                                                    ? `<button class="btn btn-success" onclick="respondToCsApprovalRequest(this.dataset.requestKey, 'approved')" data-request-key="${encodeURIComponent(key)}" ${currentUser.isOnBreak ? 'disabled title="أنه البريك الأول لاستلام المكالمة."' : ''}>📞 استلام المكالمة</button>
+                                                                        <button class="btn btn-dark" onclick="muteSharedCsCall(this.dataset.requestKey)" data-request-key="${encodeURIComponent(key)}" ${isMutedForMe || currentUser.isOnBreak ? 'disabled' : ''}>${isMutedForMe ? '🔕 الجرس مكتوم لدقيقة' : '🔕 كتم الجرس دقيقة'}</button>`
+                                                                    : `<button class="btn btn-success" onclick="respondToCsApprovalRequest(this.dataset.requestKey, 'approved')" data-request-key="${encodeURIComponent(key)}">ماشي، موافق ✅</button>
+                                                                        <button class="btn btn-primary" onclick="respondToCsApprovalRequest(this.dataset.requestKey, 'snoozed')" data-request-key="${encodeURIComponent(key)}" ${isSnoozed ? 'disabled' : ''}>دقيقة واحدة ⏱️</button>
+                                                                        <button class="btn btn-danger" onclick="respondToCsApprovalRequest(this.dataset.requestKey, 'rejected')" data-request-key="${encodeURIComponent(key)}" ${isSnoozed ? 'disabled' : ''}>لأ، إرسال لزميل ↪️</button>`;
                                                                 return `<article style="padding:14px; margin-top:10px; border-radius:14px; background:rgba(255,255,255,0.04); border-right:4px solid var(--accent);">
                                                                     <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:8px;">
                                                                         <strong>${requester}</strong><small style="color:#94a3b8;">${escapeHtml(time)}</small>
                                                                     </div>
                                                                     <div style="white-space:pre-wrap; margin-bottom:12px;">${message}</div>
+                                                                    ${isSharedPool ? '<div style="color:#38bdf8; margin-bottom:12px;">📥 صندوق المكالمات المتاحة — يقدر أي موظف خدمة عملاء يستلمها.</div>' : ''}
                                                                     ${isSnoozed
                                                                         ? '<div style="color:#fbbf24; margin-bottom:12px;" aria-live="polite">الطلب ما زال هنا، والجرس متوقف لمدة دقيقة. سيعمل تلقائيًا بعدها ⏱️</div>'
                                                                         : ''}
                                                                     <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                                                                        <button class="btn btn-success" onclick="respondToCsApprovalRequest(this.dataset.requestKey, 'approved')" data-request-key="${encodeURIComponent(key)}">ماشي، موافق ✅</button>
-                                                                        <button class="btn btn-primary" onclick="respondToCsApprovalRequest(this.dataset.requestKey, 'snoozed')" data-request-key="${encodeURIComponent(key)}" ${isSnoozed ? 'disabled' : ''}>دقيقة واحدة ⏱️</button>
-                                                                        <button class="btn btn-danger" onclick="respondToCsApprovalRequest(this.dataset.requestKey, 'rejected')" data-request-key="${encodeURIComponent(key)}" ${isSnoozed ? 'disabled' : ''}>لأ، إرسال لزميل ↪️</button>
+                                                                        ${actions}
                                                                     </div>
                                                                 </article>`;
                                                             }).join('')
@@ -5000,6 +5177,8 @@ html, body {
                                                             ? '<span style="color:#34d399; font-weight:bold;">مقبول — ماشي ✅</span>'
                                                             : request.status === 'rejected'
                                                                 ? '<span style="color:#fb7185; font-weight:bold;">مرفوض — لأ ❌</span>'
+                                                                : request.poolAvailable === true
+                                                                    ? `<span style="color:#38bdf8; font-weight:bold;">في صندوق المكالمات المتاحة 📥</span><div style="color:#94a3b8; font-size:0.8rem;">اعتذر: ${escapeHtml(declinedBy.join('، '))}</div>`
                                                                 : declinedBy.length
                                                                     ? `<span style="color:#fbbf24; font-weight:bold;">تم التحويل لزميل — في انتظار الرد ⏳</span><div style="color:#94a3b8; font-size:0.8rem;">اعتذر: ${escapeHtml(declinedBy.join('، '))}${assignedAgent ? `<br>المحوّل إليه: ${escapeHtml(assignedAgent.realName || assignedAgent.username)}` : ''}</div>`
                                                                     : '<span style="color:#fbbf24; font-weight:bold;">قيد الانتظار ⏳</span>';
@@ -5018,8 +5197,8 @@ html, body {
                                                 }
 
                                                 async function submitCsApprovalRequest() {
-                                                    if (!currentUser || currentUser.role === 'admin') {
-                                                        alert('لازم تسجل دخولك كموظف لإرسال الطلب.');
+                                                    if (!currentUser || currentUser.role === 'admin' || currentUser.isCS) {
+                                                        alert('إرسال المكالمة متاح للموظفين من غير خدمة العملاء.');
                                                         return;
                                                     }
                                                     if (!isDatabaseConnected) {
@@ -5048,6 +5227,7 @@ html, body {
                                                             assignedToName: targetAgent.realName || targetAgent.username,
                                                             assignedAt: getServerTime(),
                                                             status: 'pending',
+                                                            poolAvailable: false,
                                                             timestamp: getServerTime()
                                                         });
                                                         alert(`تم إرسال المكالمة إلى ${targetAgent.realName || targetAgent.username}. تقدر تتابع الرد هنا.`);
@@ -5090,7 +5270,8 @@ html, body {
 
                                                         const result = await db.ref(`csApprovalRequests/${requestKey}`).transaction(request => {
                                                             if (!request || request.status !== 'pending') return;
-                                                            if (request.assignedTo && request.assignedTo !== currentUser.username) return;
+                                                            const isSharedPool = request.poolAvailable === true && !request.assignedTo;
+                                                            if (isSharedPool ? decision !== 'approved' : request.assignedTo !== currentUser.username) return;
                                                             if (decision !== 'approved' && Number(request.snoozedUntil || 0) > currentAgent.timestamp) return;
                                                             if (decision === 'snoozed') {
                                                                 return {
@@ -5102,19 +5283,28 @@ html, body {
                                                             if (decision === 'rejected') {
                                                                 const declinedBy = { ...(request.declinedBy || {}), [currentUser.username]: currentAgent };
                                                                 const availableAgents = csAgents
-                                                                    .filter(username => !declinedBy[username])
+                                                                    .filter(username => username !== currentUser.username && !declinedBy[username])
                                                                     .map(username => (allUsersData || {})[username] || { username });
-                                                                const nextAgent = chooseCsApprovalAgent(availableAgents, [currentUser.username]) ||
-                                                                    chooseCsApprovalAgent(csAgents.map(username =>
-                                                                        (allUsersData || {})[username] || { username }
-                                                                    ), [currentUser.username]);
-                                                                if (!nextAgent) return;
+                                                                const nextAgent = chooseCsApprovalAgent(availableAgents);
+                                                                if (!nextAgent) {
+                                                                    return {
+                                                                        ...request,
+                                                                        declinedBy,
+                                                                        assignedTo: null,
+                                                                        assignedToName: 'صندوق المكالمات المتاحة',
+                                                                        assignedAt: currentAgent.timestamp,
+                                                                        poolAvailable: true,
+                                                                        snoozedUntil: null,
+                                                                        snoozedBy: null
+                                                                    };
+                                                                }
                                                                 return {
                                                                     ...request,
                                                                     declinedBy,
                                                                     assignedTo: nextAgent.username,
                                                                     assignedToName: nextAgent.realName || nextAgent.username,
                                                                     assignedAt: currentAgent.timestamp,
+                                                                    poolAvailable: false,
                                                                     snoozedUntil: null,
                                                                     snoozedBy: null
                                                                 };
@@ -5125,6 +5315,7 @@ html, body {
                                                                 respondedBy: currentAgent.name,
                                                                 respondedByUsername: currentAgent.username,
                                                                 respondedAt: currentAgent.timestamp,
+                                                                poolAvailable: false,
                                                                 snoozedUntil: null,
                                                                 snoozedBy: null
                                                             };
@@ -5134,11 +5325,56 @@ html, body {
                                                         } else if (decision === 'snoozed') {
                                                             alert('تمام، الطلب هيرجع لك بعد دقيقة.');
                                                         } else if (decision === 'rejected' && result.snapshot.val().status === 'pending') {
-                                                            alert(`تم إرسال الطلب إلى ${result.snapshot.val().assignedToName || 'موظف خدمة العملاء التالي'}، وهيظهر له فوراً.`);
+                                                            alert(result.snapshot.val().poolAvailable
+                                                                ? 'كل موظفي خدمة العملاء اعتذروا؛ المكالمة أصبحت في الصندوق المشترك ليستلمها أول موظف متاح.'
+                                                                : `تم إرسال الطلب إلى ${result.snapshot.val().assignedToName || 'موظف خدمة العملاء التالي'}، وهيظهر له فوراً.`);
                                                         }
                                                     } catch (error) {
                                                         console.error('فشل الرد على طلب خدمة العملاء:', error);
                                                         alert(`تعذر حفظ الرد: ${error.message}`);
+                                                    }
+                                                }
+
+                                                async function muteSharedCsCall(requestKey) {
+                                                    if (!currentUser || !currentUser.isCS || currentUser.role === 'admin' || currentUser.isOnBreak) {
+                                                        alert('كتم جرس المكالمة متاح لموظف خدمة العملاء أثناء العمل فقط.');
+                                                        return;
+                                                    }
+                                                    try {
+                                                        requestKey = decodeURIComponent(requestKey);
+                                                    } catch (error) {
+                                                        alert('تعذر تحديد المكالمة المطلوب كتم جرسها.');
+                                                        return;
+                                                    }
+                                                    if (!isDatabaseConnected) {
+                                                        alert('الاتصال بقاعدة البيانات مقطوع. حاول مرة أخرى بعد عودة الاتصال.');
+                                                        return;
+                                                    }
+                                                    const mutedUntil = getServerTime() + 60000;
+                                                    try {
+                                                        const result = await db.ref(`csApprovalRequests/${requestKey}`).transaction(request => {
+                                                            if (!request ||
+                                                                request.status !== 'pending' ||
+                                                                request.poolAvailable !== true ||
+                                                                request.assignedTo
+                                                            ) return;
+                                                            return {
+                                                                ...request,
+                                                                mutedUntilBy: {
+                                                                    ...(request.mutedUntilBy || {}),
+                                                                    [currentUser.username]: mutedUntil
+                                                                }
+                                                            };
+                                                        });
+                                                        if (!result.committed) {
+                                                            alert('المكالمة لم تعد في الصندوق المشترك؛ حدّث القائمة وحاول مرة أخرى.');
+                                                            return;
+                                                        }
+                                                        renderCsApprovalRequests();
+                                                        alert('تم كتم جرس هذه المكالمة عندك لمدة دقيقة. ستظل ظاهرة ومتاحة لزملائك.');
+                                                    } catch (error) {
+                                                        console.error('فشل كتم جرس المكالمة:', error);
+                                                        alert(`تعذر كتم جرس المكالمة: ${error.message}`);
                                                     }
                                                 }
 
@@ -7293,6 +7529,8 @@ function renderMyBreakReport() {
                                                 function updateUserUI() {
                                                     if(!currentUser || currentUser.role === 'admin') return;
                                                     const u = currentUser;
+                                                    const csContactCard = document.getElementById('csContactCard');
+                                                    if (csContactCard) csContactCard.classList.toggle('hidden', Boolean(u.isCS));
                                                     const timerText = document.getElementById('userTimer');
                                                     const lbl = document.getElementById('timerLabel');
                                                     const msg = document.getElementById('userStatusMsg');
@@ -9246,6 +9484,8 @@ if (sohraBtn) {
                             const btn = document.querySelector('.prayer-toggle-btn');
                             widget.classList.toggle('active');
                             btn.classList.toggle('active');
+                            const notesBtn = document.querySelector('.daily-notes-toggle');
+                            if (notesBtn) notesBtn.classList.toggle('prayer-open', widget.classList.contains('active'));
                         }
 
                         window.addEventListener('load', fetchPrayerTimes);
@@ -11017,6 +11257,8 @@ if (sohraBtn) {
                     initChatNotifications();
                     document.getElementById('loginSection').classList.add('hidden'); 
                     document.getElementById('employeeSection').classList.remove('hidden'); 
+                    const csContactCard = document.getElementById('csContactCard');
+                    if (csContactCard) csContactCard.classList.toggle('hidden', Boolean(currentUser.isCS));
                     document.getElementById('csFormThemeControls').classList.toggle('hidden', !currentUser.isCS);
                     applyPersonalTheme(currentUser.themeColors);
                     applyCsCallFormTheme(currentUser.themeColors);
@@ -11075,9 +11317,11 @@ if (sohraBtn) {
                     setTimeout(() => {
                         const widget = document.getElementById('prayerWidget');
                         const btn = document.querySelector('.prayer-toggle-btn');
+                        const notesBtn = document.querySelector('.daily-notes-toggle');
                         if(widget && !widget.classList.contains('active')) {
                             widget.classList.add('active');
                             if(btn) btn.classList.add('active');
+                            if(notesBtn) notesBtn.classList.add('prayer-open');
                         }
                     }, 1500); // يفتح بعد ثانية ونصف عشان يتحمل الأول
                 }
