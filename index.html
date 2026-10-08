@@ -801,6 +801,44 @@
                                                         box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
                                                     }
 
+                                                    #dailyNotesPanel {
+                                                        background: var(--daily-notes-background) !important;
+                                                        border-color: var(--daily-notes-accent) !important;
+                                                        color: var(--daily-notes-text);
+                                                    }
+
+                                                    #dailyNotesTitle,
+                                                    #dailyNotesPanel h4 {
+                                                        color: var(--daily-notes-accent) !important;
+                                                    }
+
+                                                    #dailyNotesPanel label {
+                                                        color: var(--daily-notes-text) !important;
+                                                    }
+
+                                                    #dailyNoteDate,
+                                                    #dailyNoteText,
+                                                    #dailyNotesPanel #dailyNotesList button {
+                                                        background: var(--daily-notes-input) !important;
+                                                        color: var(--daily-notes-text) !important;
+                                                        border-color: color-mix(in srgb, var(--daily-notes-accent) 35%, transparent) !important;
+                                                    }
+
+                                                    #dailyNotesPanel #dailyNotesList button strong {
+                                                        color: var(--daily-notes-accent) !important;
+                                                    }
+
+                                                    #dailyNotesPanel #dailyNotesList button div {
+                                                        color: var(--daily-notes-text) !important;
+                                                        opacity: 0.82;
+                                                    }
+
+                                                    #dailyNotesPanel #saveDailyNoteBtn {
+                                                        background: linear-gradient(135deg, var(--daily-notes-accent), var(--primary)) !important;
+                                                        border-color: var(--daily-notes-accent) !important;
+                                                        color: var(--daily-notes-text) !important;
+                                                    }
+
                                                     .cs-call-stats {
                                                         margin-top: 12px;
                                                         padding: 12px 14px;
@@ -1080,8 +1118,8 @@
 
                                                     .daily-notes-toggle {
                                                         position: fixed;
-                                                        top: 15%;
-                                                        left: 44px;
+                                                        top: calc(15% + 58px);
+                                                        left: 0;
                                                         width: 40px;
                                                         height: 50px;
                                                         padding: 0;
@@ -1094,16 +1132,12 @@
                                                         align-items: center;
                                                         justify-content: center;
                                                         cursor: pointer;
-                                                        box-shadow: 2px 2px 10px rgba(0,0,0,0.3);
                                                         font: inherit;
                                                         font-size: 1.2rem;
+                                                        box-shadow: 2px 2px 10px rgba(0,0,0,0.3);
                                                         transition: 0.3s;
                                                     }
                                                     .daily-notes-toggle:hover { padding-left: 5px; }
-                                                    .daily-notes-toggle.prayer-open {
-                                                        top: calc(14% - 10px);
-                                                        left: 254px;
-                                                    }
 
                                                     /* كلاس التفعيل للإظهار */
                                                     .prayer-widget.active { transform: translateX(0); }
@@ -1166,8 +1200,12 @@
                                                         .prayer-widget { top: auto; bottom: 80px; left: 10px; transform: translateX(-250px); }
                                                         .prayer-toggle-btn { top: auto; bottom: 100px; }
                                                         .prayer-toggle-btn.active { top: auto; bottom: 280px; left: 210px; }
-                                                        .daily-notes-toggle { top: auto; left: 44px; bottom: 100px; }
-                                                        .daily-notes-toggle.prayer-open { top: auto; left: 244px; bottom: 270px; }
+                                                        .daily-notes-toggle {
+                                                            top: auto !important;
+                                                            right: auto !important;
+                                                            bottom: 42px !important;
+                                                            left: 0 !important;
+                                                        }
                                                     }
 
                                                     /* أنيميشن الرقص لزرار الملف */
@@ -2528,6 +2566,7 @@ html, body {
 
                                             <!-- زر وويدجت الصلاة -->
                                             <div class="prayer-toggle-btn" onclick="togglePrayerWidget()">🕌</div>
+                                            <button type="button" onclick="openDailyNotes()" class="daily-notes-toggle" aria-label="فتح سجل اليومي" title="سجل اليومي">📑</button>
 
                                             <div id="prayerWidget" class="prayer-widget">
                                                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -2547,6 +2586,23 @@ html, body {
 
                                                 <div style="font-size:0.7rem; color:#aaa; text-align:center; margin-top:10px;">
                                                     بتوقيت الهيئة المصرية العامة للمساحة
+                                                </div>
+                                            </div>
+
+                                            <div id="dailyNotesModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="dailyNotesTitle" style="position:fixed; inset:0; z-index:20010; background:rgba(2,6,23,0.88); display:flex; align-items:center; justify-content:center; padding:16px;">
+                                                <div id="dailyNotesPanel" style="width:min(100%,620px); max-height:90vh; overflow:auto; padding:20px; border:1px solid #6366f1; border-radius:18px; background:#1e293b; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+                                                    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px;">
+                                                        <h3 id="dailyNotesTitle" style="margin:0;">📝 سجل اليومي</h3>
+                                                        <button type="button" onclick="closeDailyNotes()" class="btn btn-dark btn-sm">إغلاق ✖</button>
+                                                    </div>
+                                                    <label for="dailyNoteDate" style="display:block; margin-bottom:6px;">التاريخ</label>
+                                                    <input type="date" id="dailyNoteDate" class="form-control-glass" style="margin:0 0 12px;" onchange="loadDailyNoteForDate()">
+                                                    <textarea id="dailyNoteText" class="form-control-glass" rows="6" placeholder="اكتب ملاحظات هذا اليوم هنا..." style="margin:0; resize:vertical;"></textarea>
+                                                    <button id="saveDailyNoteBtn" type="button" onclick="saveDailyNote()" class="btn btn-primary" style="width:100%; margin-top:12px; padding:12px; font-weight:bold;">💾 حفظ ملاحظة اليوم</button>
+                                                    <h4 style="margin:18px 0 8px;">الأيام المسجلة</h4>
+                                                    <div id="dailyNotesList" aria-live="polite" style="max-height:220px; overflow:auto;">
+                                                        <div style="color:#94a3b8;">لا توجد أيام مسجلة بعد.</div>
+                                                    </div>
                                                 </div>
                                             </div>
 
@@ -3486,7 +3542,7 @@ html, body {
                                                 <div id="employeeSection" class="hidden">
                                                     <details style="margin:0 0 18px; padding:14px 18px; border:1px solid var(--glass-border); border-radius:18px; background:var(--glass);">
                                                         <summary style="cursor:pointer; color:var(--primary); font-weight:900;">🎨 تخصيص ألوان صفحتي</summary>
-                                                        <p style="margin:10px 0; color:var(--text-light); opacity:0.8;">اختار قالبًا جاهزًا أو غيّر ألوان الصفحة وأزرار الموظف. تقدر كمان تغيّر ألوان نموذج البلاغ بشكل مستقل. ألوانك محفوظة لحسابك.</p>
+                                                        <p style="margin:10px 0; color:var(--text-light); opacity:0.8;">اختار قالبًا جاهزًا أو غيّر ألوان الصفحة وأزرار الموظف وخلفية سجلات المكالمات وسجل اليوم. تقدر كمان تغيّر ألوان نموذج البلاغ بشكل مستقل. ألوانك محفوظة لحسابك.</p>
                                                         <label style="display:block; max-width:320px; margin-bottom:12px;">
                                                             القوالب الجاهزة
                                                             <select id="themePreset" onchange="applyPersonalThemePreset(this.value)" style="display:block; width:100%; margin-top:6px;">
@@ -3509,6 +3565,11 @@ html, body {
                                                             <label>لون النص <input type="color" id="themeText" oninput="previewPersonalTheme()"></label>
                                                             <label>لون الأزرار الأساسية <input type="color" id="themeButtonBackground" oninput="previewPersonalTheme()"></label>
                                                             <label>لون نص الأزرار <input type="color" id="themeButtonText" oninput="previewPersonalTheme()"></label>
+                                                            <label>خلفية سجلات المكالمات <input type="color" id="themeRecordsBackground" oninput="previewPersonalTheme()"></label>
+                                                            <label>خلفية نافذة سجل اليوم <input type="color" id="themeDailyNotesBackground" oninput="previewPersonalTheme()"></label>
+                                                            <label>خلفية الكتابة والأيام <input type="color" id="themeDailyNotesInput" oninput="previewPersonalTheme()"></label>
+                                                            <label>لون عنوان سجل اليوم <input type="color" id="themeDailyNotesAccent" oninput="previewPersonalTheme()"></label>
+                                                            <label>لون نص سجل اليوم <input type="color" id="themeDailyNotesText" oninput="previewPersonalTheme()"></label>
                                                         </div>
                                                         <div id="csFormThemeControls" class="hidden" style="margin-top:18px; padding:14px; border:1px solid rgba(14,165,233,0.45); border-radius:14px; background:rgba(8,47,73,0.25);">
                                                             <h4 style="margin:0 0 6px; color:#0ea5e9;">🎧 ألوان نموذج البلاغ (مستقلة)</h4>
@@ -3527,7 +3588,6 @@ html, body {
                                                             <button type="button" class="btn btn-dark btn-sm" onclick="resetPersonalTheme()">استعادة الألوان الافتراضية</button>
                                                         </div>
                                                     </details>
-                                                    <button type="button" onclick="openDailyNotes()" class="daily-notes-toggle" aria-label="فتح سجل اليومي" title="سجل اليومي">📑</button>
                                                     <section id="csContactCard" class="cs-call-card">
                                                         <h3 style="margin:0 0 8px; color:var(--accent);">📨 تواصل مع خدمة العملاء</h3>
                                                         <p style="margin:0 0 14px; color:#cbd5e1;">سيتم توجيه المكالمة تلقائيًا، وإذا اعتذر الموظف تنتقل لزميله. ولو اعتذر الجميع تظهر في صندوق مشترك ليستلمها أول موظف متاح. ويمكن للموظف طلب دقيقة ثم يظهر له الطلب مرة أخرى.</p>
@@ -3541,22 +3601,6 @@ html, body {
                                                         </details>
                                                         <div id="myCsApprovalRequests" aria-live="polite" style="margin-top:14px;"></div>
                                                     </section>
-                                                    <div id="dailyNotesModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="dailyNotesTitle" style="position:fixed; inset:0; z-index:20010; background:rgba(2,6,23,0.88); display:flex; align-items:center; justify-content:center; padding:16px;">
-                                                        <div style="width:min(100%,620px); max-height:90vh; overflow:auto; padding:20px; border:1px solid #6366f1; border-radius:18px; background:#1e293b; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
-                                                            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px;">
-                                                                <h3 id="dailyNotesTitle" style="margin:0; color:#818cf8;">📝 سجل اليومي</h3>
-                                                                <button type="button" onclick="closeDailyNotes()" class="btn btn-dark btn-sm">إغلاق ✖</button>
-                                                            </div>
-                                                            <label for="dailyNoteDate" style="display:block; margin-bottom:6px; color:#cbd5e1;">التاريخ</label>
-                                                            <input type="date" id="dailyNoteDate" class="form-control-glass" style="margin:0 0 12px;" onchange="loadDailyNoteForDate()">
-                                                            <textarea id="dailyNoteText" class="form-control-glass" rows="6" placeholder="اكتب ملاحظات هذا اليوم هنا..." style="margin:0; resize:vertical;"></textarea>
-                                                            <button id="saveDailyNoteBtn" type="button" onclick="saveDailyNote()" class="btn btn-primary" style="width:100%; margin-top:12px; padding:12px; font-weight:bold;">💾 حفظ ملاحظة اليوم</button>
-                                                            <h4 style="margin:18px 0 8px; color:#cbd5e1;">الأيام المسجلة</h4>
-                                                            <div id="dailyNotesList" aria-live="polite" style="max-height:220px; overflow:auto;">
-                                                                <div style="color:#94a3b8;">لا توجد أيام مسجلة بعد.</div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
                                                     <!-- الهيدر الجديد المنظم -->
                                                     <!-- صف الأزرار العلوي للموظف المحدث -->
                                                     <button onclick="openMyBreakReport()" class="btn btn-primary btn-sm" style="margin-top:8px; border:1px solid #38bdf8; color:#38bdf8;">
@@ -5080,7 +5124,7 @@ html, body {
                                                                         : `موجّه إلى: ${escapeHtml(request.assignedToName || 'خدمة العملاء')}`}</div>`
                                                                     : `<div style="color:#cbd5e1; margin-top:5px;">رد ${escapeHtml(request.respondedBy || 'خدمة العملاء')} ${time ? `— ${escapeHtml(time)}` : ''}</div>`;
                                                                 const message = request.message === 'تحويل مكالمة' ? 'مكالمة جديدة' : request.message || '';
-                                                                return `<article style="padding:12px; margin-top:8px; border-radius:12px; background:rgba(255,255,255,0.04);">
+                                                                return `<article style="padding:12px; margin-top:8px; border-radius:12px; background:var(--employee-record-background, rgba(255,255,255,0.04));">
                                                                     <div style="white-space:pre-wrap;">${escapeHtml(message)}</div>
                                                                     <div style="margin-top:6px;">${status}</div>${response}
                                                                 </article>`;
@@ -5132,7 +5176,7 @@ html, body {
                                                                     : `<button class="btn btn-success" onclick="respondToCsApprovalRequest(this.dataset.requestKey, 'approved')" data-request-key="${encodeURIComponent(key)}">ماشي، موافق ✅</button>
                                                                         <button class="btn btn-primary" onclick="respondToCsApprovalRequest(this.dataset.requestKey, 'snoozed')" data-request-key="${encodeURIComponent(key)}" ${isSnoozed ? 'disabled' : ''}>دقيقة واحدة ⏱️</button>
                                                                         <button class="btn btn-danger" onclick="respondToCsApprovalRequest(this.dataset.requestKey, 'rejected')" data-request-key="${encodeURIComponent(key)}" ${isSnoozed ? 'disabled' : ''}>لأ، إرسال لزميل ↪️</button>`;
-                                                                return `<article style="padding:14px; margin-top:10px; border-radius:14px; background:rgba(255,255,255,0.04); border-right:4px solid var(--accent);">
+                                                                return `<article style="padding:14px; margin-top:10px; border-radius:14px; background:var(--employee-record-background, rgba(255,255,255,0.04)); border-right:4px solid var(--accent);">
                                                                     <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:8px;">
                                                                         <strong>${requester}</strong><small style="color:#94a3b8;">${escapeHtml(time)}</small>
                                                                     </div>
@@ -5424,7 +5468,12 @@ html, body {
                                                     danger: '#f43f5e',
                                                     text: '#f1f5f9',
                                                     buttonBackground: '#4f46e5',
-                                                    buttonText: '#ffffff'
+                                                    buttonText: '#ffffff',
+                                                    recordsBackground: '#293957',
+                                                    dailyNotesBackground: '#1e293b',
+                                                    dailyNotesInput: '#111827',
+                                                    dailyNotesAccent: '#818cf8',
+                                                    dailyNotesText: '#e2e8f0'
                                                 };
 
                                                 const DEFAULT_CS_FORM_THEME = {
@@ -5446,7 +5495,12 @@ html, body {
                                                     danger: 'themeDanger',
                                                     text: 'themeText',
                                                     buttonBackground: 'themeButtonBackground',
-                                                    buttonText: 'themeButtonText'
+                                                    buttonText: 'themeButtonText',
+                                                    recordsBackground: 'themeRecordsBackground',
+                                                    dailyNotesBackground: 'themeDailyNotesBackground',
+                                                    dailyNotesInput: 'themeDailyNotesInput',
+                                                    dailyNotesAccent: 'themeDailyNotesAccent',
+                                                    dailyNotesText: 'themeDailyNotesText'
                                                 };
 
                                                 const CS_FORM_THEME_FIELDS = {
@@ -5463,25 +5517,33 @@ html, body {
                                                         pageBackground: '#082f49', surface: '#0c4a6e', primary: '#0284c7',
                                                         accent: '#22d3ee', success: '#14b8a6', warning: '#facc15',
                                                         danger: '#fb7185', text: '#f0f9ff', buttonBackground: '#0369a1',
-                                                        buttonText: '#ffffff'
+                                                        buttonText: '#ffffff', recordsBackground: '#164e63',
+                                                        dailyNotesBackground: '#0c4a6e', dailyNotesInput: '#082f49',
+                                                        dailyNotesAccent: '#22d3ee', dailyNotesText: '#f0f9ff'
                                                     },
                                                     forest: {
                                                         pageBackground: '#052e16', surface: '#14532d', primary: '#16a34a',
                                                         accent: '#84cc16', success: '#22c55e', warning: '#facc15',
                                                         danger: '#f87171', text: '#f0fdf4', buttonBackground: '#15803d',
-                                                        buttonText: '#ffffff'
+                                                        buttonText: '#ffffff', recordsBackground: '#14532d',
+                                                        dailyNotesBackground: '#14532d', dailyNotesInput: '#052e16',
+                                                        dailyNotesAccent: '#84cc16', dailyNotesText: '#f0fdf4'
                                                     },
                                                     sunset: {
                                                         pageBackground: '#431407', surface: '#7c2d12', primary: '#ea580c',
                                                         accent: '#f97316', success: '#84cc16', warning: '#facc15',
                                                         danger: '#ef4444', text: '#fff7ed', buttonBackground: '#c2410c',
-                                                        buttonText: '#ffffff'
+                                                        buttonText: '#ffffff', recordsBackground: '#7c2d12',
+                                                        dailyNotesBackground: '#7c2d12', dailyNotesInput: '#431407',
+                                                        dailyNotesAccent: '#fdba74', dailyNotesText: '#fff7ed'
                                                     },
                                                     rose: {
                                                         pageBackground: '#500724', surface: '#831843', primary: '#db2777',
                                                         accent: '#f472b6', success: '#10b981', warning: '#fbbf24',
                                                         danger: '#fb7185', text: '#fff1f2', buttonBackground: '#be185d',
-                                                        buttonText: '#ffffff'
+                                                        buttonText: '#ffffff', recordsBackground: '#831843',
+                                                        dailyNotesBackground: '#831843', dailyNotesInput: '#500724',
+                                                        dailyNotesAccent: '#f9a8d4', dailyNotesText: '#fff1f2'
                                                     },
                                                     violet: { ...DEFAULT_PERSONAL_THEME }
                                                 };
@@ -5506,6 +5568,11 @@ html, body {
                                                     root.style.setProperty('--text-light', values.text);
                                                     root.style.setProperty('--employee-button-background', values.buttonBackground);
                                                     root.style.setProperty('--employee-button-text', values.buttonText);
+                                                    root.style.setProperty('--employee-record-background', values.recordsBackground);
+                                                    root.style.setProperty('--daily-notes-background', values.dailyNotesBackground);
+                                                    root.style.setProperty('--daily-notes-input', values.dailyNotesInput);
+                                                    root.style.setProperty('--daily-notes-accent', values.dailyNotesAccent);
+                                                    root.style.setProperty('--daily-notes-text', values.dailyNotesText);
                                                     Object.entries(PERSONAL_THEME_FIELDS).forEach(([key, id]) => {
                                                         const input = document.getElementById(id);
                                                         if (input) input.value = values[key];
@@ -5582,9 +5649,9 @@ html, body {
                                                     }
 
                                                     try {
-                                                        await db.ref(`users/${currentUser.username}`).update({ themeColors: theme });
+                                                        await db.ref(`users/${currentUser.username}/themeColors`).set(theme);
                                                         currentUser.themeColors = theme;
-                                                        alert('تم حفظ ألوان الصفحة ونموذج البلاغ على حسابك بنجاح.');
+                                                        alert('تم حفظ ألوان الصفحة وسجلات المكالمات وسجل اليوم ونموذج البلاغ على حسابك بنجاح.');
                                                     } catch (error) {
                                                         console.error('فشل حفظ ألوان الصفحة:', error);
                                                         applyPersonalTheme(currentUser.themeColors || DEFAULT_PERSONAL_THEME);
@@ -9484,8 +9551,6 @@ if (sohraBtn) {
                             const btn = document.querySelector('.prayer-toggle-btn');
                             widget.classList.toggle('active');
                             btn.classList.toggle('active');
-                            const notesBtn = document.querySelector('.daily-notes-toggle');
-                            if (notesBtn) notesBtn.classList.toggle('prayer-open', widget.classList.contains('active'));
                         }
 
                         window.addEventListener('load', fetchPrayerTimes);
@@ -11317,11 +11382,9 @@ if (sohraBtn) {
                     setTimeout(() => {
                         const widget = document.getElementById('prayerWidget');
                         const btn = document.querySelector('.prayer-toggle-btn');
-                        const notesBtn = document.querySelector('.daily-notes-toggle');
                         if(widget && !widget.classList.contains('active')) {
                             widget.classList.add('active');
                             if(btn) btn.classList.add('active');
-                            if(notesBtn) notesBtn.classList.add('prayer-open');
                         }
                     }, 1500); // يفتح بعد ثانية ونصف عشان يتحمل الأول
                 }
