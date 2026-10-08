@@ -3595,19 +3595,6 @@ html, body {
                                                             <button type="button" class="btn btn-dark btn-sm" onclick="resetPersonalTheme()">استعادة الألوان الافتراضية</button>
                                                         </div>
                                                     </details>
-                                                    <section id="csContactCard" class="cs-call-card">
-                                                        <h3 style="margin:0 0 8px; color:var(--accent);">📨 تواصل مع خدمة العملاء</h3>
-                                                        <p style="margin:0 0 14px; color:#cbd5e1;">سيتم توجيه المكالمة تلقائيًا، وإذا اعتذر الموظف تنتقل لزميله. ولو اعتذر الجميع تظهر في صندوق مشترك ليستلمها أول موظف متاح. ويمكن للموظف طلب دقيقة ثم يظهر له الطلب مرة أخرى.</p>
-                                                        <div id="csApprovalTargetStatus" style="margin-bottom:10px; color:#94a3b8;" aria-live="polite">جاري تحميل موظفي خدمة العملاء...</div>
-                                                        <button id="submitCsApprovalRequestBtn" onclick="submitCsApprovalRequest()" class="btn btn-primary" style="width:100%; padding:16px; font-weight:bold;">📞 إرسال المكالمة</button>
-                                                        <details class="cs-call-stats">
-                                                            <summary>إحصائيات الموظف</summary>
-                                                            <div class="cs-call-stats-values">
-                                                                <div class="cs-call-stat">إجمالي المكالمات المرسلة: <strong id="myCsCallsSentCount">0</strong></div>
-                                                            </div>
-                                                        </details>
-                                                        <div id="myCsApprovalRequests" aria-live="polite" style="margin-top:14px;"></div>
-                                                    </section>
                                                     <!-- الهيدر الجديد المنظم -->
                                                     <!-- صف الأزرار العلوي للموظف المحدث -->
                                                     <button onclick="openMyBreakReport()" class="btn btn-primary btn-sm" style="margin-top:8px; border:1px solid #38bdf8; color:#38bdf8;">
@@ -3863,11 +3850,17 @@ html, body {
         <button onclick="document.getElementById('followUpPickerModal').classList.remove('hidden')" class="btn btn-success" style="width:100%; background:#10b981;">ابدأ</button>
     </div>
                                                                 <div style="border:1px solid var(--danger); padding:8px; border-radius:15px;"><h4>🚨 طوارئ</h4><div id="emStatusArea"><button onclick="sendEmRequest()" class="btn btn-danger" style="width:100%">طلب</button></div></div>
-                                                            </div>
+                                                                <div id="csContactToggleCard" class="hidden" style="border:1px solid var(--accent); padding:8px; border-radius:15px;">
+                                                                    <h4>📨 خدمة العملاء</h4>
+                                                                    <div id="csContactActionArea" aria-live="polite">
+                                                                        <button id="csContactRequestBtn" type="button" onclick="submitCsApprovalRequest()" class="btn btn-primary" style="width:100%; background:linear-gradient(135deg, #06b6d4, #6366f1);">
+                                                                            تواصل
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                                                                                        </div>
 
-
-
-                                                        <!-- كارت البصمة الذكي -->
+                                                                                                                    <!-- كارت البصمة الذكي -->
                 <div class="attendance-card">
                     <h3 style="margin-top:0; font-size:1.1rem; opacity:0.8;">بصمة الحضور والإنصراف الرقمية</h3>
                     
@@ -5019,16 +5012,6 @@ html, body {
                                                     }
                                                 }
 
-                                                function updateCsApprovalTargetList() {
-                                                    const status = document.getElementById('csApprovalTargetStatus');
-                                                    if (!status) return;
-                                                    const agents = Object.values(allUsersData || {})
-                                                        .filter(user => user && user.isCS && user.username && !MANAGERS.includes(user.username));
-                                                    status.textContent = agents.length
-                                                        ? `سيتم الاختيار عشوائيًا من بين ${agents.length} موظف خدمة عملاء.`
-                                                        : 'لا يوجد موظفو خدمة عملاء متاحون حاليًا.';
-                                                }
-
                                                 function chooseCsApprovalAgent(agents, excludedUsernames = []) {
                                                     const availableAgents = agents.filter(agent =>
                                                         agent && agent.username && !excludedUsernames.includes(agent.username)
@@ -5050,8 +5033,93 @@ html, body {
                                                     return selectionPool[Math.floor(Math.random() * selectionPool.length)];
                                                 }
 
+                                                function renderCsContactAction(entries) {
+                                                    const card = document.getElementById('csContactToggleCard');
+                                                    const actionArea = document.getElementById('csContactActionArea');
+                                                    if (!card || !actionArea || !currentUser) return;
+
+                                                    card.classList.toggle('hidden', currentUser.role === 'admin' || Boolean(currentUser.isCS));
+                                                    const latestRequest = entries.find(([, request]) =>
+                                                        request.requesterUsername === currentUser.username
+                                                    );
+                                                    if (!latestRequest || latestRequest[1].status !== 'pending') {
+                                                        if (latestRequest &&
+                                                            latestRequest[1].status === 'approved' &&
+                                                            !latestRequest[1].requesterAcknowledgedAt
+                                                        ) {
+                                                            const request = latestRequest[1];
+                                                            const responderName = request.respondedBy ||
+                                                                request.assignedToName ||
+                                                                (allUsersData[request.respondedByUsername] &&
+                                                                    (allUsersData[request.respondedByUsername].realName || request.respondedByUsername)) ||
+                                                                'موظف خدمة العملاء';
+                                                            actionArea.innerHTML = `
+                                                                <div style="text-align:center; line-height:1.5;" role="status">
+                                                                    <div style="color:#34d399; font-size:0.82rem; font-weight:700;">✅ الموظف موافق</div>
+                                                                    <small style="display:block; color:#cbd5e1; margin:3px 0 7px;">${escapeHtml(responderName)}</small>
+                                                                    <button type="button" class="btn btn-success btn-sm" style="width:100%;" onclick="acknowledgeCsApprovalRequest(this.dataset.requestKey, this)" data-request-key="${encodeURIComponent(latestRequest[0])}">تمام</button>
+                                                                </div>`;
+                                                            return;
+                                                        }
+                                                        actionArea.innerHTML = `<button id="csContactRequestBtn" type="button" onclick="submitCsApprovalRequest()" class="btn btn-primary" style="width:100%; background:linear-gradient(135deg, #06b6d4, #6366f1);">تواصل</button>`;
+                                                        return;
+                                                    }
+
+                                                    const request = latestRequest[1];
+                                                    const isSharedPool = request.poolAvailable === true && !request.assignedTo;
+                                                    const snoozed = Number(request.snoozedUntil || 0) > getServerTime();
+                                                    const assignedName = request.assignedToName ||
+                                                        (allUsersData[request.assignedTo] && (allUsersData[request.assignedTo].realName || request.assignedTo));
+                                                    const waitingMessage = snoozed
+                                                        ? '⏳ في انتظار الرد'
+                                                        : isSharedPool
+                                                            ? '⏳ في انتظار موظف خدمة العملاء'
+                                                            : '⏳ في انتظار الرد';
+                                                    const targetMessage = isSharedPool
+                                                        ? 'المكالمة متاحة لأول موظف خدمة عملاء'
+                                                        : `الموظف المسؤول: ${escapeHtml(assignedName || 'خدمة العملاء')}`;
+
+                                                    actionArea.innerHTML = `
+                                                        <div style="text-align:center; color:#fbbf24; font-size:0.82rem; font-weight:700; line-height:1.6;" role="status">
+                                                            <div>${waitingMessage}</div>
+                                                            <small style="color:#cbd5e1; font-weight:400;">${targetMessage}</small>
+                                                        </div>`;
+                                                }
+
+                                                async function acknowledgeCsApprovalRequest(requestKey, button) {
+                                                    if (!currentUser || currentUser.role === 'admin' || currentUser.isCS) return;
+                                                    if (!isDatabaseConnected) {
+                                                        alert('الاتصال بقاعدة البيانات مقطوع. حاول مرة أخرى بعد عودة الاتصال.');
+                                                        return;
+                                                    }
+                                                    if (button) button.disabled = true;
+                                                    const acknowledgedAt = getServerTime();
+                                                    try {
+                                                        const result = await db.ref(`csApprovalRequests/${requestKey}`).transaction(request => {
+                                                            if (!request ||
+                                                                request.requesterUsername !== currentUser.username ||
+                                                                request.status !== 'approved' ||
+                                                                request.requesterAcknowledgedAt
+                                                            ) return;
+                                                            return { ...request, requesterAcknowledgedAt: acknowledgedAt };
+                                                        });
+                                                        if (!result.committed) {
+                                                            renderCsApprovalRequests();
+                                                            return;
+                                                        }
+                                                        csApprovalRequests = {
+                                                            ...csApprovalRequests,
+                                                            [requestKey]: result.snapshot.val()
+                                                        };
+                                                        renderCsApprovalRequests();
+                                                    } catch (error) {
+                                                        if (button && button.isConnected) button.disabled = false;
+                                                        console.error('تعذر تأكيد استلام موافقة خدمة العملاء:', error);
+                                                        alert(`تعذر تأكيد الموافقة: ${error.message}`);
+                                                    }
+                                                }
+
                                                 function renderCsApprovalRequests() {
-                                                    const ownRequestsContainer = document.getElementById('myCsApprovalRequests');
                                                     const inboxContainer = document.getElementById('csApprovalInbox');
                                                     if (!currentUser) return;
 
@@ -5060,23 +5128,8 @@ html, body {
                                                     ).sort((a, b) =>
                                                         Number(b[1]?.timestamp || 0) - Number(a[1]?.timestamp || 0)
                                                     );
-                                                    const ownRequestsTotal = entries.filter(([, request]) => request.requesterUsername === currentUser.username).length;
-                                                    const employeeSentCount = document.getElementById('myCsCallsSentCount');
-                                                    if (employeeSentCount) employeeSentCount.innerText = String(ownRequestsTotal);
+                                                    renderCsContactAction(entries);
                                                     const now = getServerTime();
-                                                    const ownRequestEntries = entries.filter(([, request]) =>
-                                                        request.requesterUsername === currentUser.username
-                                                    );
-                                                    const resolvedRequests = ownRequestEntries.filter(([, request]) =>
-                                                        ['approved', 'rejected'].includes(request.status)
-                                                    );
-                                                    const resolvedExpiry = resolvedRequests.reduce((nearest, [, request]) => {
-                                                        const respondedAt = Number(request.respondedAt || request.timestamp);
-                                                        const expiresAt = respondedAt + 120000;
-                                                        return Number.isFinite(respondedAt) && expiresAt > now
-                                                            ? Math.min(nearest, expiresAt)
-                                                            : nearest;
-                                                    }, Infinity);
                                                     const snoozeExpiry = entries.reduce((nearest, [, request]) => {
                                                         if (request.status !== 'pending' || request.assignedTo !== currentUser.username) return nearest;
                                                         const expiresAt = Number(request.snoozedUntil);
@@ -5091,52 +5144,10 @@ html, body {
                                                             ? Math.min(nearest, expiresAt)
                                                             : nearest;
                                                     }, Infinity);
-                                                    const nextExpiry = Math.min(resolvedExpiry, snoozeExpiry, muteExpiry);
+                                                    const nextExpiry = Math.min(snoozeExpiry, muteExpiry);
                                                     if (csApprovalExpiryTimer) clearTimeout(csApprovalExpiryTimer);
                                                     if (Number.isFinite(nextExpiry)) {
                                                         csApprovalExpiryTimer = setTimeout(renderCsApprovalRequests, nextExpiry - now);
-                                                    }
-                                                    const ownRequests = ownRequestEntries.filter(([, request]) => {
-                                                        if (!['approved', 'rejected'].includes(request.status)) return true;
-                                                        const respondedAt = Number(request.respondedAt || request.timestamp);
-                                                        return !Number.isFinite(respondedAt) || now < respondedAt + 120000;
-                                                    }).slice(0, 10);
-                                                    if (ownRequestsContainer) {
-                                                        ownRequestsContainer.innerHTML = ownRequests.length
-                                                            ? ownRequests.map(([, request]) => {
-                                                                const isSharedPool = request.poolAvailable === true && !request.assignedTo;
-                                                                const hasBeenTransferred = request.status === 'pending' && Object.keys(request.declinedBy || {}).length > 0;
-                                                                const isSnoozed = request.status === 'pending' && Number(request.snoozedUntil) > now;
-                                                                const status = request.status === 'approved'
-                                                                    ? '<span style="color:#34d399;font-weight:bold;">ماشي ✅</span>'
-                                                                    : request.status === 'rejected'
-                                                                        ? '<span style="color:#fb7185;font-weight:bold;">لأ ❌</span>'
-                                                                        : isSnoozed
-                                                                            ? '<span style="color:#fbbf24;font-weight:bold;">خدمة العملاء طلبت دقيقة — الطلب هيرجع لها بعد قليل ⏳</span>'
-                                                                        : isSharedPool
-                                                                            ? '<span style="color:#38bdf8;font-weight:bold;">المكالمة في صندوق المكالمات المتاحة — أول موظف يستلمها هيتابعها 📥</span>'
-                                                                        : hasBeenTransferred
-                                                                            ? '<span style="color:#fbbf24;font-weight:bold;">اترسل لموظف خدمة عملاء تاني — في انتظار الرد ⏳</span>'
-                                                                            : '<span style="color:#fbbf24;font-weight:bold;">في انتظار الرد ⏳</span>';
-                                                                const date = request.respondedAt || request.timestamp;
-                                                                const time = date ? new Date(Number(date)).toLocaleString('ar-EG') : '';
-                                                                const snoozedTime = isSnoozed
-                                                                    ? new Date(Number(request.snoozedUntil)).toLocaleTimeString('ar-EG')
-                                                                    : '';
-                                                                const response = request.status === 'pending'
-                                                                    ? `<div style="color:#cbd5e1; margin-top:5px;">${isSharedPool
-                                                                        ? 'متاحة لكل موظفي خدمة العملاء للاستلام.'
-                                                                        : isSnoozed
-                                                                        ? `طلب ${escapeHtml(request.snoozedBy || 'موظف خدمة العملاء')} دقيقة — هيرجع له الطلب الساعة ${escapeHtml(snoozedTime)}`
-                                                                        : `موجّه إلى: ${escapeHtml(request.assignedToName || 'خدمة العملاء')}`}</div>`
-                                                                    : `<div style="color:#cbd5e1; margin-top:5px;">رد ${escapeHtml(request.respondedBy || 'خدمة العملاء')} ${time ? `— ${escapeHtml(time)}` : ''}</div>`;
-                                                                const message = request.message === 'تحويل مكالمة' ? 'مكالمة جديدة' : request.message || '';
-                                                                return `<article style="padding:12px; margin-top:8px; border-radius:12px; background:var(--employee-record-background, rgba(255,255,255,0.04));">
-                                                                    <div style="white-space:pre-wrap;">${escapeHtml(message)}</div>
-                                                                    <div style="margin-top:6px;">${status}</div>${response}
-                                                                </article>`;
-                                                            }).join('')
-                                                            : '<div style="color:#94a3b8; padding:8px 0;">طلباتك وردود خدمة العملاء هتظهر هنا.</div>';
                                                     }
 
                                                     if (inboxContainer && currentUser.isCS) {
@@ -5256,7 +5267,18 @@ html, body {
                                                         alert('الاتصال بقاعدة البيانات مقطوع. حاول مرة أخرى بعد عودة الاتصال.');
                                                         return;
                                                     }
-                                                    const button = document.getElementById('submitCsApprovalRequestBtn');
+                                                    const latestOwnRequest = Object.values(csApprovalRequests || {})
+                                                        .filter(request => request && request.requesterUsername === currentUser.username)
+                                                        .sort((a, b) => Number(b.timestamp || 0) - Number(a.timestamp || 0))[0];
+                                                    if (latestOwnRequest &&
+                                                        (latestOwnRequest.status === 'pending' ||
+                                                            (latestOwnRequest.status === 'approved' && !latestOwnRequest.requesterAcknowledgedAt))
+                                                    ) {
+                                                        renderCsApprovalRequests();
+                                                        return;
+                                                    }
+                                                    const button = document.getElementById('csContactRequestBtn');
+                                                    if (!button) return;
                                                     const agents = Object.values(allUsersData || {})
                                                         .filter(user => user && user.isCS && user.username && !MANAGERS.includes(user.username));
                                                     if (agents.length === 0) {
@@ -5264,30 +5286,41 @@ html, body {
                                                         return;
                                                     }
                                                     const targetAgent = chooseCsApprovalAgent(agents);
+                                                    if (!targetAgent) {
+                                                        alert('لا يوجد موظف خدمة عملاء متاح للتحويل إليه حاليًا.');
+                                                        return;
+                                                    }
                                                     const targetUsername = targetAgent.username;
                                                     const message = 'مكالمة جديدة';
                                                     const originalText = button.innerText;
                                                     button.disabled = true;
                                                     button.innerText = 'جاري الإرسال...';
+                                                    const timestamp = getServerTime();
+                                                    const request = {
+                                                        requesterUsername: currentUser.username,
+                                                        requesterName: currentUser.realName || currentUser.username,
+                                                        message,
+                                                        assignedTo: targetUsername,
+                                                        assignedToName: targetAgent.realName || targetAgent.username,
+                                                        assignedAt: timestamp,
+                                                        status: 'pending',
+                                                        poolAvailable: false,
+                                                        timestamp
+                                                    };
                                                     try {
-                                                        await db.ref('csApprovalRequests').push().set({
-                                                            requesterUsername: currentUser.username,
-                                                            requesterName: currentUser.realName || currentUser.username,
-                                                            message,
-                                                            assignedTo: targetUsername,
-                                                            assignedToName: targetAgent.realName || targetAgent.username,
-                                                            assignedAt: getServerTime(),
-                                                            status: 'pending',
-                                                            poolAvailable: false,
-                                                            timestamp: getServerTime()
-                                                        });
-                                                        alert(`تم إرسال المكالمة إلى ${targetAgent.realName || targetAgent.username}. تقدر تتابع الرد هنا.`);
+                                                        const requestRef = db.ref('csApprovalRequests').push();
+                                                        await requestRef.set(request);
+                                                        csApprovalRequests = { ...csApprovalRequests, [requestRef.key]: request };
+                                                        renderCsApprovalRequests();
                                                     } catch (error) {
                                                         console.error('فشل إرسال طلب خدمة العملاء:', error);
                                                         alert(`تعذر إرسال الطلب: ${error.message}`);
                                                     } finally {
-                                                        button.disabled = false;
-                                                        button.innerText = originalText;
+                                                        if (button.isConnected) {
+                                                            button.disabled = false;
+                                                            button.innerText = originalText;
+                                                        }
+                                                        renderCsApprovalRequests();
                                                     }
                                                 }
 
@@ -6286,7 +6319,6 @@ html, body {
                                                     }
                                                     allUsersData = newData;
                                                     updateLoginUserOptions();
-                                                    updateCsApprovalTargetList();
                                                     if (currentUser) {
                                                         renderBroadcastLog(); // ضيف السطر ده هنا عشان أول ما يتعرف عليك يظهر التوجيهات فوراً
                                                     }
@@ -7610,8 +7642,8 @@ function renderMyBreakReport() {
                                                 function updateUserUI() {
                                                     if(!currentUser || currentUser.role === 'admin') return;
                                                     const u = currentUser;
-                                                    const csContactCard = document.getElementById('csContactCard');
-                                                    if (csContactCard) csContactCard.classList.toggle('hidden', Boolean(u.isCS));
+                                                    const csContactToggleCard = document.getElementById('csContactToggleCard');
+                                                    if (csContactToggleCard) csContactToggleCard.classList.toggle('hidden', Boolean(u.isCS));
                                                     const timerText = document.getElementById('userTimer');
                                                     const lbl = document.getElementById('timerLabel');
                                                     const msg = document.getElementById('userStatusMsg');
@@ -11364,13 +11396,12 @@ if (sohraBtn) {
                     initChatNotifications();
                     document.getElementById('loginSection').classList.add('hidden'); 
                     document.getElementById('employeeSection').classList.remove('hidden'); 
-                    const csContactCard = document.getElementById('csContactCard');
-                    if (csContactCard) csContactCard.classList.toggle('hidden', Boolean(currentUser.isCS));
+                    const csContactToggleCard = document.getElementById('csContactToggleCard');
+                    if (csContactToggleCard) csContactToggleCard.classList.toggle('hidden', Boolean(currentUser.isCS));
                     document.getElementById('csFormThemeControls').classList.toggle('hidden', !currentUser.isCS);
                     applyPersonalTheme(currentUser.themeColors);
                     applyCsCallFormTheme(currentUser.themeColors);
                     applyChatBackground(currentUser.chatBg);
-                    updateCsApprovalTargetList();
                     renderCsApprovalRequests();
                     document.getElementById('welcomeMsg').innerText = `أهلاً، ${currentUser.realName || currentUser.username}`; 
                         updateAttendanceUI(); 
