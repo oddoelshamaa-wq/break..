@@ -132,6 +132,12 @@
                                                     th { background: rgba(255,255,255,0.05); color: var(--primary); padding: 15px; font-size: 0.85rem; }
                                                     td { padding: 12px; border-bottom: 1px solid var(--glass-border); text-align: center; font-size: 0.85rem; }
 
+                                                    .complaint-details-cell { min-width: 250px; max-width: 400px; text-align: right; line-height: 1.8; }
+                                                    .complaint-detail-section { padding: 8px 10px; border-right: 3px solid rgba(99, 102, 241, 0.65); border-radius: 4px 10px 10px 4px; background: rgba(255,255,255,0.035); overflow-wrap: anywhere; }
+                                                    .complaint-detail-section + .complaint-detail-section { margin-top: 8px; }
+                                                    .complaint-detail-label { display: block; margin-bottom: 3px; color: #a5b4fc; font-size: 0.76rem; font-weight: 700; }
+                                                    .complaint-detail-text { color: #f1f5f9; white-space: pre-wrap; }
+
                                                     /* العداد الدائري */
     .timer-container { 
         position: relative; 
@@ -8800,15 +8806,43 @@ if (sohraBtn) {
                     </div>
                 </div>` : '';          const proofCell = (evidenceBtn || audioPlayer) ? `<div>${evidenceBtn} ${audioPlayer}</div>` : '-';
 
+                            const detailSections = [];
+                            const detailLabels = {
+                                'الموظف المشكو في حقه': 'الموظف محل الشكوى',
+                                'شكوى العميل': 'تفاصيل شكوى العميل',
+                                'ملاحظة الجودة': 'ملاحظة فريق الجودة',
+                                'ملاحظة خدمة العملاء': 'ملاحظة خدمة العملاء'
+                            };
+                            String(c.details || '').split(/\r?\n/).forEach(line => {
+                                const text = line.trim();
+                                if (!text) return;
+
+                                const match = text.match(/^(الموظف المشكو في حقه|شكوى العميل|ملاحظة الجودة|ملاحظة خدمة العملاء)\s*[:：]\s*(.*)$/);
+                                if (match) {
+                                    detailSections.push({ label: detailLabels[match[1]], text: match[2] });
+                                } else if (detailSections.length) {
+                                    detailSections[detailSections.length - 1].text += `\n${text}`;
+                                } else {
+                                    detailSections.push({ label: '', text });
+                                }
+                            });
+                            const formattedDetails = detailSections.length
+                                ? detailSections.map(section => `
+                                    <div class="complaint-detail-section">
+                                        ${section.label ? `<strong class="complaint-detail-label">${escapeHtml(section.label)}</strong>` : ''}
+                                        <div class="complaint-detail-text">${escapeHtml(section.text)}</div>
+                                    </div>
+                                `).join('')
+                                : '<span style="color:#94a3b8;">لا توجد تفاصيل مكتوبة</span>';
+
                             tbody.innerHTML += `
                                 <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
                                     <td style="font-size:0.85rem;">${c.date}<br><small style="opacity:0.6;">${c.time}</small></td>
                                     <td style="text-align:right;">
                                         ${typeBadge} <span style="font-weight:bold; color:white;">${c.title}</span>
                                     </td>
-            <td style="font-size: 0.9rem; color: #eee; max-width: 400px; min-width: 250px; white-space: pre-wrap; text-align: right; line-height: 1.6; padding: 12px; background: rgba(255,255,255,0.02);">
-                ${c.details}
-            </td>                        <td style="text-align:center;">${displayAmount}</td>
+                                    <td class="complaint-details-cell" style="font-size:0.9rem; padding:12px; background:rgba(255,255,255,0.02);">${formattedDetails}</td>
+                                    <td style="text-align:center;">${displayAmount}</td>
                                     <td>${proofCell}</td>
                                     <td style="font-size:0.85rem; color:#aaa;">${c.admin || 'الإدارة'}</td>
                                     <td style="text-align:center;">${actionCell}</td>
