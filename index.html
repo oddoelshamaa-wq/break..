@@ -32,8 +32,10 @@
                                                 <style>
                                                     :root {
                                                         --bg-deep: #020617;
-                                                        --glass: rgba(15, 23, 42, 0.6);
-                                                        --glass-border: rgba(255, 255, 255, 0.08);
+                                                        --page-background: #0f172a;
+                                                        --surface-color: #0f172a;
+                                                        --glass: color-mix(in srgb, var(--surface-color) 60%, transparent);
+                                                        --glass-border: color-mix(in srgb, var(--text-light) 8%, transparent);
                                                         /* الألوان الجديدة: Indigo & Cyan */
                                                         --primary: #6366f1; /* Indigo */
                                                         --accent: #06b6d4;  /* Cyan */
@@ -42,12 +44,12 @@
                                                         --warning: #fbbf24;
                                                         --vip-gold: linear-gradient(45deg, #ffd700, #b8860b);
                                                         --text-light: #f1f5f9;
-                                                        --logo-gradient: linear-gradient(135deg, #818cf8 0%, #22d3ee 100%);
+                                                        --logo-gradient: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
                                                     }
 
                                                     body { 
                                                         font-family: 'Cairo', sans-serif; 
-                                                        background: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%); 
+                                                        background: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--page-background) 75%, white) 0%, var(--page-background) 100%); 
                                                         margin: 0; padding: 20px 10px; min-height: 100vh; color: var(--text-light); 
                                                         overflow-x: hidden;
                                                     }
@@ -111,10 +113,10 @@
                                                     .btn:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 12px 20px rgba(0,0,0,0.3); }
                                                     .btn:active { transform: translateY(2px); }
                                                     .btn-disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
-                                                    .btn-primary { background: linear-gradient(135deg, #0ea5e9, #2563eb); }
-                                                    .btn-success { background: linear-gradient(135deg, #10b981, #059669); }
-                                                    .btn-danger { background: linear-gradient(135deg, #ef4444, #b91c1c); }
-                                                    .btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; }
+                                                    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--accent)); }
+                                                    .btn-success { background: linear-gradient(135deg, var(--success), color-mix(in srgb, var(--success) 75%, black)); }
+                                                    .btn-danger { background: linear-gradient(135deg, var(--danger), color-mix(in srgb, var(--danger) 75%, black)); }
+                                                    .btn-warning { background: linear-gradient(135deg, var(--warning), color-mix(in srgb, var(--warning) 75%, black)); color: #000; }
                                                     .btn-vip { background: var(--vip-gold); color: #000; }
                                                     .btn-dark { background: #334155; }
 
@@ -788,6 +790,51 @@
                                                     /* إصلاح مشكلة ظهور العناصر المخفية */
                                                     .hidden {
                                                         display: none !important;
+                                                    }
+
+                                                    .cs-call-card {
+                                                        background: linear-gradient(145deg, rgba(6, 182, 212, 0.12), rgba(99, 102, 241, 0.12));
+                                                        border: 1px solid rgba(6, 182, 212, 0.32);
+                                                        border-radius: 22px;
+                                                        padding: 22px;
+                                                        margin: 18px 0;
+                                                        box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
+                                                    }
+
+                                                    .cs-call-stats {
+                                                        margin-top: 12px;
+                                                        padding: 12px 14px;
+                                                        border: 1px solid rgba(148, 163, 184, 0.14);
+                                                        border-radius: 14px;
+                                                        background: rgba(2, 6, 23, 0.24);
+                                                        color: #94a3b8;
+                                                        font-size: 0.82rem;
+                                                    }
+
+                                                    .cs-call-stats summary {
+                                                        cursor: pointer;
+                                                        color: #94a3b8;
+                                                        font-size: 0.78rem;
+                                                        user-select: none;
+                                                    }
+
+                                                    .cs-call-stats[open] summary {
+                                                        color: #cbd5e1;
+                                                        margin-bottom: 10px;
+                                                    }
+
+                                                    .cs-call-stats-values {
+                                                        display: flex;
+                                                        gap: 10px;
+                                                        flex-wrap: wrap;
+                                                    }
+
+                                                    .cs-call-stat {
+                                                        flex: 1;
+                                                        min-width: 130px;
+                                                        padding: 10px 12px;
+                                                        border-radius: 12px;
+                                                        background: rgba(255, 255, 255, 0.04);
                                                     }
 
                                                     /* تنسيق خيارات القائمة المنسدلة */
@@ -1780,7 +1827,8 @@
         margin-bottom: 15px;
     }
 
-    .input-fields input {
+    .input-fields input,
+    .input-fields select {
         width: 100%;
         padding: 16px 20px;
         background: rgba(0, 0, 0, 0.2);
@@ -1792,9 +1840,131 @@
         font-family: 'Cairo';
     }
 
-    .input-fields input:focus {
+    .input-fields input:focus,
+    .input-fields select:focus {
         border-color: #6366f1;
         background: rgba(99, 102, 241, 0.05);
+    }
+
+    #employeeSection details input[type="color"] {
+        display: block;
+        width: 100%;
+        height: 42px;
+        padding: 4px;
+        cursor: pointer;
+    }
+
+    #employeeSection button {
+        background: linear-gradient(135deg, var(--employee-button-background), var(--primary)) !important;
+        color: var(--employee-button-text) !important;
+        border-color: var(--employee-button-background) !important;
+    }
+
+    #employeeSection .btn-success {
+        background: linear-gradient(135deg, var(--success), color-mix(in srgb, var(--success) 75%, black)) !important;
+        color: var(--employee-button-text) !important;
+    }
+
+    #employeeSection .btn-danger {
+        background: linear-gradient(135deg, var(--danger), color-mix(in srgb, var(--danger) 75%, black)) !important;
+        color: var(--employee-button-text) !important;
+    }
+
+    #employeeSection .btn-warning {
+        background: linear-gradient(135deg, var(--warning), color-mix(in srgb, var(--warning) 75%, black)) !important;
+    }
+
+    #employeeSection .btn-dark {
+        background: color-mix(in srgb, var(--surface-color) 75%, var(--employee-button-background)) !important;
+        color: var(--employee-button-text) !important;
+        border-color: var(--employee-button-background) !important;
+    }
+
+    #csCallForm {
+        --cs-form-surface: #0c3a55;
+        --cs-form-input: #082f49;
+        --cs-form-border: #0284c7;
+        --cs-form-accent: #0ea5e9;
+        --cs-form-text: #e0f2fe;
+        --cs-form-button: #0284c7;
+        background: var(--cs-form-surface) !important;
+        border: 1px solid var(--cs-form-border) !important;
+        box-shadow: 0 10px 30px rgba(2, 132, 199, 0.2) !important;
+        color: var(--cs-form-text);
+    }
+
+    #csCallForm h3,
+    #csCallForm label {
+        color: var(--cs-form-accent) !important;
+    }
+
+    #csCallForm .form-control-glass {
+        background: var(--cs-form-input) !important;
+        border-color: rgba(14, 165, 233, 0.28) !important;
+        color: var(--cs-form-text) !important;
+    }
+
+    #csCallForm .form-control-glass:focus {
+        border-color: var(--cs-form-accent) !important;
+        box-shadow: 0 0 12px rgba(14, 165, 233, 0.22) !important;
+    }
+
+    #csCallForm .upload-box {
+        background: rgba(8, 47, 73, 0.55);
+        border-color: var(--cs-form-border) !important;
+    }
+
+    #csCallForm #csImagePreview {
+        border-color: var(--cs-form-accent) !important;
+    }
+
+    #csCallForm #btnCsSubmit {
+        background: linear-gradient(135deg, var(--cs-form-button), color-mix(in srgb, var(--cs-form-button) 75%, black)) !important;
+        border-color: var(--cs-form-button) !important;
+        color: var(--cs-form-text) !important;
+        box-shadow: 0 6px 18px rgba(2, 132, 199, 0.28);
+    }
+
+    #csCallForm #btnCsSubmit:hover {
+        background: linear-gradient(135deg, var(--cs-form-accent), var(--cs-form-button)) !important;
+        box-shadow: 0 8px 22px rgba(2, 132, 199, 0.4);
+    }
+
+    #chatWindow {
+        background: color-mix(in srgb, var(--surface-color) 95%, transparent) !important;
+        border-color: color-mix(in srgb, var(--primary) 55%, transparent) !important;
+    }
+
+    #chatWindow > div:first-child {
+        background: color-mix(in srgb, var(--primary) 16%, transparent) !important;
+    }
+
+    #chatWindow #chatHeaderInfo > span {
+        color: var(--primary) !important;
+    }
+
+    #chatWindow #chatMessagesArea {
+        background-color: color-mix(in srgb, var(--surface-color) 85%, transparent);
+    }
+
+    @media (max-width: 480px) {
+        #chatWindow {
+            inset: 8px !important;
+            width: auto !important;
+            height: auto !important;
+            max-height: calc(100dvh - 16px) !important;
+            border-radius: 20px !important;
+        }
+    }
+
+    #loginUser {
+        background-color: #0b1220;
+        color: #fff;
+    }
+
+    #loginUser option {
+        background-color: #0b1220;
+        color: #fff;
     }
 
     /* الزرار */
@@ -1815,6 +1985,20 @@
     .btn-submit-elegant:hover {
         transform: translateY(-2px);
         box-shadow: 0 15px 30px rgba(99, 102, 241, 0.4);
+    }
+
+    .login-mode-toggle {
+        margin-top: 14px;
+        padding: 6px 10px;
+        border: 0;
+        background: transparent;
+        color: #94a3b8;
+        font-family: 'Cairo';
+        cursor: pointer;
+    }
+
+    .login-mode-toggle:hover {
+        color: #fff;
     }
 
     .card-footer {
@@ -2000,6 +2184,22 @@
         border-radius: 50%;
         margin-left: auto;
         box-shadow: 0 0 8px #10b981;
+    }
+
+    .unread-count-badge {
+        min-width: 22px;
+        height: 22px;
+        padding: 0 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        border-radius: 999px;
+        background: #ef4444;
+        color: white;
+        font-size: 0.7rem;
+        font-weight: 900;
+        line-height: 1;
     }
 
     .chat-contact-item.has-unread {
@@ -2265,6 +2465,9 @@ html, body {
                     <audio id="requestRing" loop preload="none">
                         <source src="https://assets.mixkit.co/active_storage/sfx/1110/1110-preview.mp3" type="audio/mp3">
                     </audio>
+                    <audio id="csApprovalRing" loop preload="none">
+                        <source src="https://assets.mixkit.co/active_storage/sfx/1110/1110-preview.mp3" type="audio/mp3">
+                    </audio>
 
                     <!-- 4. صوت البث (Broadcast) - رسائل إدارية عاجلة -->
                     <audio id="broadcastSound" loop preload="none">
@@ -2405,10 +2608,10 @@ html, body {
                                                     </div>
                                                     <div id="myBreakReportSummary" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-bottom:18px;"></div>
                                                     <h3 style="color:#f87171; margin:20px 0 10px;">⏱️ حساب البريك والأكسدة لكل يوم</h3>
-                                                    <small style="display:block; color:#94a3b8; margin-bottom:8px;">الأكسدة هي الوقت الزائد عن رصيد البريك اليومي. المدد معروضة بصيغة ساعة:دقيقة.</small>
+                                                    <small style="display:block; color:#94a3b8; margin-bottom:8px;">الأكسدة هي الوقت الزائد عن رصيد البريك اليومي. المدد معروضة بصيغة ساعة:دقيقة:ثانية.</small>
                                                     <div class="table-responsive" style="margin-bottom:22px;">
                                                         <table style="width:100%;">
-                                                            <thead><tr><th>اليوم</th><th>البريك والطوارئ المستخدمة</th><th>الرصيد اليومي</th><th>الأكسدة</th></tr></thead>
+                                                            <thead><tr><th>اليوم</th><th>الأسباب</th><th>البريك والطوارئ المستخدمة</th><th>الرصيد اليومي</th><th>الأكسدة</th><th>النتيجة بعد التجميع</th></tr></thead>
                                                             <tbody id="myBreakDailyBody"></tbody>
                                                         </table>
                                                     </div>
@@ -2637,19 +2840,25 @@ html, body {
                 <div class="login-header">
                     <span class="system-tag">ELSHAMAA V2.0</span>
                     <h1>تسجيل الدخول</h1>
-                    <p>من فضلك ادخل بياناتك (بدون إزعاج)</p>
+                    <p>اختر اسمك من الأسماء المسجلة على السيستم</p>
                 </div>
 
                 <div class="input-fields">
-                    <div class="field">
-                        <input type="text" id="loginUser" placeholder="اسم المستخدم" onfocus="stateActive()" onblur="stateSleep()">
+                    <div class="field" id="loginEmployeeField">
+                        <select id="loginUser" aria-label="اختر اسم المستخدم" dir="rtl" onfocus="stateActive()" onblur="stateSleep()">
+                            <option value="">اختر اسمك</option>
+                        </select>
+                    </div>
+                    <div class="field hidden" id="loginManagerField">
+                        <input type="text" id="loginManagerUser" placeholder="اسم المستخدم للمدير" autocomplete="username" onfocus="stateActive()" onblur="stateSleep()">
                     </div>
                     <div class="field">
-                        <input type="password" id="loginPass" placeholder="كلمة المرور" onfocus="stateHide()" onblur="stateActive()">
+                        <input type="password" id="loginPass" placeholder="كلمة المرور" autocomplete="current-password" onfocus="stateHide()" onblur="stateActive()">
                     </div>
                 </div>
 
                 <button onclick="mockAttemptLogin()" class="btn-submit-elegant">دخول السيستم</button>
+                <button type="button" id="loginModeToggle" class="login-mode-toggle" onclick="toggleManagerLogin()">دخول المديرين</button>
                 
                 <div class="card-footer">
                     <span>نسيت الباسورد؟ نام وافتكر بكره</span>
@@ -2788,6 +2997,9 @@ html, body {
                 <button onclick="switchAdminTab('cs-reports')" class="btn btn-primary btn-sm" style="background:#ec4899">
                     🎧 بلاغات الجودة <span id="csBadge" class="badge-count hidden">0</span>
                 </button>
+                <button onclick="switchAdminTab('cs-approval-history')" class="btn btn-primary btn-sm" style="background:#0f766e">
+                    📜 سجل موافقات التحويل
+                </button>
                                                     </div>
 
                     <!-- قسم الجدول الأسبوعي للصلاة - للمشرف -->
@@ -2918,7 +3130,7 @@ html, body {
                                                         <div class="table-responsive">
                                                             <table>
                                                                 <thead>
-                                                                    <tr><th>الموظف والجهاز</th><th>الحالة والسبب</th><th>البريك (متبقي)</th><th>صلاة / متبع</th><th>ميتنج / VIP</th><th>التحكم</th></tr>
+                                                                    <tr><th>الموظف والجهاز</th><th>الحالة والسبب</th><th>البريك المستخدم</th><th>البريك المتبقي</th><th>صلاة / متبع</th><th>ميتنج / VIP</th><th>التحكم</th></tr>
                                                                 </thead>
                                                                 <tbody id="monitorBody"></tbody>
                                                             </table>
@@ -3045,6 +3257,7 @@ html, body {
                                                                 <input type="number" id="newAllowance" value="45">
                                                                 <input type="text" id="newFunTitle" placeholder="اللقب (مثلاً: أشطر كتكوت)" style="border-color: var(--vip-gold);">
                                                                 <select id="newUserGroup">
+                                                                    <option value="">بدون جروب</option>
                                                                     <option value="واتساب">جروب واتساب</option>
                                                                     <option value="طلبات">جروب طلبات</option>
                                                                 </select>
@@ -3151,6 +3364,32 @@ html, body {
                                                             </table>
                                                         </div>
                                                     </div>
+                                                    <div id="tab-cs-approval-history" class="hidden">
+                                                        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:15px;">
+                                                            <div>
+                                                                <h3 style="color:var(--accent); margin:0;">📜 سجل طلبات تحويل مكمله</h3>
+                                                                <small style="color:#94a3b8;">سجل الطلبات والقرارات التي اتخذتها خدمة العملاء.</small>
+                                                            </div>
+                                                            <button onclick="renderAdminCsApprovalHistory()" class="btn btn-dark btn-sm">🔄 تحديث السجل</button>
+                                                        </div>
+                                                        <div class="table-responsive">
+                                                            <table style="min-width:850px; width:100%;">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>وقت الطلب</th>
+                                                                        <th>الموظف</th>
+                                                                        <th>الطلب</th>
+                                                                        <th>القرار</th>
+                                                                        <th>بواسطة خدمة العملاء</th>
+                                                                        <th>وقت القرار</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody id="adminCsApprovalHistoryBody">
+                                                                    <tr><td colspan="6" style="text-align:center; color:#94a3b8;">لا توجد طلبات مسجلة حتى الآن.</td></tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
                                                 </div><!-- تبويب إدارة ألعاب عثمان -->
     <!-- تبويب إدارة ألعاب عثمان -->
     <div id="tab-game-manager" class="hidden">
@@ -3210,6 +3449,62 @@ html, body {
 
                                                 <!-- ================= لوحة الموظف ================= -->
                                                 <div id="employeeSection" class="hidden">
+                                                    <details style="margin:0 0 18px; padding:14px 18px; border:1px solid var(--glass-border); border-radius:18px; background:var(--glass);">
+                                                        <summary style="cursor:pointer; color:var(--primary); font-weight:900;">🎨 تخصيص ألوان صفحتي</summary>
+                                                        <p style="margin:10px 0; color:var(--text-light); opacity:0.8;">اختار قالبًا جاهزًا أو غيّر ألوان الصفحة وأزرار الموظف. تقدر كمان تغيّر ألوان نموذج البلاغ بشكل مستقل. ألوانك محفوظة لحسابك.</p>
+                                                        <label style="display:block; max-width:320px; margin-bottom:12px;">
+                                                            القوالب الجاهزة
+                                                            <select id="themePreset" onchange="applyPersonalThemePreset(this.value)" style="display:block; width:100%; margin-top:6px;">
+                                                                <option value="">ألوان مخصصة</option>
+                                                                <option value="violet">بنفسجي كلاسيكي</option>
+                                                                <option value="ocean">أزرق المحيط</option>
+                                                                <option value="forest">أخضر الغابة</option>
+                                                                <option value="sunset">غروب دافئ</option>
+                                                                <option value="rose">وردي</option>
+                                                            </select>
+                                                        </label>
+                                                        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px;">
+                                                            <label>الخلفية <input type="color" id="themePageBackground" oninput="previewPersonalTheme()"></label>
+                                                            <label>البطاقات والخلفيات الداخلية <input type="color" id="themeSurface" oninput="previewPersonalTheme()"></label>
+                                                            <label>اللون الأساسي <input type="color" id="themePrimary" oninput="previewPersonalTheme()"></label>
+                                                            <label>اللون الثانوي <input type="color" id="themeAccent" oninput="previewPersonalTheme()"></label>
+                                                            <label>لون النجاح <input type="color" id="themeSuccess" oninput="previewPersonalTheme()"></label>
+                                                            <label>لون التنبيه <input type="color" id="themeWarning" oninput="previewPersonalTheme()"></label>
+                                                            <label>لون الخطأ <input type="color" id="themeDanger" oninput="previewPersonalTheme()"></label>
+                                                            <label>لون النص <input type="color" id="themeText" oninput="previewPersonalTheme()"></label>
+                                                            <label>لون الأزرار الأساسية <input type="color" id="themeButtonBackground" oninput="previewPersonalTheme()"></label>
+                                                            <label>لون نص الأزرار <input type="color" id="themeButtonText" oninput="previewPersonalTheme()"></label>
+                                                        </div>
+                                                        <div id="csFormThemeControls" class="hidden" style="margin-top:18px; padding:14px; border:1px solid rgba(14,165,233,0.45); border-radius:14px; background:rgba(8,47,73,0.25);">
+                                                            <h4 style="margin:0 0 6px; color:#0ea5e9;">🎧 ألوان نموذج البلاغ (مستقلة)</h4>
+                                                            <p style="margin:0 0 12px; color:var(--text-light); opacity:0.8; font-size:0.85rem;">غيّر ألوان النموذج والحقول والعناوين وزر الإرسال من هنا، من غير ما تتغير ألوان باقي الصفحة.</p>
+                                                            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px;">
+                                                                <label>خلفية النموذج <input type="color" id="csFormSurfaceColor" oninput="previewCsCallFormTheme()"></label>
+                                                                <label>خلفية الحقول <input type="color" id="csFormInputColor" oninput="previewCsCallFormTheme()"></label>
+                                                                <label>إطار النموذج <input type="color" id="csFormBorderColor" oninput="previewCsCallFormTheme()"></label>
+                                                                <label>لون العناوين <input type="color" id="csFormAccentColor" oninput="previewCsCallFormTheme()"></label>
+                                                                <label>لون نص النموذج <input type="color" id="csFormTextColor" oninput="previewCsCallFormTheme()"></label>
+                                                                <label>لون زر الإرسال <input type="color" id="csFormButtonColor" oninput="previewCsCallFormTheme()"></label>
+                                                            </div>
+                                                        </div>
+                                                        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;">
+                                                            <button type="button" class="btn btn-primary btn-sm" onclick="savePersonalTheme()">حفظ كل الألوان</button>
+                                                            <button type="button" class="btn btn-dark btn-sm" onclick="resetPersonalTheme()">استعادة الألوان الافتراضية</button>
+                                                        </div>
+                                                    </details>
+                                                    <section class="cs-call-card">
+                                                        <h3 style="margin:0 0 8px; color:var(--accent);">📨 تواصل مع خدمة العملاء</h3>
+                                                        <p style="margin:0 0 14px; color:#cbd5e1;">سيتم توجيه المكالمة تلقائيًا، وإذا اعتذر الموظف تنتقل لزميله حتى يقبلها أحد. ويمكن للموظف طلب دقيقة ثم يظهر له الطلب مرة أخرى.</p>
+                                                        <div id="csApprovalTargetStatus" style="margin-bottom:10px; color:#94a3b8;" aria-live="polite">جاري تحميل موظفي خدمة العملاء...</div>
+                                                        <button id="submitCsApprovalRequestBtn" onclick="submitCsApprovalRequest()" class="btn btn-primary" style="width:100%; padding:16px; font-weight:bold;">📞 إرسال المكالمة</button>
+                                                        <details class="cs-call-stats">
+                                                            <summary>إحصائيات الموظف</summary>
+                                                            <div class="cs-call-stats-values">
+                                                                <div class="cs-call-stat">إجمالي المكالمات المرسلة: <strong id="myCsCallsSentCount">0</strong></div>
+                                                            </div>
+                                                        </details>
+                                                        <div id="myCsApprovalRequests" aria-live="polite" style="margin-top:14px;"></div>
+                                                    </section>
                                                     <!-- الهيدر الجديد المنظم -->
                                                     <!-- صف الأزرار العلوي للموظف المحدث -->
                                                     <button onclick="openMyBreakReport()" class="btn btn-primary btn-sm" style="margin-top:8px; border:1px solid #38bdf8; color:#38bdf8;">
@@ -3341,7 +3636,22 @@ html, body {
                                                     <!-- لوحة خدمة العملاء المحدثة -->
                 <!-- لوحة خدمة العملاء المحدثة -->
                 <div id="csAgentDashboard" class="hidden" style="margin-top:20px;">
-                    <div style="background:rgba(15, 23, 42, 0.9); border:2px solid var(--primary); padding:25px; border-radius:25px; margin-bottom:25px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                    <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.5); padding:20px; border-radius:20px; margin-bottom:20px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
+                            <h3 style="margin:0; color:var(--success);">📥 طلبات الموظفين <span id="csApprovalPendingCount" class="badge-count hidden">0</span></h3>
+                            <button type="button" id="enableCsApprovalSoundBtn" onclick="enableCsApprovalSound()" class="btn btn-warning btn-sm">🔊 تفعيل صوت الطلبات</button>
+                        </div>
+                        <div id="csApprovalSoundStatus" style="font-size:0.8rem; color:#fbbf24; margin-bottom:8px;">فعّل صوت الطلبات عشان الجرس يفضل شغال لحد الرد.</div>
+                        <details class="cs-call-stats">
+                            <summary>إحصائيات المكالمات</summary>
+                            <div class="cs-call-stats-values">
+                                <div class="cs-call-stat">مكالمات وصلتك: <strong id="csCallsReceivedCount">0</strong></div>
+                                <div class="cs-call-stat">مكالمات وافقت عليها: <strong id="csCallsHandledCount">0</strong></div>
+                            </div>
+                        </details>
+                        <div id="csApprovalInbox" aria-live="polite"></div>
+                    </div>
+                    <div id="csCallForm" style="background:var(--surface-color); border:2px solid var(--primary); padding:25px; border-radius:25px; margin-bottom:25px; box-shadow: 0 10px 30px color-mix(in srgb, var(--primary) 22%, transparent);">
                         <h3 style="margin-top:0; color:var(--primary); display:flex; align-items:center; gap:10px; justify-content: center;">
                             🎧 نظام رفع البلاغات والتقييم الذكي
                         </h3>
@@ -3389,7 +3699,7 @@ html, body {
 
                         <img id="csImagePreview" src="" style="display:none; width:120px; height:120px; object-fit:cover; border-radius:15px; margin:0 auto 20px auto; border:2px solid var(--warning); box-shadow: 0 0 15px rgba(0,0,0,0.5);">
                         
-                        <button id="btnCsSubmit" onclick="uploadCsCall()" class="btn btn-primary" style="width:100%; padding: 20px; font-size: 1.2rem; font-weight: 900; background: linear-gradient(135deg, #6366f1, #a855f7) !important;">
+                        <button id="btnCsSubmit" onclick="uploadCsCall()" class="btn btn-primary" style="width:100%; padding: 20px; font-size: 1.2rem; font-weight: 900;">
                             🚀 إرسال البلاغ الآن
                         </button>
                     </div>
@@ -3912,7 +4222,7 @@ html, body {
         </div>
     </div>
                                             <script>
-                                                const APP_VERSION = "2.0.5"; // غير الرقم ده (مثلاً لـ 2.0.6) كل ما ترفع تحديث جديد
+                                                const APP_VERSION = "2.0.10"; // غير الرقم ده (مثلاً لـ 2.0.6) كل ما ترفع تحديث جديد
 
                                                 // منع القائمة اليمنى (Right Click)
                                                 document.addEventListener('contextmenu', event => event.preventDefault());
@@ -3957,6 +4267,9 @@ html, body {
                                                 }
 
                                                 let allUsersData = {}, currentUser = null, timerInterval = null, isLoaded = false;
+                                                let csApprovalRequests = {};
+                                                let csApprovalExpiryTimer = null;
+                                                let csApprovalSoundUnlocked = false;
                                                 let loadingHintTimer = setTimeout(() => {
                                                     const status = document.getElementById('loadingStatus');
                                                     if (!isLoaded && status) status.innerText = 'تحميل بيانات الموظفين والسجلات يستغرق وقتًا؛ تحقق من اتصال الإنترنت وانتظر اكتمال المزامنة.';
@@ -4428,6 +4741,415 @@ html, body {
                                                     return div.innerHTML;
                                                 }
 
+                                                function updateCsApprovalRing() {
+                                                    const ring = document.getElementById('csApprovalRing');
+                                                    if (!ring) return;
+                                                    const hasAssignedPendingRequest = Boolean(
+                                                        currentUser &&
+                                                        currentUser.role !== 'admin' &&
+                                                        currentUser.isCS &&
+                                                        soundActive &&
+                                                        csApprovalSoundUnlocked &&
+                                                        Object.values(csApprovalRequests || {}).some(request =>
+                                                            request &&
+                                                            request.status === 'pending' &&
+                                                            request.requesterUsername !== currentUser.username &&
+                                                            (!request.assignedTo || request.assignedTo === currentUser.username) &&
+                                                            !(request.declinedBy && request.declinedBy[currentUser.username]) &&
+                                                            Number(request.snoozedUntil || 0) <= getServerTime()
+                                                        )
+                                                    );
+                                                    if (hasAssignedPendingRequest) {
+                                                        if (ring.paused) {
+                                                            ring.currentTime = 0;
+                                                            ring.play().catch(error => {
+                                                                const status = document.getElementById('csApprovalSoundStatus');
+                                                                const button = document.getElementById('enableCsApprovalSoundBtn');
+                                                                if (status) {
+                                                                    status.innerText = 'الجرس متوقف لأن المتصفح منع الصوت. اضغط زر تفعيل صوت الطلبات.';
+                                                                    status.style.color = '#fb7185';
+                                                                }
+                                                                if (button) button.innerText = '🔊 أعد تفعيل صوت الطلبات';
+                                                                console.error('تعذر تشغيل جرس طلبات خدمة العملاء:', error);
+                                                            });
+                                                        }
+                                                    } else {
+                                                        ring.pause();
+                                                        ring.currentTime = 0;
+                                                    }
+                                                }
+
+                                                async function enableCsApprovalSound() {
+                                                    const ring = document.getElementById('csApprovalRing');
+                                                    const button = document.getElementById('enableCsApprovalSoundBtn');
+                                                    const status = document.getElementById('csApprovalSoundStatus');
+                                                    if (!ring || !currentUser || !currentUser.isCS) return;
+                                                    if (button) button.disabled = true;
+                                                    try {
+                                                        ring.volume = 0;
+                                                        await ring.play();
+                                                        csApprovalSoundUnlocked = true;
+                                                        soundActive = true;
+                                                        sessionStorage.setItem('systemActive', 'true');
+                                                        ring.pause();
+                                                        ring.currentTime = 0;
+                                                        ring.volume = 1;
+                                                        if (button) button.innerText = '🔊 صوت الطلبات مفعل';
+                                                        if (status) {
+                                                            status.innerText = 'الصوت مفعل — الجرس يرن للطلبات الموجهة لك حتى ترد أو تحوّلها.';
+                                                            status.style.color = '#34d399';
+                                                        }
+                                                        updateCsApprovalRing();
+                                                    } catch (error) {
+                                                        ring.volume = 1;
+                                                        if (button) button.innerText = '🔊 أعد تفعيل صوت الطلبات';
+                                                        if (status) {
+                                                            status.innerText = 'المتصفح منع الصوت. اضغط الزر مرة أخرى وتأكد أن صوت الجهاز مفتوح.';
+                                                            status.style.color = '#fb7185';
+                                                        }
+                                                        console.error('تعذر تفعيل صوت طلبات خدمة العملاء:', error);
+                                                        alert('المتصفح منع تشغيل الصوت. اضغط زر تفعيل صوت الطلبات مرة أخرى.');
+                                                    } finally {
+                                                        if (button) button.disabled = false;
+                                                    }
+                                                }
+
+                                                function updateCsApprovalTargetList() {
+                                                    const status = document.getElementById('csApprovalTargetStatus');
+                                                    if (!status) return;
+                                                    const agents = Object.values(allUsersData || {})
+                                                        .filter(user => user && user.isCS && user.username && !MANAGERS.includes(user.username));
+                                                    status.textContent = agents.length
+                                                        ? `سيتم الاختيار عشوائيًا من بين ${agents.length} موظف خدمة عملاء.`
+                                                        : 'لا يوجد موظفو خدمة عملاء متاحون حاليًا.';
+                                                }
+
+                                                function chooseCsApprovalAgent(agents, excludedUsernames = []) {
+                                                    const availableAgents = agents.filter(agent =>
+                                                        agent && agent.username && !excludedUsernames.includes(agent.username)
+                                                    );
+                                                    if (availableAgents.length === 0) return null;
+
+                                                    const mostRecentlyAssigned = Object.values(csApprovalRequests || {})
+                                                        .filter(request => request && request.assignedTo)
+                                                        .reduce((latest, request) => {
+                                                            const assignedAt = Number(request.assignedAt || request.timestamp || 0);
+                                                            return assignedAt > latest.assignedAt
+                                                                ? { username: request.assignedTo, assignedAt }
+                                                                : latest;
+                                                        }, { username: '', assignedAt: -1 });
+                                                    const differentAgents = availableAgents.filter(agent =>
+                                                        agent.username !== mostRecentlyAssigned.username
+                                                    );
+                                                    const selectionPool = differentAgents.length ? differentAgents : availableAgents;
+                                                    return selectionPool[Math.floor(Math.random() * selectionPool.length)];
+                                                }
+
+                                                function renderCsApprovalRequests() {
+                                                    const ownRequestsContainer = document.getElementById('myCsApprovalRequests');
+                                                    const inboxContainer = document.getElementById('csApprovalInbox');
+                                                    if (!currentUser) return;
+
+                                                    const entries = Object.entries(csApprovalRequests || {}).filter(([, request]) =>
+                                                        request && typeof request === 'object'
+                                                    ).sort((a, b) =>
+                                                        Number(b[1]?.timestamp || 0) - Number(a[1]?.timestamp || 0)
+                                                    );
+                                                    const ownRequestsTotal = entries.filter(([, request]) => request.requesterUsername === currentUser.username).length;
+                                                    const employeeSentCount = document.getElementById('myCsCallsSentCount');
+                                                    if (employeeSentCount) employeeSentCount.innerText = String(ownRequestsTotal);
+                                                    const now = getServerTime();
+                                                    const ownRequestEntries = entries.filter(([, request]) =>
+                                                        request.requesterUsername === currentUser.username
+                                                    );
+                                                    const resolvedRequests = ownRequestEntries.filter(([, request]) =>
+                                                        ['approved', 'rejected'].includes(request.status)
+                                                    );
+                                                    const resolvedExpiry = resolvedRequests.reduce((nearest, [, request]) => {
+                                                        const respondedAt = Number(request.respondedAt || request.timestamp);
+                                                        const expiresAt = respondedAt + 120000;
+                                                        return Number.isFinite(respondedAt) && expiresAt > now
+                                                            ? Math.min(nearest, expiresAt)
+                                                            : nearest;
+                                                    }, Infinity);
+                                                    const snoozeExpiry = entries.reduce((nearest, [, request]) => {
+                                                        if (request.status !== 'pending' || request.assignedTo !== currentUser.username) return nearest;
+                                                        const expiresAt = Number(request.snoozedUntil);
+                                                        return Number.isFinite(expiresAt) && expiresAt > now
+                                                            ? Math.min(nearest, expiresAt)
+                                                            : nearest;
+                                                    }, Infinity);
+                                                    const nextExpiry = Math.min(resolvedExpiry, snoozeExpiry);
+                                                    if (csApprovalExpiryTimer) clearTimeout(csApprovalExpiryTimer);
+                                                    if (Number.isFinite(nextExpiry)) {
+                                                        csApprovalExpiryTimer = setTimeout(renderCsApprovalRequests, nextExpiry - now);
+                                                    }
+                                                    const ownRequests = ownRequestEntries.filter(([, request]) => {
+                                                        if (!['approved', 'rejected'].includes(request.status)) return true;
+                                                        const respondedAt = Number(request.respondedAt || request.timestamp);
+                                                        return !Number.isFinite(respondedAt) || now < respondedAt + 120000;
+                                                    }).slice(0, 10);
+                                                    if (ownRequestsContainer) {
+                                                        ownRequestsContainer.innerHTML = ownRequests.length
+                                                            ? ownRequests.map(([, request]) => {
+                                                                const hasBeenTransferred = request.status === 'pending' && Object.keys(request.declinedBy || {}).length > 0;
+                                                                const isSnoozed = request.status === 'pending' && Number(request.snoozedUntil) > now;
+                                                                const status = request.status === 'approved'
+                                                                    ? '<span style="color:#34d399;font-weight:bold;">ماشي ✅</span>'
+                                                                    : request.status === 'rejected'
+                                                                        ? '<span style="color:#fb7185;font-weight:bold;">لأ ❌</span>'
+                                                                        : isSnoozed
+                                                                            ? '<span style="color:#fbbf24;font-weight:bold;">خدمة العملاء طلبت دقيقة — الطلب هيرجع لها بعد قليل ⏳</span>'
+                                                                        : hasBeenTransferred
+                                                                            ? '<span style="color:#fbbf24;font-weight:bold;">اترسل لموظف خدمة عملاء تاني — في انتظار الرد ⏳</span>'
+                                                                            : '<span style="color:#fbbf24;font-weight:bold;">في انتظار الرد ⏳</span>';
+                                                                const date = request.respondedAt || request.timestamp;
+                                                                const time = date ? new Date(Number(date)).toLocaleString('ar-EG') : '';
+                                                                const snoozedTime = isSnoozed
+                                                                    ? new Date(Number(request.snoozedUntil)).toLocaleTimeString('ar-EG')
+                                                                    : '';
+                                                                const response = request.status === 'pending'
+                                                                    ? `<div style="color:#cbd5e1; margin-top:5px;">${isSnoozed
+                                                                        ? `طلب ${escapeHtml(request.snoozedBy || 'موظف خدمة العملاء')} دقيقة — هيرجع له الطلب الساعة ${escapeHtml(snoozedTime)}`
+                                                                        : `موجّه إلى: ${escapeHtml(request.assignedToName || 'خدمة العملاء')}`}</div>`
+                                                                    : `<div style="color:#cbd5e1; margin-top:5px;">رد ${escapeHtml(request.respondedBy || 'خدمة العملاء')} ${time ? `— ${escapeHtml(time)}` : ''}</div>`;
+                                                                const message = request.message === 'تحويل مكالمة' ? 'مكالمة جديدة' : request.message || '';
+                                                                return `<article style="padding:12px; margin-top:8px; border-radius:12px; background:rgba(255,255,255,0.04);">
+                                                                    <div style="white-space:pre-wrap;">${escapeHtml(message)}</div>
+                                                                    <div style="margin-top:6px;">${status}</div>${response}
+                                                                </article>`;
+                                                            }).join('')
+                                                            : '<div style="color:#94a3b8; padding:8px 0;">طلباتك وردود خدمة العملاء هتظهر هنا.</div>';
+                                                    }
+
+                                                    if (inboxContainer && currentUser.isCS) {
+                                                        const receivedCount = entries.filter(([, request]) =>
+                                                            request.requesterUsername !== currentUser.username &&
+                                                            (request.assignedTo === currentUser.username ||
+                                                                Boolean(request.declinedBy && request.declinedBy[currentUser.username]) ||
+                                                                request.respondedByUsername === currentUser.username)
+                                                        ).length;
+                                                        const handledCount = entries.filter(([, request]) =>
+                                                            request.status === 'approved' && request.respondedByUsername === currentUser.username
+                                                        ).length;
+                                                        const receivedCountElement = document.getElementById('csCallsReceivedCount');
+                                                        const handledCountElement = document.getElementById('csCallsHandledCount');
+                                                        if (receivedCountElement) receivedCountElement.innerText = String(receivedCount);
+                                                        if (handledCountElement) handledCountElement.innerText = String(handledCount);
+                                                        const pending = entries.filter(([, request]) =>
+                                                            request.status === 'pending' &&
+                                                            request.requesterUsername !== currentUser.username &&
+                                                            (!request.assignedTo || request.assignedTo === currentUser.username) &&
+                                                            !(request.declinedBy && request.declinedBy[currentUser.username])
+                                                        );
+                                                        const count = document.getElementById('csApprovalPendingCount');
+                                                        if (count) {
+                                                            count.innerText = String(pending.length);
+                                                            count.classList.toggle('hidden', pending.length === 0);
+                                                        }
+                                                        inboxContainer.innerHTML = pending.length
+                                                            ? pending.map(([key, request]) => {
+                                                                const requester = escapeHtml(request.requesterName || request.requesterUsername || 'موظف');
+                                                                const message = escapeHtml(request.message === 'تحويل مكالمة' ? 'مكالمة جديدة' : request.message || '');
+                                                                const time = request.timestamp ? new Date(Number(request.timestamp)).toLocaleString('ar-EG') : '';
+                                                                const snoozedUntil = Number(request.snoozedUntil || 0);
+                                                                const isSnoozed = snoozedUntil > now;
+                                                                return `<article style="padding:14px; margin-top:10px; border-radius:14px; background:rgba(255,255,255,0.04); border-right:4px solid var(--accent);">
+                                                                    <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:8px;">
+                                                                        <strong>${requester}</strong><small style="color:#94a3b8;">${escapeHtml(time)}</small>
+                                                                    </div>
+                                                                    <div style="white-space:pre-wrap; margin-bottom:12px;">${message}</div>
+                                                                    ${isSnoozed
+                                                                        ? '<div style="color:#fbbf24; margin-bottom:12px;" aria-live="polite">الطلب ما زال هنا، والجرس متوقف لمدة دقيقة. سيعمل تلقائيًا بعدها ⏱️</div>'
+                                                                        : ''}
+                                                                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                                                                        <button class="btn btn-success" onclick="respondToCsApprovalRequest(this.dataset.requestKey, 'approved')" data-request-key="${encodeURIComponent(key)}">ماشي، موافق ✅</button>
+                                                                        <button class="btn btn-primary" onclick="respondToCsApprovalRequest(this.dataset.requestKey, 'snoozed')" data-request-key="${encodeURIComponent(key)}" ${isSnoozed ? 'disabled' : ''}>دقيقة واحدة ⏱️</button>
+                                                                        <button class="btn btn-danger" onclick="respondToCsApprovalRequest(this.dataset.requestKey, 'rejected')" data-request-key="${encodeURIComponent(key)}" ${isSnoozed ? 'disabled' : ''}>لأ، إرسال لزميل ↪️</button>
+                                                                    </div>
+                                                                </article>`;
+                                                            }).join('')
+                                                            : '<div style="color:#94a3b8; padding:8px 0;">مفيش طلبات جديدة دلوقتي.</div>';
+                                                    }
+                                                    updateCsApprovalRing();
+                                                }
+
+                                                function renderAdminCsApprovalHistory() {
+                                                    const tbody = document.getElementById('adminCsApprovalHistoryBody');
+                                                    if (!tbody || !currentUser || currentUser.role !== 'admin') return;
+                                                    const entries = Object.entries(csApprovalRequests || {})
+                                                        .filter(([, request]) => request && typeof request === 'object')
+                                                        .sort((a, b) => Number(b[1].timestamp || 0) - Number(a[1].timestamp || 0));
+
+                                                    if (!entries.length) {
+                                                        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:20px;">لا توجد طلبات مسجلة حتى الآن.</td></tr>';
+                                                        return;
+                                                    }
+
+                                                    const formatTime = value => value
+                                                        ? escapeHtml(new Date(Number(value)).toLocaleString('ar-EG'))
+                                                        : '—';
+                                                    tbody.innerHTML = entries.map(([, request]) => {
+                                                        const declinedBy = Object.values(request.declinedBy || {})
+                                                            .map(agent => agent && agent.name ? agent.name : '')
+                                                            .filter(Boolean);
+                                                        const assignedAgent = request.assignedTo
+                                                            ? allUsersData[request.assignedTo]
+                                                            : null;
+                                                        const status = request.status === 'approved'
+                                                            ? '<span style="color:#34d399; font-weight:bold;">مقبول — ماشي ✅</span>'
+                                                            : request.status === 'rejected'
+                                                                ? '<span style="color:#fb7185; font-weight:bold;">مرفوض — لأ ❌</span>'
+                                                                : declinedBy.length
+                                                                    ? `<span style="color:#fbbf24; font-weight:bold;">تم التحويل لزميل — في انتظار الرد ⏳</span><div style="color:#94a3b8; font-size:0.8rem;">اعتذر: ${escapeHtml(declinedBy.join('، '))}${assignedAgent ? `<br>المحوّل إليه: ${escapeHtml(assignedAgent.realName || assignedAgent.username)}` : ''}</div>`
+                                                                    : '<span style="color:#fbbf24; font-weight:bold;">قيد الانتظار ⏳</span>';
+                                                        const responder = request.respondedByUsername
+                                                            ? `${request.respondedBy || 'خدمة العملاء'} (@${request.respondedByUsername})`
+                                                            : request.respondedBy || '—';
+                                                        return `<tr>
+                                                            <td>${formatTime(request.timestamp)}</td>
+                                                            <td>${escapeHtml(request.requesterName || request.requesterUsername || '—')}</td>
+                                                            <td style="white-space:pre-wrap; min-width:220px;">${escapeHtml(request.message || '')}</td>
+                                                            <td>${status}</td>
+                                                            <td>${escapeHtml(responder)}</td>
+                                                            <td>${request.respondedAt ? formatTime(request.respondedAt) : '—'}</td>
+                                                        </tr>`;
+                                                    }).join('');
+                                                }
+
+                                                async function submitCsApprovalRequest() {
+                                                    if (!currentUser || currentUser.role === 'admin') {
+                                                        alert('لازم تسجل دخولك كموظف لإرسال الطلب.');
+                                                        return;
+                                                    }
+                                                    if (!isDatabaseConnected) {
+                                                        alert('الاتصال بقاعدة البيانات مقطوع. حاول مرة أخرى بعد عودة الاتصال.');
+                                                        return;
+                                                    }
+                                                    const button = document.getElementById('submitCsApprovalRequestBtn');
+                                                    const agents = Object.values(allUsersData || {})
+                                                        .filter(user => user && user.isCS && user.username && !MANAGERS.includes(user.username));
+                                                    if (agents.length === 0) {
+                                                        alert('لا يوجد موظفو خدمة عملاء متاحون حاليًا.');
+                                                        return;
+                                                    }
+                                                    const targetAgent = chooseCsApprovalAgent(agents);
+                                                    const targetUsername = targetAgent.username;
+                                                    const message = 'مكالمة جديدة';
+                                                    const originalText = button.innerText;
+                                                    button.disabled = true;
+                                                    button.innerText = 'جاري الإرسال...';
+                                                    try {
+                                                        await db.ref('csApprovalRequests').push().set({
+                                                            requesterUsername: currentUser.username,
+                                                            requesterName: currentUser.realName || currentUser.username,
+                                                            message,
+                                                            assignedTo: targetUsername,
+                                                            assignedToName: targetAgent.realName || targetAgent.username,
+                                                            assignedAt: getServerTime(),
+                                                            status: 'pending',
+                                                            timestamp: getServerTime()
+                                                        });
+                                                        alert(`تم إرسال المكالمة إلى ${targetAgent.realName || targetAgent.username}. تقدر تتابع الرد هنا.`);
+                                                    } catch (error) {
+                                                        console.error('فشل إرسال طلب خدمة العملاء:', error);
+                                                        alert(`تعذر إرسال الطلب: ${error.message}`);
+                                                    } finally {
+                                                        button.disabled = false;
+                                                        button.innerText = originalText;
+                                                    }
+                                                }
+
+                                                async function respondToCsApprovalRequest(requestKey, decision) {
+                                                    if (!currentUser || !currentUser.isCS || currentUser.role === 'admin' || currentUser.isOnBreak) {
+                                                        alert('الرد على الطلبات متاح لموظف خدمة العملاء أثناء العمل فقط.');
+                                                        return;
+                                                    }
+                                                    if (!['approved', 'rejected', 'snoozed'].includes(decision)) return;
+                                                    try {
+                                                        requestKey = decodeURIComponent(requestKey);
+                                                    } catch (error) {
+                                                        alert('تعذر تحديد الطلب المطلوب.');
+                                                        return;
+                                                    }
+                                                    if (!isDatabaseConnected) {
+                                                        alert('الاتصال بقاعدة البيانات مقطوع. حاول مرة أخرى بعد عودة الاتصال.');
+                                                        return;
+                                                    }
+                                                    try {
+                                                        const currentAgent = {
+                                                            name: currentUser.realName || currentUser.username,
+                                                            username: currentUser.username,
+                                                            timestamp: getServerTime()
+                                                        };
+                                                        const csAgents = Object.values(allUsersData || {})
+                                                            .filter(user => user && user.isCS && user.username && !MANAGERS.includes(user.username))
+                                                            .map(user => user.username)
+                                                            .sort((a, b) => a.localeCompare(b));
+                                                        if (!csAgents.includes(currentUser.username)) csAgents.push(currentUser.username);
+
+                                                        const result = await db.ref(`csApprovalRequests/${requestKey}`).transaction(request => {
+                                                            if (!request || request.status !== 'pending') return;
+                                                            if (request.assignedTo && request.assignedTo !== currentUser.username) return;
+                                                            if (decision !== 'approved' && Number(request.snoozedUntil || 0) > currentAgent.timestamp) return;
+                                                            if (decision === 'snoozed') {
+                                                                return {
+                                                                    ...request,
+                                                                    snoozedUntil: currentAgent.timestamp + 60000,
+                                                                    snoozedBy: currentAgent.name
+                                                                };
+                                                            }
+                                                            if (decision === 'rejected') {
+                                                                const declinedBy = { ...(request.declinedBy || {}), [currentUser.username]: currentAgent };
+                                                                const availableAgents = csAgents
+                                                                    .filter(username => !declinedBy[username])
+                                                                    .map(username => (allUsersData || {})[username] || { username });
+                                                                const nextAgent = chooseCsApprovalAgent(availableAgents, [currentUser.username]) ||
+                                                                    chooseCsApprovalAgent(csAgents.map(username =>
+                                                                        (allUsersData || {})[username] || { username }
+                                                                    ), [currentUser.username]);
+                                                                if (!nextAgent) return;
+                                                                return {
+                                                                    ...request,
+                                                                    declinedBy,
+                                                                    assignedTo: nextAgent.username,
+                                                                    assignedToName: nextAgent.realName || nextAgent.username,
+                                                                    assignedAt: currentAgent.timestamp,
+                                                                    snoozedUntil: null,
+                                                                    snoozedBy: null
+                                                                };
+                                                            }
+                                                            return {
+                                                                ...request,
+                                                                status: 'approved',
+                                                                respondedBy: currentAgent.name,
+                                                                respondedByUsername: currentAgent.username,
+                                                                respondedAt: currentAgent.timestamp,
+                                                                snoozedUntil: null,
+                                                                snoozedBy: null
+                                                            };
+                                                        });
+                                                        if (!result.committed) {
+                                                            alert('الطلب لم يعد موجّهًا إليك أو تم الرد عليه بالفعل.');
+                                                        } else if (decision === 'snoozed') {
+                                                            alert('تمام، الطلب هيرجع لك بعد دقيقة.');
+                                                        } else if (decision === 'rejected' && result.snapshot.val().status === 'pending') {
+                                                            alert(`تم إرسال الطلب إلى ${result.snapshot.val().assignedToName || 'موظف خدمة العملاء التالي'}، وهيظهر له فوراً.`);
+                                                        }
+                                                    } catch (error) {
+                                                        console.error('فشل الرد على طلب خدمة العملاء:', error);
+                                                        alert(`تعذر حفظ الرد: ${error.message}`);
+                                                    }
+                                                }
+
+                                                db.ref('csApprovalRequests').on('value', snap => {
+                                                    csApprovalRequests = snap.val() || {};
+                                                    renderCsApprovalRequests();
+                                                    renderAdminCsApprovalHistory();
+                                                }, error => {
+                                                    console.error('فشل تحميل طلبات خدمة العملاء:', error);
+                                                });
+
                                                 let initialServerTime = Date.now(), initialPerformanceTime = performance.now();
                                                 let isServerTimeSynchronized = false;
                                                 let isDatabaseConnected = false;
@@ -4455,6 +5177,191 @@ html, body {
                                                 function getServerTimeString() { const d = new Date(getServerTime()); let h = d.getHours(); const m = d.getMinutes().toString().padStart(2, '0'), s = d.getSeconds().toString().padStart(2, '0'), ampm = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return `${h.toString().padStart(2, '0')}:${m}:${s} ${ampm}`; }
 
                                                 const MANAGERS = ['mahmoud', 'bo', 'ahmed'];
+
+                                                const DEFAULT_PERSONAL_THEME = {
+                                                    pageBackground: '#0f172a',
+                                                    surface: '#0f172a',
+                                                    primary: '#6366f1',
+                                                    accent: '#06b6d4',
+                                                    success: '#10b981',
+                                                    warning: '#fbbf24',
+                                                    danger: '#f43f5e',
+                                                    text: '#f1f5f9',
+                                                    buttonBackground: '#4f46e5',
+                                                    buttonText: '#ffffff'
+                                                };
+
+                                                const DEFAULT_CS_FORM_THEME = {
+                                                    csFormSurface: '#0c3a55',
+                                                    csFormInput: '#082f49',
+                                                    csFormBorder: '#0284c7',
+                                                    csFormAccent: '#0ea5e9',
+                                                    csFormText: '#e0f2fe',
+                                                    csFormButton: '#0284c7'
+                                                };
+
+                                                const PERSONAL_THEME_FIELDS = {
+                                                    pageBackground: 'themePageBackground',
+                                                    surface: 'themeSurface',
+                                                    primary: 'themePrimary',
+                                                    accent: 'themeAccent',
+                                                    success: 'themeSuccess',
+                                                    warning: 'themeWarning',
+                                                    danger: 'themeDanger',
+                                                    text: 'themeText',
+                                                    buttonBackground: 'themeButtonBackground',
+                                                    buttonText: 'themeButtonText'
+                                                };
+
+                                                const CS_FORM_THEME_FIELDS = {
+                                                    csFormSurface: 'csFormSurfaceColor',
+                                                    csFormInput: 'csFormInputColor',
+                                                    csFormBorder: 'csFormBorderColor',
+                                                    csFormAccent: 'csFormAccentColor',
+                                                    csFormText: 'csFormTextColor',
+                                                    csFormButton: 'csFormButtonColor'
+                                                };
+
+                                                const PERSONAL_THEME_PRESETS = {
+                                                    ocean: {
+                                                        pageBackground: '#082f49', surface: '#0c4a6e', primary: '#0284c7',
+                                                        accent: '#22d3ee', success: '#14b8a6', warning: '#facc15',
+                                                        danger: '#fb7185', text: '#f0f9ff', buttonBackground: '#0369a1',
+                                                        buttonText: '#ffffff'
+                                                    },
+                                                    forest: {
+                                                        pageBackground: '#052e16', surface: '#14532d', primary: '#16a34a',
+                                                        accent: '#84cc16', success: '#22c55e', warning: '#facc15',
+                                                        danger: '#f87171', text: '#f0fdf4', buttonBackground: '#15803d',
+                                                        buttonText: '#ffffff'
+                                                    },
+                                                    sunset: {
+                                                        pageBackground: '#431407', surface: '#7c2d12', primary: '#ea580c',
+                                                        accent: '#f97316', success: '#84cc16', warning: '#facc15',
+                                                        danger: '#ef4444', text: '#fff7ed', buttonBackground: '#c2410c',
+                                                        buttonText: '#ffffff'
+                                                    },
+                                                    rose: {
+                                                        pageBackground: '#500724', surface: '#831843', primary: '#db2777',
+                                                        accent: '#f472b6', success: '#10b981', warning: '#fbbf24',
+                                                        danger: '#fb7185', text: '#fff1f2', buttonBackground: '#be185d',
+                                                        buttonText: '#ffffff'
+                                                    },
+                                                    violet: { ...DEFAULT_PERSONAL_THEME }
+                                                };
+
+                                                function applyPersonalTheme(theme = {}) {
+                                                    if (!theme || typeof theme !== 'object') theme = {};
+                                                    const values = { ...DEFAULT_PERSONAL_THEME };
+                                                    Object.keys(DEFAULT_PERSONAL_THEME).forEach(key => {
+                                                        if (typeof theme[key] === 'string' && /^#[0-9a-f]{6}$/i.test(theme[key])) {
+                                                            values[key] = theme[key];
+                                                        }
+                                                    });
+                                                    const root = document.documentElement;
+                                                    root.style.setProperty('--page-background', values.pageBackground);
+                                                    root.style.setProperty('--bg-deep', values.pageBackground);
+                                                    root.style.setProperty('--surface-color', values.surface);
+                                                    root.style.setProperty('--primary', values.primary);
+                                                    root.style.setProperty('--accent', values.accent);
+                                                    root.style.setProperty('--success', values.success);
+                                                    root.style.setProperty('--warning', values.warning);
+                                                    root.style.setProperty('--danger', values.danger);
+                                                    root.style.setProperty('--text-light', values.text);
+                                                    root.style.setProperty('--employee-button-background', values.buttonBackground);
+                                                    root.style.setProperty('--employee-button-text', values.buttonText);
+                                                    Object.entries(PERSONAL_THEME_FIELDS).forEach(([key, id]) => {
+                                                        const input = document.getElementById(id);
+                                                        if (input) input.value = values[key];
+                                                    });
+                                                    const presetSelect = document.getElementById('themePreset');
+                                                    if (presetSelect) {
+                                                        const matchedPreset = Object.entries(PERSONAL_THEME_PRESETS)
+                                                            .find(([, preset]) => Object.keys(DEFAULT_PERSONAL_THEME)
+                                                                .every(key => preset[key] === values[key]));
+                                                        presetSelect.value = matchedPreset ? matchedPreset[0] : '';
+                                                    }
+                                                }
+
+                                                function readPersonalThemeControls() {
+                                                    return Object.fromEntries(
+                                                        Object.entries(PERSONAL_THEME_FIELDS).map(([key, id]) => [
+                                                            key,
+                                                            document.getElementById(id).value
+                                                        ])
+                                                    );
+                                                }
+
+                                                function applyCsCallFormTheme(theme = {}) {
+                                                    const values = { ...DEFAULT_CS_FORM_THEME };
+                                                    Object.keys(DEFAULT_CS_FORM_THEME).forEach(key => {
+                                                        if (typeof theme[key] === 'string' && /^#[0-9a-f]{6}$/i.test(theme[key])) {
+                                                            values[key] = theme[key];
+                                                        }
+                                                    });
+                                                    const form = document.getElementById('csCallForm');
+                                                    if (!form) return;
+                                                    Object.entries(values).forEach(([key, color]) => {
+                                                        form.style.setProperty(`--${key.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`)}`, color);
+                                                        const input = document.getElementById(CS_FORM_THEME_FIELDS[key]);
+                                                        if (input) input.value = color;
+                                                    });
+                                                }
+
+                                                function readCsCallFormThemeControls() {
+                                                    return Object.fromEntries(
+                                                        Object.entries(CS_FORM_THEME_FIELDS).map(([key, id]) => [
+                                                            key,
+                                                            document.getElementById(id).value
+                                                        ])
+                                                    );
+                                                }
+
+                                                function previewCsCallFormTheme() {
+                                                    applyCsCallFormTheme(readCsCallFormThemeControls());
+                                                }
+
+                                                function previewPersonalTheme() {
+                                                    applyPersonalTheme(readPersonalThemeControls());
+                                                }
+
+                                                function applyPersonalThemePreset(presetName) {
+                                                    const preset = PERSONAL_THEME_PRESETS[presetName];
+                                                    if (preset) applyPersonalTheme(preset);
+                                                }
+
+                                                async function savePersonalTheme() {
+                                                    if (!currentUser || currentUser.role === 'admin') {
+                                                        alert('تخصيص الألوان متاح لحسابات الموظفين فقط.');
+                                                        return;
+                                                    }
+
+                                                    const theme = {
+                                                        ...readPersonalThemeControls(),
+                                                        ...readCsCallFormThemeControls()
+                                                    };
+                                                    if (!Object.values(theme).every(color => /^#[0-9a-f]{6}$/i.test(color))) {
+                                                        alert('تعذر حفظ الألوان: يوجد لون غير صالح.');
+                                                        return;
+                                                    }
+
+                                                    try {
+                                                        await db.ref(`users/${currentUser.username}`).update({ themeColors: theme });
+                                                        currentUser.themeColors = theme;
+                                                        alert('تم حفظ ألوان الصفحة ونموذج البلاغ على حسابك بنجاح.');
+                                                    } catch (error) {
+                                                        console.error('فشل حفظ ألوان الصفحة:', error);
+                                                        applyPersonalTheme(currentUser.themeColors || DEFAULT_PERSONAL_THEME);
+                                                        applyCsCallFormTheme(currentUser.themeColors || DEFAULT_CS_FORM_THEME);
+                                                        alert(`تعذر حفظ ألوان الصفحة: ${error.message}`);
+                                                    }
+                                                }
+
+                                                function resetPersonalTheme() {
+                                                    applyPersonalTheme(DEFAULT_PERSONAL_THEME);
+                                                    applyCsCallFormTheme(DEFAULT_CS_FORM_THEME);
+                                                    savePersonalTheme();
+                                                }
 
                                             function getDeviceType() {
         const ua = navigator.userAgent;
@@ -4508,6 +5415,7 @@ html, body {
             }
 
             document.getElementById('forceSoundOverlay').style.display = 'none';
+            if (currentUser && currentUser.isCS) enableCsApprovalSound();
             startGlobalTimer();
         }
 
@@ -5060,6 +5968,8 @@ html, body {
                                                         if (pending) { if (ring.paused) ring.play().catch(e=>{}); } else { ring.pause(); ring.currentTime = 0; }
                                                     }
                                                     allUsersData = newData;
+                                                    updateLoginUserOptions();
+                                                    updateCsApprovalTargetList();
                                                     if (currentUser) {
                                                         renderBroadcastLog(); // ضيف السطر ده هنا عشان أول ما يتعرف عليك يظهر التوجيهات فوراً
                                                     }
@@ -5112,6 +6022,7 @@ html, body {
                             }
                             else {
                                 updateUserUI();
+                                renderCsApprovalRequests();
                                 updateEmStatus();
                                 updateMeetingStatus();
                                 updateOtStatus();
@@ -5209,8 +6120,8 @@ html, body {
 
                 } 
             }                                 
-        function attemptLogin() { 
-            const u = document.getElementById('loginUser').value.trim().toLowerCase();
+        function attemptLogin(username) { 
+            const u = username.trim().toLowerCase();
             const p = document.getElementById('loginPass').value.trim(); 
             
             if (allUsersData[u] && allUsersData[u].password === p) { 
@@ -5581,7 +6492,7 @@ html, body {
             if (u.prayerLimit > 0) usersWithCredit++;
             if (u.prayerCountToday > 0) usersFinishedPrayer++;
 
-            let lg = u.usedSeconds||0, lp = u.prayerSeconds||0, lm = u.meetingSeconds||0, lf = u.followUpSeconds||0, lv = u.vipSeconds||0;
+            let lg = Number(u.usedSeconds) || 0, lp = Number(u.prayerSeconds) || 0, lm = Number(u.meetingSeconds) || 0, lf = Number(u.followUpSeconds) || 0, lv = Number(u.vipSeconds) || 0;
 
             // حساب الوقت الحي إذا كان الموظف في بريك حالياً
             if (u.isOnBreak && u.lastStartTime) {
@@ -5661,7 +6572,8 @@ html, body {
                         </div>
                     </td>
                     <td style="font-weight:bold; font-size:0.85rem; color:${statusColor}">${mainStatusText}</td>
-                    <td><span id="rem_${u.username}" style="font-weight:bold; color:${rem>=0?'white':'#f43f5e'}">${rem>=0?formatTime(rem):'-'+formatTime(Math.abs(rem))}</span></td>
+                    <td><span id="break_used_${u.username}" style="font-weight:bold;">${formatDurationHMS(lg)}</span></td>
+                    <td><span id="rem_${u.username}" style="font-weight:bold; color:${rem>=0?'white':'#f43f5e'}">${rem>=0?formatDurationHMS(rem):'-'+formatDurationHMS(Math.abs(rem))}</span></td>
                     <td>
                         <span id="pray_${u.username}" style="font-weight:bold;">${formatTime(lp)}</span><br>
                         ${prayerCreditStatus}
@@ -5692,8 +6604,8 @@ html, body {
                                                     Object.values(allUsersData).forEach(u => {
                                                         if (!u || !u.username || MANAGERS.includes(u.username)) return;
 
-                                                        let lg = u.usedSeconds || 0, lp = u.prayerSeconds || 0, lm = u.meetingSeconds || 0,
-                                                            lf = u.followUpSeconds || 0, lv = u.vipSeconds || 0;
+                                                        let lg = Number(u.usedSeconds) || 0, lp = Number(u.prayerSeconds) || 0, lm = Number(u.meetingSeconds) || 0,
+                                                            lf = Number(u.followUpSeconds) || 0, lv = Number(u.vipSeconds) || 0;
 
                                                         if (u.isOnBreak && u.lastStartTime) {
                                                             let elap = Math.floor((getServerTime() - u.lastStartTime) / 1000);
@@ -5706,10 +6618,16 @@ html, body {
 
                                                         const rem = ((u.allowance || 45) * 60) - lg;
 
+                                                        const usedEl = document.getElementById(`break_used_${u.username}`);
+                                                        if (usedEl) {
+                                                            const usedTime = formatDurationHMS(lg);
+                                                            if (usedEl.innerText !== usedTime) usedEl.innerText = usedTime;
+                                                        }
+
                                                         // تحديث "البريك المتبقي"
                                                         const rEl = document.getElementById(`rem_${u.username}`);
                                                         if (rEl) {
-                                                            const newTime = rem >= 0 ? formatTime(rem) : "-" + formatTime(Math.abs(rem));
+                                                            const newTime = rem >= 0 ? formatDurationHMS(rem) : "-" + formatDurationHMS(Math.abs(rem));
                                                             if (rEl.innerText !== newTime) { // تحديث فقط لو الرقم اتغير
                                                                 rEl.innerText = newTime;
                                                                 rEl.style.color = rem >= 0 ? "white" : "var(--danger)";
@@ -5770,14 +6688,14 @@ function renderMyBreakReport() {
 
     if (!employee || employee.username !== currentUser.username) {
         tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px;">بيانات التقرير غير متاحة حاليًا.</td></tr>';
-        dailyBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">بيانات التقرير غير متاحة حاليًا.</td></tr>';
+        dailyBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">بيانات التقرير غير متاحة حاليًا.</td></tr>';
         summary.innerHTML = '';
         return;
     }
 
     if (from && to && from > to) {
         tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px;">تاريخ البداية يجب أن يكون قبل تاريخ النهاية.</td></tr>';
-        dailyBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">تحقق من فترة البحث.</td></tr>';
+        dailyBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">تحقق من فترة البحث.</td></tr>';
         summary.innerHTML = '';
         return;
     }
@@ -5786,15 +6704,9 @@ function renderMyBreakReport() {
     const rows = [];
     const dailyTotals = {};
     const allowanceSeconds = Math.max(0, Number(employee.allowance) || 45) * 60;
-    const formatReportDuration = (seconds) => {
-        const totalMinutes = Math.floor(Math.max(0, seconds) / 60);
-        const hours = Math.floor(totalMinutes / 60);
-        const minutes = totalMinutes % 60;
-        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-    };
     const getDailyTotals = (date, displayDate) => {
         if (!dailyTotals[date]) {
-            dailyTotals[date] = { displayDate, break: 0 };
+            dailyTotals[date] = { displayDate, break: 0, reasons: [], isActive: false };
         }
         return dailyTotals[date];
     };
@@ -5811,7 +6723,10 @@ function renderMyBreakReport() {
         const type = String(session.type || 'نشاط');
         if (type === 'بريك عام' || type === 'طوارئ') {
             totals.break += duration;
-            getDailyTotals(isoDate, session.date).break += duration;
+            const day = getDailyTotals(isoDate, session.date);
+            day.break += duration;
+            const reason = String(session.reason || type).trim();
+            if (reason && !day.reasons.includes(reason)) day.reasons.push(reason);
         }
         else if (type === 'صلاة') totals.prayer += duration;
         else if (type === 'استراحة VIP' || type === 'VIP سهرة') totals.vip += duration;
@@ -5836,7 +6751,11 @@ function renderMyBreakReport() {
             const type = String(employee.breakType || 'نشاط');
             if (type === 'بريك عام' || type === 'طوارئ') {
                 totals.break += duration;
-                getDailyTotals(isoDate, startedAt.toLocaleDateString('ar-EG')).break += duration;
+                const day = getDailyTotals(isoDate, startedAt.toLocaleDateString('ar-EG'));
+                day.break += duration;
+                day.isActive = true;
+                const reason = String(employee.lastReason || type).trim();
+                if (reason && !day.reasons.includes(reason)) day.reasons.push(reason);
             }
             else if (type === 'صلاة') totals.prayer += duration;
             else if (type === 'استراحة VIP' || type === 'VIP سهرة') totals.vip += duration;
@@ -5868,19 +6787,21 @@ function renderMyBreakReport() {
     if (employee.isVIP) summaryCards.push(['VIP', totals.vip, '#fbbf24']);
     summary.innerHTML = summaryCards.map(([label, seconds, color]) => `
         <div style="background:rgba(0,0,0,0.25); border:1px solid ${color}; border-radius:14px; padding:12px; text-align:center;">
-            <small>${label}</small><div style="font-size:1.2rem; font-weight:bold; color:${color};">${formatReportDuration(seconds)}</div>
+            <small>${label}</small><div style="font-size:1.2rem; font-weight:bold; color:${color};">${formatDurationHMS(seconds)}</div>
         </div>`).join('');
 
     const dailyEntries = Object.entries(dailyTotals).sort(([dateA], [dateB]) => dateB.localeCompare(dateA));
     if (dailyEntries.length === 0) {
-        dailyBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:#94a3b8;">لا يوجد بريك أو أكسدة في الفترة المحددة.</td></tr>';
+        dailyBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:#94a3b8;">لا يوجد بريك أو أكسدة في الفترة المحددة.</td></tr>';
     } else {
         dailyBody.innerHTML = dailyEntries.map(([, day]) => `
             <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
                 <td>${escapeHtml(day.displayDate)}</td>
-                <td>${formatReportDuration(day.break)}</td>
-                <td>${formatReportDuration(day.allowance)}</td>
-                <td style="font-weight:bold; color:${day.oxidation > 0 ? '#fb7185' : '#10b981'};">${formatReportDuration(day.oxidation)}${day.oxidation > 0 ? ' ⚠️' : ' ✅'}</td>
+                <td style="text-align:right;">${day.reasons.length ? day.reasons.map(reason => escapeHtml(reason)).join('، ') : '—'}</td>
+                <td>${formatDurationHMS(day.break)}</td>
+                <td>${formatDurationHMS(day.allowance)}</td>
+                <td style="font-weight:bold; color:${day.oxidation > 0 ? '#fb7185' : '#10b981'};">${formatDurationHMS(day.oxidation)}${day.oxidation > 0 ? ' ⚠️' : ' ✅'}</td>
+                <td style="font-weight:bold; color:${day.oxidation > 0 ? '#fb7185' : day.isActive ? '#fbbf24' : '#10b981'};">${day.oxidation > 0 ? `أكسد بـ ${formatDurationHMS(day.oxidation)} ⚠️` : day.isActive ? `البريك جاري · باقي ${formatDurationHMS(day.allowance - day.break)}` : 'البريك خلص بدون أكسدة ✅'}</td>
             </tr>`).join('');
     }
 
@@ -5897,7 +6818,7 @@ function renderMyBreakReport() {
                 <div style="color:#94a3b8; font-size:0.8rem;">${escapeHtml(row.startTime)} – ${escapeHtml(row.endTime)}</div>
                 ${row.reason ? `<small style="color:#fbbf24;">السبب: ${escapeHtml(row.reason)}</small>` : ''}
             </td>
-            <td style="font-weight:bold;">${formatReportDuration(row.duration)}</td>
+            <td style="font-weight:bold;">${formatDurationHMS(row.duration)}</td>
         </tr>`).join('');
 }
 
@@ -6168,6 +7089,74 @@ function renderMyBreakReport() {
                         }
                     }
 
+    function announceBreakStarted(type) {
+        if (!soundActive) return;
+
+        const messages = {
+            'بريك عام': 'تم بدء البريك بنجاح.',
+            'استراحة VIP': 'تم بدء استراحة VIP بنجاح.',
+            'VIP سهرة': 'تم بدء بريك السهرة بنجاح.'
+        };
+        const message = messages[type];
+        if (!message) return;
+
+        if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') {
+            console.warn("ميزة النطق الصوتي غير مدعومة في هذا المتصفح.");
+            return;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(message);
+        utterance.lang = 'ar-EG';
+        utterance.onerror = (event) => {
+            console.warn("تعذر تشغيل تأكيد بدء البريك صوتياً:", event.error);
+        };
+
+        try {
+            window.speechSynthesis.speak(utterance);
+        } catch (error) {
+            console.error("فشل تشغيل تأكيد بدء البريك صوتياً:", error);
+        }
+    }
+
+    function getBreakAnnouncementSessionKey(username) {
+        return `break_announcement_start_${username}`;
+    }
+
+    function announceBreakProgress(user, elapsedSeconds, remainingSeconds) {
+        if (!soundActive || !user || user.role === 'admin' || !user.isOnBreak) return;
+        if (user.breakType !== 'بريك عام' && user.breakType !== 'طوارئ') return;
+        if (remainingSeconds <= 0) return;
+        if (!Number.isFinite(Number(user.lastStartTime)) || Number(user.lastStartTime) <= 0) return;
+        if (sessionStorage.getItem(getBreakAnnouncementSessionKey(user.username)) !== String(user.lastStartTime)) return;
+
+        const elapsedMilestone = Math.floor(elapsedSeconds / 600) * 10;
+        if (elapsedMilestone < 10) return;
+
+        const announcementKey = `break_progress_${user.username}_${user.lastStartTime}`;
+        const lastAnnouncedMilestone = Number(sessionStorage.getItem(announcementKey)) || 0;
+        if (elapsedMilestone <= lastAnnouncedMilestone) return;
+
+        const remainingMinutes = Math.ceil(remainingSeconds / 60);
+        const message = `اتخصم ${elapsedMilestone} دقيقة من البريك، وباقي ${remainingMinutes} دقيقة من رصيدك.`;
+        if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') {
+            console.warn("ميزة النطق الصوتي غير مدعومة في هذا المتصفح.");
+            return;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(message);
+        utterance.lang = 'ar-EG';
+        utterance.onerror = (event) => {
+            console.warn("تعذر تشغيل تنبيه الوقت المتبقي للبريك صوتياً:", event.error);
+        };
+
+        try {
+            window.speechSynthesis.speak(utterance);
+            sessionStorage.setItem(announcementKey, String(elapsedMilestone));
+        } catch (error) {
+            console.error("فشل تشغيل تنبيه الوقت المتبقي للبريك صوتياً:", error);
+        }
+    }
+
     function startMyBreak(t) {
         if (!currentUser) {
             alert("تعذر تحديد حساب الموظف لبدء النشاط.");
@@ -6201,7 +7190,16 @@ function renderMyBreakReport() {
             return;
         }
 
-        beginUserActivity(currentUser.username, t, reasonValue || t, () => {
+        beginUserActivity(currentUser.username, t, reasonValue || t, (confirmedActivity) => {
+            const confirmedStartTime = Number(confirmedActivity && confirmedActivity.lastStartTime);
+            if (Number.isFinite(confirmedStartTime) && confirmedStartTime > 0) {
+                sessionStorage.setItem(
+                    getBreakAnnouncementSessionKey(currentUser.username),
+                    String(confirmedStartTime)
+                );
+            }
+            announceBreakStarted(t);
+
             // إذا بدأ صلاة، نحدث توقيت الـ 10 دقائق للي بعده
             if(t === 'صلاة') {
         db.ref('settings/currentTurnStartTime').set(getServerTime()).catch((error) => {
@@ -6400,7 +7398,7 @@ function renderMyBreakReport() {
                                                                     : isDatabaseConnected
                                                                         ? "☁️ متصل بقاعدة البيانات"
                                                                         : "⚠️ الاتصال غير متاح؛ لا تُحدّث الصفحة حتى يعود";
-                                                                elapsedElement.innerText = `المدة: ${formatTime(elap)} · بدأ ${startedAt} · ${connectionStatus}`;
+                                                                elapsedElement.innerText = `المدة: ${formatDurationHMS(elap)} · بدأ ${startedAt} · ${connectionStatus}`;
                                                                 elapsedElement.style.color = isActivityWritePending ? "#fbbf24" : (isDatabaseConnected ? "#94a3b8" : "#f87171");
                                                             }
                                                         }
@@ -6448,13 +7446,14 @@ if (sohraBtn) {
                                                         else if (u.breakType === 'بريك عام' || u.breakType === 'طوارئ' || u.breakType === 'استراحة VIP' || u.breakType === 'VIP سهرة') {
                                                                                                     const isVipBreak = u.breakType === 'استراحة VIP' || u.breakType === 'VIP سهرة';
                                                                                                     const rem = allowTotal - ((u.usedSeconds || 0) + (isVipBreak ? 0 : elap));
+        if (!isVipBreak) announceBreakProgress(u, elap, rem);
         updateLockScreenTimer(rem, u.breakType);
 
                                                             let pct = (rem / allowTotal); if (pct < 0) pct = 0;
                                                             circle.style.strokeDashoffset = circ - (pct * circ);
 
                                                             if (isVipBreak) {
-                                                                timerText.innerText = formatTime(elap);
+                                                                timerText.innerText = formatDurationHMS(elap);
                                                                 lbl.innerText = "مدة الـ VIP";
                                                                 circle.style.stroke = "#ffd700"; // لون ذهبي
                                                             } else if (rem >= 0) {
@@ -6473,7 +7472,7 @@ if (sohraBtn) {
                                                         }
                                                         // باقي الأنواع (ميتنج، متابعة...)
                                                         else {
-                                                            timerText.innerText = formatTime(elap);
+                                                            timerText.innerText = formatDurationHMS(elap);
                                                             lbl.innerText = "مدة " + u.breakType;
                                                             circle.style.stroke = "#f59e0b";
                                                             circle.style.strokeDashoffset = 0;
@@ -6546,6 +7545,14 @@ if (sohraBtn) {
                                                 }
 
                                                 function formatTime(s) { if(isNaN(s) || s < 0) return "00:00"; return `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`; }
+                                                function formatDurationHMS(seconds) {
+                                                    const value = Number(seconds);
+                                                    const totalSeconds = Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+                                                    const hours = Math.floor(totalSeconds / 3600);
+                                                    const minutes = Math.floor((totalSeconds % 3600) / 60);
+                                                    const remainingSeconds = totalSeconds % 60;
+                                                    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+                                                }
         // دالة تشغيل التنبيه
         function playAlarm() { 
             if(soundActive) { 
@@ -7516,19 +8523,16 @@ if (sohraBtn) {
                         if (data) {
                             // === منطق التقييد الخاص بأبو تميم ===
                             if (currentUser.username === 'bo') {
-                                const creator = data.admin; // اسم الأدمن اللي سجل الشكوى
+                                const creator = data.admin;
                                 const myName = currentUser.realName || currentUser.username;
 
-                                // إذا لم يكن أبو تميم هو من كتب الشكوى، منعه من الحذف
-                                // ملاحظة: نقارن بالاسم الحقيقي واليوزر نيم للأمان
                                 if (creator !== myName && creator !== 'bo') {
                                     alert("⛔ عذراً يا أبو تميم.. قوانين الإدارة تمنعك من حذف شكوى سجلها مشرف آخر. يمكنك فقط حذف الشكاوى التي سجلتها بنفسك.");
-                                    return; // إيقاف العملية هنا
+                                    return;
                                 }
                             }
-                            // ===================================
 
-                            // 3. رسالة تأكيد (لبقية المشرفين أو لأبو تميم لو كانت شكواه)
+                            // 3. رسالة تأكيد
                             if(!confirm("⚠️ هل أنت متأكد من حذف هذه المخالفة؟\n\nسيتم تسجيل العملية في سجل الرقابة (الأرشيف) مع اسمك وتفاصيل المحذوف.")) return;
 
                             // تجهيز نص الأرشيف للرقابة
@@ -8421,15 +9425,16 @@ if (sohraBtn) {
         if (currentUser.username === 'ahmed') {
             title = "المشرف العام";
         } else if (currentUser.username === 'bo') {
-            title = "مساعدة مشرف"; // تغيير اللقب لـ "بو" فقط
+            title = "مساعدة مشرف";
         }
 
         managerNameEl.innerText = `${title}: ${realName}`;
         if (currentUser.username === 'bo') {
             managerNameEl.style.color = "rgb(233, 7, 130)";
-            managerNameEl.style.fontWeight = "900"; // لجعل الخط عريض وواضح
+            managerNameEl.style.fontWeight = "900";
         } else {
-            managerNameEl.style.color = ""; // العودة للون الافتراضي للمشرفين الآخرين
+            managerNameEl.style.color = "";
+            managerNameEl.style.fontWeight = "";
         }
 
                                                             // إخفاء أزرار محمود
@@ -9067,8 +10072,9 @@ if (sohraBtn) {
                             // الاحتفاظ بالقيمة المختارة حالياً قبل التحديث
                             const currentVal = groupSelect.value;
 
-                            let h = '<option value="">-- اختر المجموعة --</option>';
+                            let h = '<option value="">بدون جروب</option><option value="واتساب">جروب واتساب</option><option value="طلبات">جروب طلبات</option>';
                             Object.values(groups).forEach(g => {
+                                if (!g || !g.name || ['واتساب', 'طلبات'].includes(g.name)) return;
                                 // إضافة كل مجموعة موجودة في الجدول كخيار في القائمة
                                 h += `<option value="${g.name}">${g.name}</option>`;
                             });
@@ -9092,9 +10098,10 @@ if (sohraBtn) {
                             const currentSelection = groupSelect.value;
 
                             // تنظيف القائمة والبدء من جديد
-                            let optionsHTML = '<option value="">-- اختر المجموعة --</option>';
+                            let optionsHTML = '<option value="">بدون جروب</option><option value="واتساب">جروب واتساب</option><option value="طلبات">جروب طلبات</option>';
                             
                             Object.values(groups).forEach(g => {
+                                if (!g || !g.name || ['واتساب', 'طلبات'].includes(g.name)) return;
                                 // هنا بنضيف اسم المجموعة اللي في الجدول للقائمة
                                 optionsHTML += `<option value="${g.name}">${g.name}</option>`;
                             });
@@ -9796,7 +10803,7 @@ if (sohraBtn) {
                 }
         function switchAdminTab(t) {
         // قائمة بجميع معرفات التبويبات في لوحة المشرف
-        const tabs = ['tab-monitor', 'tab-reports', 'tab-users', 'tab-groups', 'tab-overtime', 'tab-emergency', 'tab-meetings', 'tab-permissions', 'tab-cs-reports', 'tab-game-manager'];
+        const tabs = ['tab-monitor', 'tab-reports', 'tab-users', 'tab-groups', 'tab-overtime', 'tab-emergency', 'tab-meetings', 'tab-permissions', 'tab-cs-reports', 'tab-cs-approval-history', 'tab-game-manager'];
         
         tabs.forEach(id => {
             const el = document.getElementById(id);
@@ -9812,6 +10819,7 @@ if (sohraBtn) {
         // استدعاء دالة التحديث الخاصة بكل تبويب
         if(t === 'reports') updateReportSelect();
         if(t === 'cs-reports') renderAdminCsReports(); 
+        if(t === 'cs-approval-history') renderAdminCsApprovalHistory();
         if(t === 'groups') { updateMembersSelector(); renderGroupsTable(); }
         if(t === 'monitor') { populateQueueSelect(); renderPrayerQueue(); }
         
@@ -10009,12 +11017,14 @@ if (sohraBtn) {
                     initChatNotifications();
                     document.getElementById('loginSection').classList.add('hidden'); 
                     document.getElementById('employeeSection').classList.remove('hidden'); 
+                    document.getElementById('csFormThemeControls').classList.toggle('hidden', !currentUser.isCS);
+                    applyPersonalTheme(currentUser.themeColors);
+                    applyCsCallFormTheme(currentUser.themeColors);
+                    applyChatBackground(currentUser.chatBg);
+                    updateCsApprovalTargetList();
+                    renderCsApprovalRequests();
                     document.getElementById('welcomeMsg').innerText = `أهلاً، ${currentUser.realName || currentUser.username}`; 
                         updateAttendanceUI(); 
-                        if (currentUser.chatBg) {
-            applyChatBackground(currentUser.chatBg);
-        }
-
                     // --- تسجيل وقت الحضور (Clock-In) ---
                     const today = getServerDateString().replace(/\//g, '-');
                     const attendanceRef = db.ref(`users/${currentUser.username}/attendance/${today}`);
@@ -10057,6 +11067,7 @@ if (sohraBtn) {
                     } else { 
                         document.getElementById('forceSoundOverlay').style.display = 'flex'; 
                     }
+                    updateCsApprovalRing();
 
                     updateWeeklyLogDisplays();
 
@@ -11949,7 +12960,7 @@ const isSohra = document.getElementById('isSohraBreak').checked;
             user.lastStartTime = getServerTime();
             user.lastReason = reason || type;
             return user;
-        }, (error, committed) => {
+        }, (error, committed, snapshot) => {
             isActivityWritePending = false;
             if (showActivityLoading) setActivityLoading(false);
             if (error) {
@@ -11964,7 +12975,7 @@ const isSohra = document.getElementById('isSohraBreak').checked;
                 return;
             }
             if (currentUser && currentUser.role !== 'admin') updateUserUI();
-            if (typeof onSuccess === "function") onSuccess();
+            if (typeof onSuccess === "function") onSuccess(snapshot.val());
         }, false);
     }
 
@@ -12184,6 +13195,20 @@ const isSohra = document.getElementById('isSohraBreak').checked;
         "بقولك إيه؟ ما تحاولش تاني عشان هنام منك!"
     ];
 
+    let isManagerLogin = false;
+
+    function toggleManagerLogin() {
+        isManagerLogin = !isManagerLogin;
+        document.getElementById('loginEmployeeField').classList.toggle('hidden', isManagerLogin);
+        document.getElementById('loginManagerField').classList.toggle('hidden', !isManagerLogin);
+        document.getElementById('loginModeToggle').textContent = isManagerLogin
+            ? 'العودة لدخول الموظفين'
+            : 'دخول المديرين';
+        document.querySelector('.login-header p').textContent = isManagerLogin
+            ? 'أدخل اسم المستخدم وكلمة المرور الخاصة بالمدير'
+            : 'اختر اسمك من الأسماء المسجلة على السيستم';
+    }
+
     function osmanFocus() {
         // يفتح عين واحدة ويبص بقرف
         document.getElementById('eyeL').setAttribute('d', 'M85 100 A5 5 0 1 1 95 100');
@@ -12206,14 +13231,53 @@ const isSohra = document.getElementById('isSohraBreak').checked;
     }
 
     // دالة محاكاة الدخول مع التريقة
+    function updateLoginUserOptions() {
+        const select = document.getElementById('loginUser');
+        if (!select) return;
+
+        const selectedUsername = select.value;
+        const users = Object.entries(allUsersData)
+            .filter(([username, user]) => user && user.username && !MANAGERS.includes(username))
+            .map(([username, user]) => ({
+                username,
+                realName: String(user.realName || user.username).trim()
+            }))
+            .sort((a, b) => a.realName.localeCompare(b.realName, 'ar'));
+        const nameCounts = users.reduce((counts, user) => {
+            counts.set(user.realName, (counts.get(user.realName) || 0) + 1);
+            return counts;
+        }, new Map());
+
+        select.options.length = 0;
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = users.length ? 'اختر اسمك' : 'لا توجد أسماء مسجلة';
+        select.appendChild(placeholder);
+
+        users.forEach(user => {
+            const option = document.createElement('option');
+            option.value = user.username;
+            option.textContent = nameCounts.get(user.realName) > 1
+                ? `${user.realName} (${user.username})`
+                : user.realName;
+            select.appendChild(option);
+        });
+
+        if (users.some(user => user.username === selectedUsername)) {
+            select.value = selectedUsername;
+        }
+    }
+
     function mockAttemptLogin() {
-        const u = document.getElementById('loginUser').value.trim();
+        const u = (isManagerLogin
+            ? document.getElementById('loginManagerUser').value
+            : document.getElementById('loginUser').value).trim().toLowerCase();
         const p = document.getElementById('loginPass').value.trim();
 
         // استدعاء دالة الدخول الأصلية بتاعتك بس هنزود عليها التريقة
-        if (allUsersData[u] && allUsersData[u].password === p) {
+        if (allUsersData[u] && MANAGERS.includes(u) === isManagerLogin && allUsersData[u].password === p) {
             // نجاح (دخول طبيعي)
-            attemptLogin();
+            attemptLogin(u);
         } else {
             // فشل (بدء التريقة)
             const card = document.getElementById('loginCard');
@@ -12276,11 +13340,13 @@ const isSohra = document.getElementById('isSohraBreak').checked;
 
     // دالة محاكاة الدخول مع نظام التريقة المطور
    function mockAttemptLogin() {
-    const u = document.getElementById('loginUser').value.trim().toLowerCase();
+    const u = (isManagerLogin
+        ? document.getElementById('loginManagerUser').value
+        : document.getElementById('loginUser').value).trim().toLowerCase();
     const p = document.getElementById('loginPass').value.trim();
 
-    if (allUsersData[u] && allUsersData[u].password === p) {
-        attemptLogin();
+    if (allUsersData[u] && MANAGERS.includes(u) === isManagerLogin && allUsersData[u].password === p) {
+        attemptLogin(u);
     } else {
         const card = document.getElementById('loginCard');
         card.classList.add('shake-card');
@@ -12343,8 +13409,11 @@ const isSohra = document.getElementById('isSohraBreak').checked;
 
     // العودة للقائمة
     function closeChatArea() {
+        const returningToGroups = currentChatType === 'group';
+        if (currentChatID) markAsRead(currentChatID, currentChatType);
         currentChatRecipient = null;
         currentChatID = null; // تصفير المعرف الحالي
+        currentChatType = returningToGroups ? 'groups' : 'private';
         
         if(chatListener) chatListener.off(); // إيقاف الاستماع للرسائل لتوفير البيانات
 
@@ -12356,6 +13425,8 @@ const isSohra = document.getElementById('isSohraBreak').checked;
         // إخفاء منطقة الرسائل وزر الرجوع
         document.getElementById('chatMessagesArea').classList.add('hidden');
         document.getElementById('backToContacts').classList.add('hidden');
+        if (returningToGroups) renderChatGroups();
+        else renderContacts();
         
         // إعادة الهيدر لشكلة الطبيعي
         document.getElementById('chatHeaderInfo').innerHTML = `<div style="width:12px; height:12px; background:#10b981; border-radius:50%; box-shadow: 0 0 10px #10b981;"></div><span style="font-weight:900; color:#818cf8; font-size:1.1rem;">الدردشة الذكية</span>`;
@@ -12901,9 +13972,10 @@ const isSohra = document.getElementById('isSohraBreak').checked;
                     
                     // تحديد هل المستخدم هو المنشئ؟
                     const isCreator = (g.creator === currentUser.username);
+                    const unreadCount = unreadMessagesData[gid] || 0;
 
                     container.innerHTML += `
-                        <div class="chat-contact-item" style="display:flex; align-items:center; gap:15px; padding:15px; border-radius:18px; cursor:pointer; background:rgba(99, 102, 241, 0.05); margin-bottom:8px; border:1px solid rgba(99,102,241,0.1); position:relative;">
+                        <div class="chat-contact-item ${unreadCount > 0 ? 'has-unread' : ''}" style="display:flex; align-items:center; gap:15px; padding:15px; border-radius:18px; cursor:pointer; background:rgba(99, 102, 241, 0.05); margin-bottom:8px; border:1px solid rgba(99,102,241,0.1); position:relative;">
                             <!-- الجزء الخاص بفتح الشات -->
                             <div onclick="openGroupChat('${gid}', '${g.name}')" style="display:flex; align-items:center; gap:15px; flex:1;">
                                 <div style="width:50px; height:50px; background:linear-gradient(45deg, #6366f1, #06b6d4); border-radius:15px; display:flex; align-items:center; justify-content:center; color:white; font-size:1.5rem;">
@@ -12916,7 +13988,8 @@ const isSohra = document.getElementById('isSohraBreak').checked;
                             </div>
 
                             <!-- أزرار التحكم (حذف أو خروج) -->
-                            <div style="display:flex; gap:10px;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                ${unreadCount > 0 ? `<span class="unread-count-badge" aria-label="${unreadCount} رسائل غير مقروءة">${unreadCount > 99 ? '99+' : unreadCount}</span>` : ''}
                                 ${isCreator ? 
                                     `<button onclick="deleteGroupChat('${gid}')" title="حذف المجموعة نهائياً" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:1.1rem;"><i class="fa-solid fa-trash-can"></i></button>` : 
                                     `<button onclick="leaveGroupChat('${gid}')" title="خروج من المجموعة" style="background:none; border:none; color:#aaa; cursor:pointer; font-size:1.1rem;"><i class="fa-solid fa-right-from-bracket"></i></button>`
@@ -12932,6 +14005,7 @@ const isSohra = document.getElementById('isSohraBreak').checked;
     // 4. فتح المحادثة
     function openPrivateChat(username, name) {
         currentChatType = 'private';
+        currentChatRecipient = username;
         currentChatID = [currentUser.username, username].sort().join('_');
         currentChatDisplayName = name;
         prepareChatUI();
@@ -12941,6 +14015,7 @@ const isSohra = document.getElementById('isSohraBreak').checked;
         currentChatType = 'group';
         currentChatID = gid;
         currentChatDisplayName = name;
+        markAsRead(gid, 'group');
         prepareChatUI();
     }
 
@@ -13050,19 +14125,21 @@ function sendChatMessage() {
     const now = getServerTime();
 
     // سجل المحادثة كـ "مقروءة"
-    markAsRead(currentChatID);
-
     // إرسال النص للشات
     db.ref(path + currentChatID).push({
         sender: currentUser.username,
         text: text,
         timestamp: now
     }).then(() => {
+        markAsRead(currentChatID);
         input.value = ''; // تصفير خانة الكتابة
         if (typeof unreadMessagesData !== 'undefined') {
             unreadMessagesData[currentChatID] = 0;
             updateGlobalBadge(); 
         }
+    }).catch(error => {
+        console.error('فشل إرسال رسالة الشات:', error);
+        alert(`تعذر إرسال الرسالة: ${error.message}`);
     });
 }
 
@@ -13211,86 +14288,159 @@ function checkChatCommands(msgText, senderUsername) {
 
     // دالة لتطبيق الخلفية على الواجهة
     function applyChatBackground(url) {
-        // جرب استهداف messagesContainer و chatMessagesArea لضمان التغطية الكاملة
         const chatArea = document.getElementById('messagesContainer');
         const chatAreaMain = document.getElementById('chatMessagesArea');
-        
-        if (url) {
-            const style = `url('${url}')`;
-            if(chatArea) {
-                chatArea.style.backgroundImage = style;
-                chatArea.style.backgroundSize = "cover";
-                chatArea.style.backgroundPosition = "center";
-            }
-            if(chatAreaMain) {
-                chatAreaMain.style.backgroundImage = style;
-                chatAreaMain.style.backgroundSize = "cover";
-                chatAreaMain.style.backgroundPosition = "center";
-            }
-        }
+
+        [chatArea, chatAreaMain].forEach(area => {
+            if (!area) return;
+            area.style.backgroundImage = url ? `url("${url}")` : 'none';
+            area.style.backgroundSize = url ? 'cover' : '';
+            area.style.backgroundPosition = url ? 'center' : '';
+            area.style.backgroundColor = 'var(--surface-color)';
+        });
     }
     let unreadMessagesData = {}; // تخزين عدد الرسائل غير المقروءة لكل غرفة
+    let chatNotificationListeners = [];
+    let chatNotificationRooms = {};
+    let chatNotificationSummaryTimer = null;
+
+    function trackChatNotificationListener(ref, eventName, callback) {
+        ref.on(eventName, callback, error => {
+            console.error(`تعذر مراقبة إشعارات المحادثة (${eventName}):`, error);
+        });
+        chatNotificationListeners.push({ ref, eventName, callback });
+    }
+
+    function getChatLastSeenData() {
+        try {
+            const data = JSON.parse(localStorage.getItem('chat_last_seen') || '{}');
+            return data && typeof data === 'object' && !Array.isArray(data) ? data : {};
+        } catch (error) {
+            console.error('تعذر قراءة آخر أوقات مشاهدة المحادثات:', error);
+            return {};
+        }
+    }
+
+    function detachChatNotificationRoom(type, roomId) {
+        const roomKey = `${type}:${roomId}`;
+        const room = chatNotificationRooms[roomKey];
+        if (!room) return;
+
+        room.ref.off('child_added', room.onAdded);
+        room.ref.off('child_removed', room.onRemoved);
+        chatNotificationListeners = chatNotificationListeners.filter(listener => listener.ref !== room.ref);
+        delete chatNotificationRooms[roomKey];
+        delete unreadMessagesData[roomId];
+    }
+
+    function updateChatNotificationSummary() {
+        if (!currentUser) return;
+
+        const rooms = Object.values(chatNotificationRooms);
+        const totalUnreadMessages = rooms.reduce((total, room) => total + room.messages.size, 0);
+        let latestUnreadMsg = null;
+        rooms.forEach(room => {
+            room.messages.forEach(message => {
+                if (!latestUnreadMsg || Number(message.timestamp) > Number(latestUnreadMsg.timestamp)) {
+                    latestUnreadMsg = message;
+                }
+            });
+        });
+
+        updateGlobalBadge(totalUnreadMessages);
+        showChatRadar(latestUnreadMsg, totalUnreadMessages);
+        const contactsList = document.getElementById('chatContactsList');
+        if (currentChatType === 'groups' && contactsList && !contactsList.classList.contains('hidden')) {
+            renderChatGroups();
+        } else {
+            renderContacts();
+        }
+    }
+
+    function scheduleChatNotificationSummary() {
+        if (chatNotificationSummaryTimer !== null) return;
+        chatNotificationSummaryTimer = setTimeout(() => {
+            chatNotificationSummaryTimer = null;
+            updateChatNotificationSummary();
+        }, 80);
+    }
+
+    function setupChatNotificationRoom(type, roomId) {
+        if (!roomId || !currentUser) return;
+
+        const roomKey = `${type}:${roomId}`;
+        if (chatNotificationRooms[roomKey]) return;
+
+        const lastSeenData = getChatLastSeenData();
+        const lastSeen = Number(lastSeenData[roomId]) || 0;
+        const messagesPath = type === 'private' ? 'private_messages/' : 'group_messages/';
+        const ref = db.ref(messagesPath + roomId).orderByChild('timestamp').startAt(lastSeen);
+        const room = { ref, type, roomId, messages: new Map(), onAdded: null, onRemoved: null };
+        chatNotificationRooms[roomKey] = room;
+        unreadMessagesData[roomId] = 0;
+
+        room.onAdded = snap => {
+            if (chatNotificationRooms[roomKey] !== room || !currentUser) return;
+            const message = snap.val();
+            const timestamp = Number(message && message.timestamp);
+            if (!message || message.sender === currentUser.username ||
+                !Number.isFinite(timestamp) || timestamp <= lastSeen) return;
+
+            room.messages.set(snap.key, message);
+            unreadMessagesData[roomId] = room.messages.size;
+            scheduleChatNotificationSummary();
+        };
+        room.onRemoved = snap => {
+            if (chatNotificationRooms[roomKey] !== room || !currentUser) return;
+            if (room.messages.delete(snap.key)) {
+                unreadMessagesData[roomId] = room.messages.size;
+                scheduleChatNotificationSummary();
+            }
+        };
+
+        trackChatNotificationListener(ref, 'child_added', room.onAdded);
+        trackChatNotificationListener(ref, 'child_removed', room.onRemoved);
+    }
 
     // 1. دالة بدء مراقبة الرسائل الجديدة (تستدعى عند تسجيل الدخول)
     function initChatNotifications() {
         if (!currentUser) return;
 
-        // مراقبة الرسائل الخاصة
-        db.ref('private_messages').on('value', (snap) => {
-            const allRooms = snap.val() || {};
-            processUnread(allRooms, 'private');
+        chatNotificationListeners.forEach(({ ref, eventName, callback }) => {
+            ref.off(eventName, callback);
         });
-
-        // مراقبة رسائل المجموعات
-        db.ref('group_messages').on('value', (snap) => {
-            const allGroups = snap.val() || {};
-            processUnread(allGroups, 'group');
-        });
-    }
-
-    // 2. معالجة الرسائل وحساب غير المقروء
-    // ميزة الرادار: إظهار من أرسل ماذا
-    // استبدل دالة processUnread القديمة بهذين الدالتين
-    function processUnread(roomsData, type) {
-        const lastSeenData = JSON.parse(localStorage.getItem('chat_last_seen') || '{}');
-        let latestUnreadMsg = null;
-
-        Object.entries(roomsData).forEach(([roomId, messages]) => {
-            const isMyRoom = type === 'private' ? roomId.includes(currentUser.username) : true; 
-            
-            if (isMyRoom) {
-                const lastSeen = lastSeenData[roomId] || 0;
-                const roomMessages = Object.values(messages);
-                
-                // التعديل هنا: بنحسب الرسايل اللي "مش أنا اللي باعتها" بس
-                const hasUnread = roomMessages.some(m => m.timestamp > lastSeen && m.sender !== currentUser.username);
-                unreadMessagesData[roomId] = hasUnread ? 1 : 0;
-
-                if (hasUnread) {
-                    // التعديل هنا: بنجيب آخر رسالة "مبعوتة لي" مش أنا اللي باعتها
-                    const receivedMessages = roomMessages.filter(m => m.sender !== currentUser.username);
-                    const lastMsg = receivedMessages[receivedMessages.length - 1];
-                    
-                    if (lastMsg && (!latestUnreadMsg || lastMsg.timestamp > latestUnreadMsg.timestamp)) {
-                        latestUnreadMsg = lastMsg;
-                    }
-                }
-            }
-        });
-
-        let totalUnreadRooms = 0;
-        Object.values(unreadMessagesData).forEach(val => totalUnreadRooms += val);
-
-        updateGlobalBadge(totalUnreadRooms);
-        
-        // إظهار الرادار فقط لو فيه رسالة "جديدة" ومن "شخص آخر"
-        if (latestUnreadMsg && latestUnreadMsg.sender !== currentUser.username) {
-            showChatRadar(latestUnreadMsg, totalUnreadRooms);
-        } else {
-            document.getElementById('chatRadarPreview').style.display = 'none';
+        chatNotificationListeners = [];
+        if (chatNotificationSummaryTimer !== null) {
+            clearTimeout(chatNotificationSummaryTimer);
+            chatNotificationSummaryTimer = null;
         }
-        
-        renderContacts(); 
+        chatNotificationRooms = {};
+        unreadMessagesData = {};
+        updateGlobalBadge(0);
+
+        Object.values(allUsersData || {}).forEach(user => {
+            if (!user.username || user.username === currentUser.username) return;
+            const roomId = [currentUser.username, user.username].sort().join('_');
+            setupChatNotificationRoom('private', roomId);
+        });
+
+        const groupsRef = db.ref('chat_groups');
+        const onGroupsChanged = snap => {
+            const groups = snap.val() || {};
+            if (!currentUser) return;
+            const myGroupIds = new Set(Object.entries(groups)
+                .filter(([, group]) => Array.isArray(group.members) && group.members.includes(currentUser.username))
+                .map(([groupId]) => groupId));
+
+            Object.values(chatNotificationRooms).forEach(room => {
+                if (room.type === 'group' && !myGroupIds.has(room.roomId)) {
+                    detachChatNotificationRoom('group', room.roomId);
+                }
+            });
+            myGroupIds.forEach(groupId => setupChatNotificationRoom('group', groupId));
+            updateChatNotificationSummary();
+        };
+        trackChatNotificationListener(groupsRef, 'value', onGroupsChanged);
     }
 
     function showChatRadar(msg, count) {
@@ -13341,6 +14491,9 @@ function checkChatCommands(msgText, senderUsername) {
     // 3. تحديث الرقم الأحمر على الزرار العائم
     function updateGlobalBadge(count) {
         const badge = document.getElementById('chatNotificationBadge');
+        if (typeof count !== 'number') {
+            count = Object.values(unreadMessagesData).reduce((total, value) => total + value, 0);
+        }
         if (count > 0) {
             badge.innerText = count > 99 ? '+99' : count;
             badge.classList.remove('hidden');
@@ -13352,6 +14505,7 @@ function checkChatCommands(msgText, senderUsername) {
             window.lastTotalUnread = count;
         } else {
             badge.classList.add('hidden');
+            window.lastTotalUnread = 0;
         }
     }
 
@@ -13383,38 +14537,30 @@ function checkChatCommands(msgText, senderUsername) {
                     </div>
                     <div style="flex:1; margin-right:10px;">
                         <div style="font-weight:900; font-size:0.95rem; color:${isManager ? '#fbbf24' : 'white'}">${displayName}</div>
-                        <div style="font-size:0.7rem; color:#64748b;">${unreadCount > 0 ? 'بعت لك رسالة جديدة' : ''}</div>
+                        <div style="font-size:0.7rem; color:#64748b;">${unreadCount > 0 ? (unreadCount === 1 ? 'رسالة غير مقروءة' : `${unreadCount} رسائل غير مقروءة`) : ''}</div>
                     </div>
-                    ${unreadCount > 0 ? `<div class="unread-dot"></div>` : ''}
+                    ${unreadCount > 0 ? `<div class="unread-count-badge" aria-label="${unreadCount} رسائل غير مقروءة">${unreadCount > 99 ? '99+' : unreadCount}</div>` : ''}
                 </div>
             `;
         });
     }   
     // 5. دالة تحديث "وقت الرؤية" عند فتح شات معين
-    function markAsRead(roomId) {
-        const lastSeenData = JSON.parse(localStorage.getItem('chat_last_seen') || '{}');
+    function markAsRead(roomId, type = currentChatType) {
+        const lastSeenData = getChatLastSeenData();
         
-        // بنسجل الوقت الحالي + 10 ثواني قدام لضمان إن أي رسالة في نفس اللحظة تعتبر مقروءة
-        lastSeenData[roomId] = getServerTime() + 10000; 
+        lastSeenData[roomId] = getServerTime();
         localStorage.setItem('chat_last_seen', JSON.stringify(lastSeenData));
         
-        // أهم سطرين: تصفر العداد في الذاكرة فوراً عشان الرقم يختفي من الزرار
-        if (unreadMessagesData[roomId]) {
-            unreadMessagesData[roomId] = 0;
-            
-            // إعادة حساب الإجمالي وتحديث البادج فوراً
-            let total = 0;
-            Object.values(unreadMessagesData).forEach(v => total += v);
-            updateGlobalBadge(total);
-            renderContacts(); // تحديث النقطة الخضراء في القائمة
-        }
+        detachChatNotificationRoom(type, roomId);
+        if (chatNotificationListeners.length > 0) setupChatNotificationRoom(type, roomId);
+        updateChatNotificationSummary();
     }
 
     // 6. تعديل دوال فتح الشات لإلغاء التنبيه
     const originalOpenPrivateChat = openPrivateChat;
     openPrivateChat = function(username, name) {
         const roomId = [currentUser.username, username].sort().join('_');
-        markAsRead(roomId);
+        markAsRead(roomId, 'private');
         originalOpenPrivateChat(username, name);
     };
     // 1. دالة حذف الجروب نهائياً (للمنشئ فقط)
@@ -13913,9 +15059,6 @@ function checkChatCommands(msgText, senderUsername) {
         });
     }
 
-    // جوه الـ on('child_added')
-    const m = snap.val();
-    checkGameAnswer(m.text, m.sender); // ده السطر اللي هيخلي عثمان يراقب الإجابات
     // --- تطوير نظام الشات (صور + ريكورد) ---
 
    
@@ -14025,11 +15168,14 @@ function checkChatCommands(msgText, senderUsername) {
         
         chatListener.limitToLast(50).on('child_added', (snap) => {
             const m = snap.val();
-                checkGameAnswer(m.text || "", m.sender); 
+            if (!m) return;
+            const messageText = typeof m.text === 'string' ? m.text : '';
+            checkGameAnswer(messageText, m.sender);
 
             
             const isMe = m.sender === currentUser.username;
             const senderData = allUsersData[m.sender] || { realName: m.sender, profilePic: '' };
+            const safeSenderName = escapeHtml(senderData.realName || m.sender || 'مستخدم');
             
             let contentHtml = "";
 
@@ -14045,7 +15191,7 @@ function checkChatCommands(msgText, senderUsername) {
                     // لو صاحبي هو اللي باعتلي التحدي (يظهر الزرار هنا)
                     contentHtml = `
                         <div style="background:linear-gradient(45deg, #1e293b, #0f172a); padding:15px; border-radius:15px; border:2px solid gold; text-align:center;">
-                            <b style="color:gold; display:block; margin-bottom:10px;">${m.text}</b>
+                            <b style="color:gold; display:block; margin-bottom:10px;">${escapeHtml(messageText)}</b>
                             <button onclick="acceptChallenge('${m.challengeID}', '${m.gameType}', '${m.sender}')" 
                                     style="background:gold; color:black; border:none; padding:8px 15px; border-radius:10px; font-weight:900; cursor:pointer; width:100%;">
                             ✅ موافق.. العب معاك!
@@ -14054,10 +15200,9 @@ function checkChatCommands(msgText, senderUsername) {
                 }
             } 
             // --- لو رسالة عادية (نص أو صورة أو صوت) ---
-        else if (m.text) {
-        // كود سحري بيبحث عن أي لينك بيبدأ بـ http ويحوله لرابط أزرق قابل للضغط
-        const linkedText = m.text.replace(/(https?:\/\/[^\s]+)/g, (url) => {
-            return `<a href="${url}" target="_blank" style="color: #00e5ff; text-decoration: underline; font-weight: bold;">${url}</a>`;
+        else if (messageText) {
+        const linkedText = escapeHtml(messageText).replace(/(https?:\/\/[^\s<]+)/g, (url) => {
+            return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: underline; font-weight: bold;">${url}</a>`;
         });
             contentHtml = `<div>${linkedText}</div>`;
 
@@ -14074,71 +15219,27 @@ function checkChatCommands(msgText, senderUsername) {
             } 
 
             // رسم الفقاعة (Bubble)
-            const avatar = `<img src="${senderData.profilePic || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'}" style="width:30px; height:30px; border-radius:50%; object-fit:cover;">`;
+            const avatar = `<img src="${escapeHtml(senderData.profilePic || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png')}" style="width:30px; height:30px; border-radius:50%; object-fit:cover;">`;
+            const messageTime = m.timestamp != null && Number.isFinite(Number(m.timestamp))
+                ? new Date(Number(m.timestamp)).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
+                : '';
             
-            container.innerHTML += `
+            container.insertAdjacentHTML('beforeend', `
                 <div style="display:flex; flex-direction:column; align-items:${isMe ? 'flex-start' : 'flex-end'}; max-width:85%; ${isMe ? 'margin-right:auto' : 'margin-left:auto'}">
+                    ${!isMe ? `<small style="font-size:0.65rem; color:var(--primary); margin-bottom:2px; margin-left:10px;">${safeSenderName}</small>` : ''}
                     <div style="display:flex; gap:8px; align-items:flex-end; flex-direction:${isMe ? 'row' : 'row-reverse'}">
                         ${!isMe ? avatar : ''}
-                        <div style="padding:10px 14px; border-radius:18px; font-size:0.9rem; 
-                                    background:${isMe ? 'linear-gradient(135deg, #6366f1, #4f46e5)' : 'rgba(255,255,255,0.08)'}; 
+                        <div style="padding:10px 14px; border-radius:18px; font-size:0.9rem; white-space:pre-wrap; overflow-wrap:anywhere;
+                                    background:${isMe ? 'linear-gradient(135deg, var(--employee-button-background), var(--primary))' : 'rgba(255,255,255,0.08)'}; 
                                     color:white; border-bottom-${isMe ? 'right' : 'left'}-radius:5px; box-shadow:0 4px 15px rgba(0,0,0,0.1);">
                             ${contentHtml}
-                            <span style="display:block; font-size:0.6rem; opacity:0.5; margin-top:5px;">${new Date(m.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+                            <span style="display:block; font-size:0.6rem; opacity:0.5; margin-top:5px;">${messageTime}</span>
                         </div>
                     </div>
                 </div>
-            `;
+            `);
             container.scrollTop = container.scrollHeight;
         });
-    }
-    async function processUnread(roomsData, type) {
-        const lastSeenData = JSON.parse(localStorage.getItem('chat_last_seen') || '{}');
-        let latestUnreadMsg = null;
-
-        // جلب قائمة المجموعات التي أنا عضو فيها فعلياً
-        let myGroupIds = [];
-        if (type === 'group') {
-            const groupsSnap = await db.ref('chat_groups').once('value');
-            const allGroups = groupsSnap.val() || {};
-            Object.entries(allGroups).forEach(([gid, g]) => {
-                if (g.members && g.members.includes(currentUser.username)) {
-                    myGroupIds.push(gid);
-                }
-            });
-        }
-
-        Object.entries(roomsData).forEach(([roomId, messages]) => {
-            // التعديل هنا: التحقق من العضوية للجروبات أو وجود الاسم في الخاص
-            let isMyRoom = false;
-            if (type === 'private') {
-                isMyRoom = roomId.includes(currentUser.username);
-            } else {
-                isMyRoom = myGroupIds.includes(roomId); // هنا نتحقق هل أنا في الجروب ده فعلاً؟
-            }
-            
-            if (isMyRoom) {
-                const lastSeen = lastSeenData[roomId] || 0;
-                const roomMessages = Object.values(messages);
-                
-                const hasUnread = roomMessages.some(m => m.timestamp > lastSeen && m.sender !== currentUser.username);
-                unreadMessagesData[roomId] = hasUnread ? 1 : 0;
-
-                if (hasUnread) {
-                    const lastMsg = roomMessages[roomMessages.length - 1];
-                    if (!latestUnreadMsg || lastMsg.timestamp > latestUnreadMsg.timestamp) {
-                        latestUnreadMsg = lastMsg;
-                    }
-                }
-            }
-        });
-
-        let totalUnreadRooms = 0;
-        Object.values(unreadMessagesData).forEach(val => totalUnreadRooms += val);
-
-        updateGlobalBadge(totalUnreadRooms);
-        showChatRadar(latestUnreadMsg, totalUnreadRooms);
-        renderContacts(); 
     }
     // دالة مراقبة التحديات النشطة - بتخلي الجدول يفتح تلقائي عند الطرفين
     function listenForActiveGames() {
