@@ -3570,6 +3570,7 @@ html, body {
                                                             <label>خلفية الكتابة والأيام <input type="color" id="themeDailyNotesInput" oninput="previewPersonalTheme()"></label>
                                                             <label>لون عنوان سجل اليوم <input type="color" id="themeDailyNotesAccent" oninput="previewPersonalTheme()"></label>
                                                             <label>لون نص سجل اليوم <input type="color" id="themeDailyNotesText" oninput="previewPersonalTheme()"></label>
+                                                            <label>خلفية لوحة طلبات خدمة العملاء <input type="color" id="themeCsDashboardBackground" oninput="previewPersonalTheme()"></label>
                                                         </div>
                                                         <div id="csFormThemeControls" class="hidden" style="margin-top:18px; padding:14px; border:1px solid rgba(14,165,233,0.45); border-radius:14px; background:rgba(8,47,73,0.25);">
                                                             <h4 style="margin:0 0 6px; color:#0ea5e9;">🎧 ألوان نموذج البلاغ (مستقلة)</h4>
@@ -3732,9 +3733,9 @@ html, body {
                                                     <!-- لوحة خدمة العملاء المحدثة -->
                 <!-- لوحة خدمة العملاء المحدثة -->
                 <div id="csAgentDashboard" class="hidden" style="margin-top:20px;">
-                    <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.5); padding:20px; border-radius:20px; margin-bottom:20px;">
+                    <div style="background:var(--cs-dashboard-background, rgba(16,185,129,0.08)); border:1px solid color-mix(in srgb, var(--primary) 55%, transparent); padding:20px; border-radius:20px; margin-bottom:20px;">
                         <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
-                            <h3 style="margin:0; color:var(--success);">📥 طلبات الموظفين <span id="csApprovalPendingCount" class="badge-count hidden">0</span></h3>
+                            <h3 style="margin:0; color:var(--primary);">📥 طلبات الموظفين <span id="csApprovalPendingCount" class="badge-count hidden">0</span></h3>
                             <button type="button" id="enableCsApprovalSoundBtn" onclick="enableCsApprovalSound()" class="btn btn-warning btn-sm">🔊 تفعيل صوت الطلبات</button>
                         </div>
                         <div id="csApprovalSoundStatus" style="font-size:0.8rem; color:#fbbf24; margin-bottom:8px;">فعّل صوت الطلبات عشان الجرس يفضل شغال لحد الرد.</div>
@@ -5473,7 +5474,8 @@ html, body {
                                                     dailyNotesBackground: '#1e293b',
                                                     dailyNotesInput: '#111827',
                                                     dailyNotesAccent: '#818cf8',
-                                                    dailyNotesText: '#e2e8f0'
+                                                    dailyNotesText: '#e2e8f0',
+                                                    csDashboardBackground: '#173b3b'
                                                 };
 
                                                 const DEFAULT_CS_FORM_THEME = {
@@ -5500,7 +5502,8 @@ html, body {
                                                     dailyNotesBackground: 'themeDailyNotesBackground',
                                                     dailyNotesInput: 'themeDailyNotesInput',
                                                     dailyNotesAccent: 'themeDailyNotesAccent',
-                                                    dailyNotesText: 'themeDailyNotesText'
+                                                    dailyNotesText: 'themeDailyNotesText',
+                                                    csDashboardBackground: 'themeCsDashboardBackground'
                                                 };
 
                                                 const CS_FORM_THEME_FIELDS = {
@@ -5519,7 +5522,8 @@ html, body {
                                                         danger: '#fb7185', text: '#f0f9ff', buttonBackground: '#0369a1',
                                                         buttonText: '#ffffff', recordsBackground: '#164e63',
                                                         dailyNotesBackground: '#0c4a6e', dailyNotesInput: '#082f49',
-                                                        dailyNotesAccent: '#22d3ee', dailyNotesText: '#f0f9ff'
+                                                        dailyNotesAccent: '#22d3ee', dailyNotesText: '#f0f9ff',
+                                                        csDashboardBackground: '#123b52'
                                                     },
                                                     forest: {
                                                         pageBackground: '#052e16', surface: '#14532d', primary: '#16a34a',
@@ -5527,7 +5531,8 @@ html, body {
                                                         danger: '#f87171', text: '#f0fdf4', buttonBackground: '#15803d',
                                                         buttonText: '#ffffff', recordsBackground: '#14532d',
                                                         dailyNotesBackground: '#14532d', dailyNotesInput: '#052e16',
-                                                        dailyNotesAccent: '#84cc16', dailyNotesText: '#f0fdf4'
+                                                        dailyNotesAccent: '#84cc16', dailyNotesText: '#f0fdf4',
+                                                        csDashboardBackground: '#123d2a'
                                                     },
                                                     sunset: {
                                                         pageBackground: '#431407', surface: '#7c2d12', primary: '#ea580c',
@@ -5535,7 +5540,8 @@ html, body {
                                                         danger: '#ef4444', text: '#fff7ed', buttonBackground: '#c2410c',
                                                         buttonText: '#ffffff', recordsBackground: '#7c2d12',
                                                         dailyNotesBackground: '#7c2d12', dailyNotesInput: '#431407',
-                                                        dailyNotesAccent: '#fdba74', dailyNotesText: '#fff7ed'
+                                                        dailyNotesAccent: '#fdba74', dailyNotesText: '#fff7ed',
+                                                        csDashboardBackground: '#512b1b'
                                                     },
                                                     rose: {
                                                         pageBackground: '#500724', surface: '#831843', primary: '#db2777',
@@ -5543,7 +5549,8 @@ html, body {
                                                         danger: '#fb7185', text: '#fff1f2', buttonBackground: '#be185d',
                                                         buttonText: '#ffffff', recordsBackground: '#831843',
                                                         dailyNotesBackground: '#831843', dailyNotesInput: '#500724',
-                                                        dailyNotesAccent: '#f9a8d4', dailyNotesText: '#fff1f2'
+                                                        dailyNotesAccent: '#f9a8d4', dailyNotesText: '#fff1f2',
+                                                        csDashboardBackground: '#4b1938'
                                                     },
                                                     violet: { ...DEFAULT_PERSONAL_THEME }
                                                 };
@@ -5573,6 +5580,7 @@ html, body {
                                                     root.style.setProperty('--daily-notes-input', values.dailyNotesInput);
                                                     root.style.setProperty('--daily-notes-accent', values.dailyNotesAccent);
                                                     root.style.setProperty('--daily-notes-text', values.dailyNotesText);
+                                                    root.style.setProperty('--cs-dashboard-background', values.csDashboardBackground);
                                                     Object.entries(PERSONAL_THEME_FIELDS).forEach(([key, id]) => {
                                                         const input = document.getElementById(id);
                                                         if (input) input.value = values[key];
@@ -5651,7 +5659,7 @@ html, body {
                                                     try {
                                                         await db.ref(`users/${currentUser.username}/themeColors`).set(theme);
                                                         currentUser.themeColors = theme;
-                                                        alert('تم حفظ ألوان الصفحة وسجلات المكالمات وسجل اليوم ونموذج البلاغ على حسابك بنجاح.');
+                                                        alert('تم حفظ ألوان الصفحة وسجلات المكالمات وسجل اليوم ولوحة خدمة العملاء ونموذج البلاغ على حسابك بنجاح.');
                                                     } catch (error) {
                                                         console.error('فشل حفظ ألوان الصفحة:', error);
                                                         applyPersonalTheme(currentUser.themeColors || DEFAULT_PERSONAL_THEME);
