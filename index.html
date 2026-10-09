@@ -557,6 +557,24 @@
                                                     .server-clock-box { background: rgba(0,0,0,0.4); padding: 10px 20px; border-radius: 20px; border: 1px solid var(--glass-border); text-align: center; }
                                                     .clock-time { font-size: 1.3rem; font-weight: 800; color: var(--primary); display: block; }
 
+                                                    .employee-clock-card {
+                                                        background: linear-gradient(135deg, color-mix(in srgb, var(--clock-color) 24%, #0f172a), color-mix(in srgb, var(--clock-color) 34%, #0f172a));
+                                                        padding: 14px 28px;
+                                                        border-radius: 22px;
+                                                        border: 2px solid color-mix(in srgb, var(--clock-color) 75%, transparent);
+                                                        box-shadow: 0 0 25px color-mix(in srgb, var(--clock-color) 55%, transparent), inset 0 0 12px color-mix(in srgb, var(--clock-color) 24%, transparent);
+                                                        backdrop-filter: blur(10px);
+                                                    }
+
+                                                    .employee-clock-time {
+                                                        color: var(--clock-color);
+                                                        text-shadow: 0 0 12px color-mix(in srgb, var(--clock-color) 90%, transparent);
+                                                    }
+
+                                                    .employee-clock-date {
+                                                        color: var(--clock-color);
+                                                    }
+
                                                     #broadcastOverlay {
                                                         position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95);
                                                         z-index: 10000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(20px);
@@ -1598,8 +1616,8 @@
                                                 top: 15%;
                                                 left: 20px; /* على اليسار */
                                                 width: 220px;
-                                                background: rgba(15, 23, 42, 0.95);
-                                                border: 1px solid var(--primary);
+                                                background: color-mix(in srgb, var(--prayer-widget-background, #0f172a) 95%, transparent);
+                                                border: 1px solid var(--prayer-countdown-color, var(--primary));
                                                 border-radius: 20px;
                                                 padding: 15px;
                                                 z-index: 8000;
@@ -1659,16 +1677,16 @@
                                                     .prayer-toggle-btn.active { left: 220px; border-radius: 50%; width: 30px; height: 30px; top: 14%; }
 
                                                     .next-prayer-box {
-                                                        background: rgba(56, 189, 248, 0.1);
-                                                        border: 1px dashed var(--primary);
+                                                        background: color-mix(in srgb, var(--prayer-countdown-color, #38bdf8) 10%, transparent);
+                                                        border: 1px dashed var(--prayer-countdown-color, var(--primary));
                                                         border-radius: 12px;
                                                         padding: 10px;
                                                         text-align: center;
                                                         margin-bottom: 15px;
                                                     }
 
-                                                    .next-prayer-name { color: var(--warning); font-weight: bold; font-size: 0.9rem; display: block; margin-bottom: 5px; }
-                                                    .next-prayer-timer { font-size: 1.4rem; font-weight: 900; color: white; direction: ltr; font-family: monospace; }
+                                                    .next-prayer-name { color: var(--prayer-countdown-color, var(--warning)); font-weight: bold; font-size: 0.9rem; display: block; margin-bottom: 5px; }
+                                                    .next-prayer-timer { font-size: 1.4rem; font-weight: 900; color: var(--prayer-countdown-color, white); direction: ltr; font-family: monospace; }
 
                                                     .prayer-list { list-style: none; padding: 0; margin: 0; font-size: 0.85rem; }
                                                 /* تنسيق صف الصلاة العادي */
@@ -1684,7 +1702,7 @@
 
                 /* حالة الصلاة التي "تنور" (التي عليها الدور) */
                 .prayer-item.next-prayer-highlight {
-                    background: rgba(251, 191, 36, 0.08); /* خلفية صفراء خفيفة جداً */
+                    background: color-mix(in srgb, var(--prayer-highlight-color, #fbbf24) 8%, transparent);
                 }
 
                 /* الخط الأصفر الجانبي الذي يظهر في الصورة */
@@ -1695,16 +1713,16 @@
                     top: 15%;
                     height: 70%;
                     width: 3px;
-                    background: #fbbf24; /* اللون الأصفر/الذهبي */
-                    box-shadow: 0 0 10px rgba(251, 191, 36, 0.6);
+                    background: var(--prayer-highlight-color, #fbbf24);
+                    box-shadow: 0 0 10px color-mix(in srgb, var(--prayer-highlight-color, #fbbf24) 60%, transparent);
                     border-radius: 2px 0 0 2px;
                 }
 
                 /* تغيير لون النص للصلاة القادمة */
                 .prayer-item.next-prayer-highlight span:last-child {
-                    color: #fbbf24; /* لون اسم الصلاة (المغرب مثلاً) */
+                    color: var(--prayer-highlight-color, #fbbf24);
                     font-weight: 900;
-                    text-shadow: 0 0 8px rgba(251, 191, 36, 0.3);
+                    text-shadow: 0 0 8px color-mix(in srgb, var(--prayer-highlight-color, #fbbf24) 30%, transparent);
                 }
 
                 .prayer-item.next-prayer-highlight span:first-child {
@@ -2532,6 +2550,15 @@
     #csCallForm .upload-box {
         background: rgba(8, 47, 73, 0.55);
         border-color: var(--cs-form-border) !important;
+    }
+
+    #employeeSection #csCallForm .upload-box {
+        background: color-mix(in srgb, var(--employee-upload-color) 18%, var(--cs-form-surface)) !important;
+        border-color: var(--employee-upload-color) !important;
+    }
+
+    #employeeSection #csCallForm .upload-box label {
+        color: var(--employee-upload-color) !important;
     }
 
     #csCallForm #csImagePreview {
@@ -4155,7 +4182,7 @@ html, body {
                                                 <div id="employeeSection" class="hidden">
                                                     <details style="margin:0 0 18px; padding:14px 18px; border:1px solid var(--glass-border); border-radius:18px; background:var(--glass);">
                                                         <summary style="cursor:pointer; color:var(--primary); font-weight:900;">🎨 تخصيص ألوان صفحتي</summary>
-                                                        <p style="margin:10px 0; color:var(--text-light); opacity:0.8;">اختار قالبًا جاهزًا أو غيّر ألوان الصفحة وأزرار الموظف وخلفية سجلات المكالمات وسجل اليوم. تقدر كمان تغيّر ألوان نموذج البلاغ بشكل مستقل. ألوانك محفوظة لحسابك.</p>
+                                                        <p style="margin:10px 0; color:var(--text-light); opacity:0.8;">اختار قالبًا جاهزًا أو غيّر ألوان الصفحة والساعة وخانات تسجيل المكالمة والصور وأزرار الموظف وسجلات المكالمات وسجل اليوم. تقدر كمان تغيّر ألوان نموذج البلاغ بشكل مستقل. ألوانك محفوظة لحسابك.</p>
                                                         <label style="display:block; max-width:320px; margin-bottom:12px;">
                                                             القوالب الجاهزة
                                                             <select id="themePreset" onchange="applyPersonalThemePreset(this.value)" style="display:block; width:100%; margin-top:6px;">
@@ -4184,6 +4211,11 @@ html, body {
                                                             <label>لون عنوان سجل اليوم <input type="color" id="themeDailyNotesAccent" oninput="previewPersonalTheme()"></label>
                                                             <label>لون نص سجل اليوم <input type="color" id="themeDailyNotesText" oninput="previewPersonalTheme()"></label>
                                                             <label>خلفية لوحة طلبات خدمة العملاء <input type="color" id="themeCsDashboardBackground" oninput="previewPersonalTheme()"></label>
+                                                            <label>لون الساعة والتاريخ <input type="color" id="themeClockColor" oninput="previewPersonalTheme()"></label>
+                                                            <label>لون خانات تسجيل المكالمة والصور <input type="color" id="themeUploadColor" oninput="previewPersonalTheme()"></label>
+                                                            <label>خلفية مواقيت الصلاة <input type="color" id="themePrayerWidgetBackground" oninput="previewPersonalTheme()"></label>
+                                                            <label>لون عداد الصلاة القادمة <input type="color" id="themePrayerCountdownColor" oninput="previewPersonalTheme()"></label>
+                                                            <label>لون تمييز الصلاة القادمة <input type="color" id="themePrayerHighlightColor" oninput="previewPersonalTheme()"></label>
                                                         </div>
                                                         <div id="csFormThemeControls" class="hidden" style="margin-top:18px; padding:14px; border:1px solid rgba(14,165,233,0.45); border-radius:14px; background:rgba(8,47,73,0.25);">
                                                             <h4 style="margin:0 0 6px; color:#0ea5e9;">🎧 ألوان نموذج البلاغ (مستقلة)</h4>
@@ -4272,13 +4304,13 @@ html, body {
 
                                                         <!-- الجزء الشمال: الساعة والتاريخ (التصميم الجديد) -->
                                                         <div style="display: flex; align-items: center; gap: 20px;">
-                                                            <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(6, 182, 212, 0.3)); padding: 14px 28px; border-radius: 22px; border: 2px solid rgba(99, 102, 241, 0.6); box-shadow: 0 0 25px rgba(99, 102, 241, 0.5), inset 0 0 12px rgba(99, 102, 241, 0.2); backdrop-filter: blur(10px);">
+                                                            <div class="employee-clock-card">
                                                                 <div style="display: flex; align-items: center; gap: 10px;">
                                                                     <span style="font-size: 1.5rem;">⏰</span>
                                                                     <div>
-                                                                        <span id="userServerTime" style="font-family: 'Courier New', monospace; font-weight: 900; font-size: 1.5rem; color: #38bdf8; text-shadow: 0 0 12px rgba(56, 189, 248, 0.9); letter-spacing: 2px;">00:00:00</span>
+                                                                        <span id="userServerTime" class="employee-clock-time" style="font-family: 'Courier New', monospace; font-weight: 900; font-size: 1.5rem; letter-spacing: 2px;">00:00:00</span>
                                                                         <br>
-                                                                        <span id="userServerDate" style="font-size: 0.95rem; color: #06b6d4; font-weight: 700; opacity: 0.95; letter-spacing: 1px;">10/01/2026</span>
+                                                                        <span id="userServerDate" class="employee-clock-date" style="font-size: 0.95rem; font-weight: 700; opacity: 0.95; letter-spacing: 1px;">10/01/2026</span>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -6864,6 +6896,11 @@ html, body {
                                                     pageBackground: '#0f172a',
                                                     surface: '#0f172a',
                                                     primary: '#6366f1',
+                                                    clockColor: '#38bdf8',
+                                                    uploadColor: '#a855f7',
+                                                    prayerWidgetBackground: '#0f172a',
+                                                    prayerCountdownColor: '#38bdf8',
+                                                    prayerHighlightColor: '#fbbf24',
                                                     accent: '#06b6d4',
                                                     success: '#10b981',
                                                     warning: '#fbbf24',
@@ -6892,6 +6929,11 @@ html, body {
                                                     pageBackground: 'themePageBackground',
                                                     surface: 'themeSurface',
                                                     primary: 'themePrimary',
+                                                    clockColor: 'themeClockColor',
+                                                    uploadColor: 'themeUploadColor',
+                                                    prayerWidgetBackground: 'themePrayerWidgetBackground',
+                                                    prayerCountdownColor: 'themePrayerCountdownColor',
+                                                    prayerHighlightColor: 'themePrayerHighlightColor',
                                                     accent: 'themeAccent',
                                                     success: 'themeSuccess',
                                                     warning: 'themeWarning',
@@ -6919,6 +6961,11 @@ html, body {
                                                 const PERSONAL_THEME_PRESETS = {
                                                     ocean: {
                                                         pageBackground: '#082f49', surface: '#0c4a6e', primary: '#0284c7',
+                                                        clockColor: '#38bdf8',
+                                                        uploadColor: '#22d3ee',
+                                                        prayerWidgetBackground: '#082f49',
+                                                        prayerCountdownColor: '#38bdf8',
+                                                        prayerHighlightColor: '#facc15',
                                                         accent: '#22d3ee', success: '#14b8a6', warning: '#facc15',
                                                         danger: '#fb7185', text: '#f0f9ff', buttonBackground: '#0369a1',
                                                         buttonText: '#ffffff', recordsBackground: '#164e63',
@@ -6928,6 +6975,11 @@ html, body {
                                                     },
                                                     forest: {
                                                         pageBackground: '#052e16', surface: '#14532d', primary: '#16a34a',
+                                                        clockColor: '#4ade80',
+                                                        uploadColor: '#84cc16',
+                                                        prayerWidgetBackground: '#052e16',
+                                                        prayerCountdownColor: '#4ade80',
+                                                        prayerHighlightColor: '#facc15',
                                                         accent: '#84cc16', success: '#22c55e', warning: '#facc15',
                                                         danger: '#f87171', text: '#f0fdf4', buttonBackground: '#15803d',
                                                         buttonText: '#ffffff', recordsBackground: '#14532d',
@@ -6937,6 +6989,11 @@ html, body {
                                                     },
                                                     sunset: {
                                                         pageBackground: '#431407', surface: '#7c2d12', primary: '#ea580c',
+                                                        clockColor: '#fb923c',
+                                                        uploadColor: '#f97316',
+                                                        prayerWidgetBackground: '#431407',
+                                                        prayerCountdownColor: '#fb923c',
+                                                        prayerHighlightColor: '#facc15',
                                                         accent: '#f97316', success: '#84cc16', warning: '#facc15',
                                                         danger: '#ef4444', text: '#fff7ed', buttonBackground: '#c2410c',
                                                         buttonText: '#ffffff', recordsBackground: '#7c2d12',
@@ -6946,6 +7003,11 @@ html, body {
                                                     },
                                                     rose: {
                                                         pageBackground: '#500724', surface: '#831843', primary: '#db2777',
+                                                        clockColor: '#f472b6',
+                                                        uploadColor: '#f472b6',
+                                                        prayerWidgetBackground: '#500724',
+                                                        prayerCountdownColor: '#f472b6',
+                                                        prayerHighlightColor: '#fbbf24',
                                                         accent: '#f472b6', success: '#10b981', warning: '#fbbf24',
                                                         danger: '#fb7185', text: '#fff1f2', buttonBackground: '#be185d',
                                                         buttonText: '#ffffff', recordsBackground: '#831843',
@@ -6969,6 +7031,11 @@ html, body {
                                                     root.style.setProperty('--bg-deep', values.pageBackground);
                                                     root.style.setProperty('--surface-color', values.surface);
                                                     root.style.setProperty('--primary', values.primary);
+                                                    root.style.setProperty('--clock-color', values.clockColor);
+                                                    root.style.setProperty('--employee-upload-color', values.uploadColor);
+                                                    root.style.setProperty('--prayer-widget-background', values.prayerWidgetBackground);
+                                                    root.style.setProperty('--prayer-countdown-color', values.prayerCountdownColor);
+                                                    root.style.setProperty('--prayer-highlight-color', values.prayerHighlightColor);
                                                     root.style.setProperty('--accent', values.accent);
                                                     root.style.setProperty('--success', values.success);
                                                     root.style.setProperty('--warning', values.warning);
@@ -6990,6 +7057,11 @@ html, body {
                                                     if (presetSelect) {
                                                         const matchedPreset = Object.entries(PERSONAL_THEME_PRESETS)
                                                             .find(([, preset]) => Object.keys(DEFAULT_PERSONAL_THEME)
+                                                                .filter(key => (key !== 'clockColor' || typeof theme.clockColor === 'string') &&
+                                                                    (key !== 'uploadColor' || typeof theme.uploadColor === 'string') &&
+                                                                    (key !== 'prayerWidgetBackground' || typeof theme.prayerWidgetBackground === 'string') &&
+                                                                    (key !== 'prayerCountdownColor' || typeof theme.prayerCountdownColor === 'string') &&
+                                                                    (key !== 'prayerHighlightColor' || typeof theme.prayerHighlightColor === 'string'))
                                                                 .every(key => preset[key] === values[key]));
                                                         presetSelect.value = matchedPreset ? matchedPreset[0] : '';
                                                     }
