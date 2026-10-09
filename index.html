@@ -1347,6 +1347,35 @@
                                                         margin-bottom: 10px;
                                                     }
 
+                                                    .cs-call-stats-filter {
+                                                        display: flex;
+                                                        gap: 10px;
+                                                        flex-wrap: wrap;
+                                                        margin-bottom: 10px;
+                                                    }
+
+                                                    .cs-call-stats-filter label {
+                                                        display: flex;
+                                                        align-items: center;
+                                                        gap: 8px;
+                                                    }
+
+                                                    .cs-call-stats-filter input {
+                                                        max-width: 160px;
+                                                        padding: 6px 8px;
+                                                        border: 1px solid rgba(148, 163, 184, 0.25);
+                                                        border-radius: 8px;
+                                                        background: rgba(15, 23, 42, 0.8);
+                                                        color: var(--text-light);
+                                                        font: inherit;
+                                                    }
+
+                                                    .cs-call-history {
+                                                        margin-top: 16px;
+                                                        padding-top: 12px;
+                                                        border-top: 1px solid rgba(148, 163, 184, 0.14);
+                                                    }
+
                                                     .cs-call-stats-values {
                                                         display: flex;
                                                         gap: 10px;
@@ -4309,9 +4338,23 @@ html, body {
                         <div id="csApprovalSoundStatus" style="font-size:0.8rem; color:#fbbf24; margin-bottom:8px;">فعّل صوت الطلبات عشان الجرس يفضل شغال لحد الرد.</div>
                         <details class="cs-call-stats">
                             <summary>إحصائيات المكالمات</summary>
+                            <div class="cs-call-stats-filter">
+                                <label for="csCallStatsFrom">من:
+                                    <input type="date" id="csCallStatsFrom" onchange="renderCsApprovalRequests()">
+                                </label>
+                                <label for="csCallStatsTo">إلى:
+                                    <input type="date" id="csCallStatsTo" onchange="renderCsApprovalRequests()">
+                                </label>
+                                <span id="csCallStatsDateError" style="display:none; color:#fb7185; align-self:center;">تاريخ البداية يجب أن يكون قبل تاريخ النهاية.</span>
+                            </div>
                             <div class="cs-call-stats-values">
                                 <div class="cs-call-stat">مكالمات وصلتك: <strong id="csCallsReceivedCount">0</strong></div>
                                 <div class="cs-call-stat">مكالمات وافقت عليها: <strong id="csCallsHandledCount">0</strong></div>
+                            </div>
+                            <div class="cs-call-history">
+                                <h4 style="margin:0 0 8px; color:#cbd5e1;">📜 سجل المكالمات المسندة إليك</h4>
+                                <p style="margin:0 0 10px; color:#94a3b8; font-size:0.78rem;">الحذف يخفي المكالمة من سجلك فقط، وتظل محفوظة عند المشرف.</p>
+                                <div id="csCallHistory" aria-live="polite"></div>
                             </div>
                         </details>
                         <div id="csApprovalInbox" aria-live="polite"></div>
@@ -4939,6 +4982,10 @@ html, body {
 
                                                 let allUsersData = {}, currentUser = null, timerInterval = null, isLoaded = false;
                                                 let csApprovalRequests = {};
+                                                let csApprovalHiddenHistory = {};
+                                                let csApprovalHiddenHistoryUser = '';
+                                                let csApprovalHiddenHistoryLoading = false;
+                                                let csApprovalHiddenHistoryError = '';
                                                 let myDailyNotes = {};
                                                 let dailyNotesPasswordRecord = null;
                                                 let dailyNotesPasswordSetup = false;
@@ -5784,6 +5831,64 @@ html, body {
                                                     return Boolean(user && (user.isCS || user.isCSAssistant));
                                                 }
 
+                                                function loadCsApprovalHiddenHistory(username) {
+                                                    if (!username) return;
+                                                    csApprovalHiddenHistory = {};
+                                                    csApprovalHiddenHistoryUser = username;
+                                                    csApprovalHiddenHistoryLoading = true;
+                                                    csApprovalHiddenHistoryError = '';
+                                                    db.ref(`users/${username}/hiddenCsApprovalHistory`).once('value')
+                                                        .then(snapshot => {
+                                                            if (!currentUser || currentUser.username !== username) return;
+                                                            csApprovalHiddenHistory = snapshot.val() || {};
+                                                        })
+                                                        .catch(error => {
+                                                            console.error('فشل تحميل سجل المكالمات المخفي:', error);
+                                                            if (currentUser && currentUser.username === username) {
+                                                                csApprovalHiddenHistoryError = error.message || 'تعذر تحميل السجل.';
+                                                            }
+                                                        })
+                                                        .finally(() => {
+                                                            if (!currentUser || currentUser.username !== username) return;
+                                                            csApprovalHiddenHistoryLoading = false;
+                                                            renderCsApprovalRequests();
+                                                        });
+                                                }
+
+                                                async function hideCsCallFromMyHistory(requestKey, button) {
+                                                    if (!isCsCallAgent(currentUser) || currentUser.role === 'admin') {
+                                                        alert('إخفاء سجل المكالمات متاح لموظف خدمة العملاء فقط.');
+                                                        return;
+                                                    }
+                                                    try {
+                                                        requestKey = decodeURIComponent(requestKey);
+                                                    } catch (error) {
+                                                        alert('تعذر تحديد المكالمة المطلوبة.');
+                                                        return;
+                                                    }
+                                                    const request = csApprovalRequests[requestKey];
+                                                    if (!request || request.assignedTo !== currentUser.username) {
+                                                        alert('لا يمكنك إخفاء مكالمة غير مسندة إلى حسابك.');
+                                                        return;
+                                                    }
+                                                    if (!isDatabaseConnected) {
+                                                        alert('الاتصال بقاعدة البيانات مقطوع. حاول مرة أخرى بعد عودة الاتصال.');
+                                                        return;
+                                                    }
+                                                    if (!confirm('سيتم إخفاء المكالمة من سجلك فقط، وستظل محفوظة في سجل المشرف. هل تريد المتابعة؟')) return;
+
+                                                    if (button) button.disabled = true;
+                                                    try {
+                                                        await db.ref(`users/${currentUser.username}/hiddenCsApprovalHistory/${requestKey}`).set(true);
+                                                        csApprovalHiddenHistory = { ...csApprovalHiddenHistory, [requestKey]: true };
+                                                        renderCsApprovalRequests();
+                                                    } catch (error) {
+                                                        console.error('فشل إخفاء المكالمة من السجل الشخصي:', error);
+                                                        alert(`تعذر إخفاء المكالمة: ${error.message}`);
+                                                        if (button && button.isConnected) button.disabled = false;
+                                                    }
+                                                }
+
                                                 function updateCsApprovalRing() {
                                                     const ring = document.getElementById('csApprovalRing');
                                                     if (!ring) return;
@@ -6190,6 +6295,83 @@ html, body {
                                                         csApprovalExpiryTimer = setTimeout(renderCsApprovalRequests, nextExpiry - now);
                                                     }
 
+                                                    if (isCsCallAgent(currentUser)) {
+                                                        if (csApprovalHiddenHistoryUser !== currentUser.username && !csApprovalHiddenHistoryLoading) {
+                                                            loadCsApprovalHiddenHistory(currentUser.username);
+                                                        }
+                                                        const statsFrom = document.getElementById('csCallStatsFrom')?.value || '';
+                                                        const statsTo = document.getElementById('csCallStatsTo')?.value || '';
+                                                        const invalidStatsDateRange = Boolean(statsFrom && statsTo && statsFrom > statsTo);
+                                                        const statsDateError = document.getElementById('csCallStatsDateError');
+                                                        if (statsDateError) statsDateError.style.display = invalidStatsDateRange ? 'inline' : 'none';
+                                                        const historyIsReady = csApprovalHiddenHistoryUser === currentUser.username &&
+                                                            !csApprovalHiddenHistoryLoading && !csApprovalHiddenHistoryError;
+                                                        const statsEntries = invalidStatsDateRange || !historyIsReady
+                                                            ? []
+                                                            : entries.filter(([requestKey, request]) => {
+                                                                if (request.requesterUsername === currentUser.username ||
+                                                                    request.assignedTo !== currentUser.username ||
+                                                                    csApprovalHiddenHistory[requestKey]) return false;
+                                                                const assignedAt = Number(request.assignedAt);
+                                                                const timestamp = Number.isFinite(assignedAt) && assignedAt > 0
+                                                                    ? assignedAt
+                                                                    : Number(request.timestamp);
+                                                                if (!Number.isFinite(timestamp) || timestamp <= 0) return false;
+                                                                const date = new Date(timestamp);
+                                                                if (Number.isNaN(date.getTime())) return false;
+                                                                const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                                                                return (!statsFrom || dateKey >= statsFrom) && (!statsTo || dateKey <= statsTo);
+                                                            });
+                                                        const receivedCountElement = document.getElementById('csCallsReceivedCount');
+                                                        const handledCountElement = document.getElementById('csCallsHandledCount');
+                                                        if (receivedCountElement) receivedCountElement.innerText = String(statsEntries.length);
+                                                        if (handledCountElement) {
+                                                            handledCountElement.innerText = String(statsEntries.filter(([, request]) =>
+                                                                ['approved', 'completed'].includes(request.status) &&
+                                                                request.respondedByUsername === currentUser.username
+                                                            ).length);
+                                                        }
+
+                                                        const historyContainer = document.getElementById('csCallHistory');
+                                                        if (historyContainer) {
+                                                            if (csApprovalHiddenHistoryLoading || !historyIsReady && !csApprovalHiddenHistoryError) {
+                                                                historyContainer.innerHTML = '<div style="color:#94a3b8;">جارٍ تحميل سجلك الشخصي...</div>';
+                                                            } else if (csApprovalHiddenHistoryError) {
+                                                                historyContainer.innerHTML = `<div style="color:#fb7185;">تعذر تحميل سجل المكالمات: ${escapeHtml(csApprovalHiddenHistoryError)} <button type="button" class="btn btn-dark btn-sm" onclick="loadCsApprovalHiddenHistory(currentUser.username)">إعادة المحاولة</button></div>`;
+                                                            } else if (invalidStatsDateRange) {
+                                                                historyContainer.innerHTML = '<div style="color:#94a3b8;">عدّل نطاق التاريخ لعرض السجل.</div>';
+                                                            } else if (statsEntries.length === 0) {
+                                                                historyContainer.innerHTML = '<div style="color:#94a3b8;">لا توجد مكالمات مسندة إليك في الفترة المحددة.</div>';
+                                                            } else {
+                                                                const statusLabels = {
+                                                                    pending: 'قيد الانتظار',
+                                                                    approved: 'تمت الموافقة',
+                                                                    completed: 'انتهت المكالمة',
+                                                                    cancelled: 'ملغاة',
+                                                                    rejected: 'مرفوضة'
+                                                                };
+                                                                historyContainer.innerHTML = statsEntries.map(([key, request]) => {
+                                                                    const timestamp = Number(request.assignedAt || request.timestamp);
+                                                                    const time = Number.isFinite(timestamp) && timestamp > 0
+                                                                        ? new Date(timestamp).toLocaleString('ar-EG')
+                                                                        : '—';
+                                                                    const requester = escapeHtml(request.requesterName || request.requesterUsername || 'موظف');
+                                                                    const message = escapeHtml(request.message === 'تحويل مكالمة' ? 'مكالمة جديدة' : request.message || '');
+                                                                    const responder = escapeHtml(request.respondedBy || request.respondedByUsername || '—');
+                                                                    const status = escapeHtml(statusLabels[request.status] || 'غير محددة');
+                                                                    return `<article style="padding:12px; margin-top:10px; border-radius:12px; background:var(--employee-record-background, rgba(255,255,255,0.04)); border-right:3px solid var(--accent);">
+                                                                        <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                                                                            <strong>${requester}</strong><small style="color:#94a3b8;">${escapeHtml(time)}</small>
+                                                                        </div>
+                                                                        <div style="margin:6px 0; color:#cbd5e1;">${message || 'مكالمة جديدة'} · ${status}</div>
+                                                                        <div style="margin-bottom:10px; color:#94a3b8; font-size:0.8rem;">الرد بواسطة: ${responder}</div>
+                                                                        <button type="button" class="btn btn-danger btn-sm" onclick="hideCsCallFromMyHistory(this.dataset.requestKey, this)" data-request-key="${encodeURIComponent(key)}">🗑 حذف من سجلي</button>
+                                                                    </article>`;
+                                                                }).join('');
+                                                            }
+                                                        }
+                                                    }
+
                                                     if (inboxContainer && isCsCallAgent(currentUser) && currentUser.isCSAvailable === false) {
                                                         inboxContainer.innerHTML = '<p style="color:#fbbf24;">استقبال المكالمات متوقف لهذا الحساب حاليًا. تواصل مع المشرف لإعادة تفعيله.</p>';
                                                         const pendingCount = document.getElementById('csApprovalPendingCount');
@@ -6198,24 +6380,6 @@ html, body {
                                                             pendingCount.classList.add('hidden');
                                                         }
                                                     } else if (inboxContainer && isCsCallAgent(currentUser)) {
-                                                        const visibleUsernames = new Set(
-                                                            entries.flatMap(([, request]) => getCsRequestVisibleAgents(request))
-                                                        );
-                                                        const receivedCount = entries.filter(([, request]) =>
-                                                            request.requesterUsername !== currentUser.username &&
-                                                            (getCsRequestVisibleAgents(request).includes(currentUser.username) ||
-                                                                request.poolAvailable === true ||
-                                                                Boolean(request.declinedBy && request.declinedBy[currentUser.username]) ||
-                                                                request.respondedByUsername === currentUser.username)
-                                                        ).length;
-                                                        const handledCount = entries.filter(([, request]) =>
-                                                            ['approved', 'completed'].includes(request.status) &&
-                                                            request.respondedByUsername === currentUser.username
-                                                        ).length;
-                                                        const receivedCountElement = document.getElementById('csCallsReceivedCount');
-                                                        const handledCountElement = document.getElementById('csCallsHandledCount');
-                                                        if (receivedCountElement) receivedCountElement.innerText = String(receivedCount);
-                                                        if (handledCountElement) handledCountElement.innerText = String(handledCount);
                                                         const pending = entries.filter(([, request]) => {
                                                             const visibleAgents = getCsRequestVisibleAgents(request);
                                                             return request.status === 'pending' &&
@@ -7621,7 +7785,7 @@ html, body {
 
                     if (currentUser.role === 'admin') showAdmin(); 
                     
-                    else { setupPresence(s); showEmployee(); } 
+                    else { loadCsApprovalHiddenHistory(s); setupPresence(s); showEmployee(); } 
                     if (currentUser.role === 'admin') startGlobalTimer();
                     listenForRemoteLogout(s); // إضافة السطر هنا
 
@@ -7640,7 +7804,7 @@ html, body {
                 manageSingleSession(u);
 
                 if (currentUser.role === 'admin') showAdmin(); 
-                else { setupPresence(u); showEmployee(); } 
+                else { loadCsApprovalHiddenHistory(u); setupPresence(u); showEmployee(); } 
             } else {
                 alert('بيانات الدخول غير صحيحة'); 
             }
