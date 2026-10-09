@@ -2363,16 +2363,65 @@
         text-transform: uppercase;
     }
 
+    .login-header {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .header-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #a5f3fc;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    .header-tag {
+        background: rgba(34, 211, 238, 0.12);
+        border: 1px solid rgba(34, 211, 238, 0.3);
+        color: #67e8f9;
+        padding: 6px 12px;
+        border-radius: 999px;
+    }
+
+    .header-name {
+        color: #f8fafc;
+        font-weight: 800;
+        font-size: 0.78rem;
+    }
+
     .glass-login-card h1 {
         color: white;
-        margin: 10px 0 5px;
-        font-size: 1.8rem;
+        margin: 0;
+        font-size: 1.6rem;
+        line-height: 1.4;
     }
 
     .glass-login-card p {
         color: #94a3b8;
         font-size: 0.85rem;
-        margin-bottom: 30px;
+        margin: 0;
+    }
+
+    .count-badge {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 90px;
+        height: 90px;
+        margin: 8px auto 18px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(34, 211, 238, 0.2), rgba(14, 165, 233, 0.08));
+        border: 2px solid rgba(103, 232, 249, 0.45);
+        box-shadow: inset 0 0 20px rgba(34, 211, 238, 0.12), 0 15px 30px rgba(14, 165, 233, 0.2);
+        color: #67e8f9;
+        font-size: 2.4rem;
+        font-weight: 900;
+        font-family: 'Cairo';
     }
 
     /* المدخلات */
@@ -3454,9 +3503,13 @@ html, body {
             <!-- الكارت الزجاجي المنظم -->
             <div class="glass-login-card" id="loginCard">
                 <div class="login-header">
-                    <span class="system-tag">ELSHAMAA V2.0</span>
-                    <h1>تسجيل الدخول</h1>
+                    <div class="header-top">
+                        <span class="header-tag">مكالمات</span>
+                        <span class="header-name">محمد</span>
+                    </div>
+                    <h1>المكالمات المتاحة</h1>
                     <p>اختر اسمك من الأسماء المسجلة على السيستم</p>
+                    <div class="count-badge">1</div>
                 </div>
 
                 <div class="input-fields">
@@ -3473,8 +3526,10 @@ html, body {
                     </div>
                 </div>
 
-                <button onclick="mockAttemptLogin()" class="btn-submit-elegant">دخول السيستم</button>
-                <button type="button" id="loginModeToggle" class="login-mode-toggle" onclick="toggleManagerLogin()">دخول المديرين</button>
+                <div style="display:flex; gap:12px; margin-top:8px;">
+                    <button onclick="mockAttemptLogin()" class="btn-submit-elegant" style="flex:1;">تأكيد</button>
+                    <button type="button" id="loginModeToggle" class="login-mode-toggle" onclick="toggleManagerLogin()" style="flex:1; border:1px solid rgba(52,211,153,0.4); background:linear-gradient(135deg, rgba(16,185,129,0.16), rgba(52,211,153,0.3)); border-radius:18px; color:#d1fae5; font-weight:800;">موافق</button>
+                </div>
                 
                 <div class="card-footer">
                     <span>نسيت الباسورد؟ نام وافتكر بكره</span>
@@ -4364,7 +4419,7 @@ html, body {
 <button id="sohraBreakBtn" onclick="confirmVIPAction('بريك سهر')" class="btn hidden" style="background: linear-gradient(135deg, #4c1d95, #2e1065); border: 1px solid #a78bfa; padding:20px; font-size:1.1rem; color:white;">
     <span style="font-size:1.8rem;">🌙</span><br>بريك سهر
 </button>
-                                                            <div class="activity-controls-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; max-width: 1200px; margin: 0 auto;">
+                                                            <div class="activity-controls-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; max-width: 1100px; margin: 0 auto;">
     <div class="activity-control-card" style="border:1px solid var(--success); padding:8px; border-radius:15px;">
         <h4>🍔 بريك</h4>
         <button onclick="document.getElementById('breakPickerModal').classList.remove('hidden')" class="btn btn-success" style="width:100%">ابدأ</button>
@@ -5849,6 +5904,16 @@ html, body {
                                                     return selectionPool[Math.floor(Math.random() * selectionPool.length)];
                                                 }
 
+                                                function getCsRequestVisibleAgents(request) {
+                                                    if (!request) return [];
+                                                    const visible = Array.isArray(request.visibleTo)
+                                                        ? request.visibleTo.filter(Boolean)
+                                                        : [];
+                                                    if (request.assignedTo) visible.push(request.assignedTo);
+                                                    if (request.secondaryAgent) visible.push(request.secondaryAgent);
+                                                    return [...new Set(visible)];
+                                                }
+
                                                 const csUnavailableReassignmentInProgress = new Set();
                                                 function reassignUnavailableCsRequests() {
                                                     Object.entries(csApprovalRequests || {}).forEach(([requestKey, request]) => {
@@ -5907,6 +5972,11 @@ html, body {
                                                             return;
                                                         }
                                                     }
+                                                    if (latestRequest && latestRequest[1].status === 'cancelled') {
+                                                        actionArea.innerHTML = `
+                                                            <button id="csContactRequestBtn" type="button" onclick="submitCsApprovalRequest()" class="btn btn-primary" style="width:100%; background:linear-gradient(135deg, #06b6d4, #6366f1);">إرسال طلب</button>`;
+                                                        return;
+                                                    }
                                                     if (latestRequest && latestRequest[1].status === 'approved') {
                                                         const request = latestRequest[1];
                                                         if (!request.requesterAcknowledgedAt) {
@@ -5923,7 +5993,9 @@ html, body {
                                                                 </div>`;
                                                             return;
                                                         }
-                                                        actionArea.innerHTML = `<div style="text-align:center; color:#34d399; font-size:0.82rem; font-weight:700;" role="status">📞 المكالمة جارية مع ${escapeHtml(request.respondedBy || 'خدمة العملاء')}</div>`;
+                                                        actionArea.innerHTML = `
+                                                            <div style="text-align:center; color:#34d399; font-size:0.82rem; font-weight:700; line-height:1.5;" role="status">📞 المكالمة جارية مع ${escapeHtml(request.respondedBy || 'خدمة العملاء')}</div>
+                                                            <button type="button" class="btn btn-danger btn-sm" style="width:100%; margin-top:7px;" onclick="cancelCsApprovalRequest(this.dataset.requestKey, this)" data-request-key="${encodeURIComponent(latestRequest[0])}">📴 كنسل الطلب، المكالمة وقعت</button>`;
                                                         return;
                                                     }
                                                     if (!latestRequest || latestRequest[1].status !== 'pending') {
@@ -5949,8 +6021,48 @@ html, body {
                                                         <div style="text-align:center; color:#fbbf24; font-size:0.82rem; font-weight:700; line-height:1.6;" role="status">
                                                             <div>${waitingMessage}</div>
                                                             <small style="color:#cbd5e1; font-weight:400;">${targetMessage}</small>
-                                                            <button type="button" class="btn btn-danger btn-sm" style="width:100%; margin-top:7px;" onclick="cancelCsApprovalRequest(this.dataset.requestKey, this)" data-request-key="${encodeURIComponent(latestRequest[0])}">📴 المكالمة خلصت</button>
+                                                            <button type="button" class="btn btn-danger btn-sm" style="width:100%; margin-top:7px;" onclick="cancelCsApprovalRequest(this.dataset.requestKey, this)" data-request-key="${encodeURIComponent(latestRequest[0])}">إلغاء الطلب</button>
                                                         </div>`;
+                                                }
+
+                                                async function cancelCsApprovalRequest(requestKey, button) {
+                                                    if (!currentUser || currentUser.role === 'admin' || isCsCallAgent(currentUser)) return;
+                                                    if (!isDatabaseConnected) {
+                                                        alert('الاتصال بقاعدة البيانات مقطوع. حاول مرة أخرى بعد عودة الاتصال.');
+                                                        return;
+                                                    }
+                                                    if (button) button.disabled = true;
+                                                    try {
+                                                        const decodedRequestKey = decodeURIComponent(requestKey);
+                                                        const cancelledAt = getServerTime();
+                                                        const result = await db.ref(`csApprovalRequests/${decodedRequestKey}`).transaction(request => {
+                                                            const callDropped = request && request.status === 'approved' && Boolean(request.requesterAcknowledgedAt);
+                                                            if (!request ||
+                                                                request.requesterUsername !== currentUser.username ||
+                                                                (request.status !== 'pending' && !callDropped)
+                                                            ) return;
+                                                            return {
+                                                                ...request,
+                                                                status: 'cancelled',
+                                                                cancelledAt,
+                                                                cancellationReason: callDropped ? 'call_dropped' : 'requester_cancelled',
+                                                                ...(callDropped ? { callEndedAt: cancelledAt, callEndedBy: currentUser.realName || currentUser.username } : {})
+                                                            };
+                                                        });
+                                                        if (!result.committed) {
+                                                            renderCsApprovalRequests();
+                                                            return;
+                                                        }
+                                                        csApprovalRequests = {
+                                                            ...csApprovalRequests,
+                                                            [decodedRequestKey]: result.snapshot.val()
+                                                        };
+                                                        renderCsApprovalRequests();
+                                                    } catch (error) {
+                                                        if (button && button.isConnected) button.disabled = false;
+                                                        console.error('تعذر إلغاء طلب خدمة العملاء:', error);
+                                                        alert(`تعذر إلغاء الطلب: ${error.message}`);
+                                                    }
                                                 }
 
                                                 async function acknowledgeCsApprovalRequest(requestKey, button) {
@@ -5970,8 +6082,10 @@ html, body {
                                                             ) return;
                                                             return {
                                                                 ...request,
+                                                                status: 'cancelled',
                                                                 requesterAcknowledgedAt: acknowledgedAt,
-                                                                callStartedAt: acknowledgedAt
+                                                                cancelledAt: acknowledgedAt,
+                                                                cancellationReason: 'requester_acknowledged'
                                                             };
                                                         });
                                                         if (!result.committed) {
@@ -5987,43 +6101,6 @@ html, body {
                                                         if (button && button.isConnected) button.disabled = false;
                                                         console.error('تعذر تأكيد استلام موافقة خدمة العملاء:', error);
                                                         alert(`تعذر تأكيد الموافقة: ${error.message}`);
-                                                    }
-                                                }
-
-                                                async function cancelCsApprovalRequest(requestKey, button) {
-                                                    if (!currentUser || currentUser.role === 'admin' || isCsCallAgent(currentUser)) return;
-                                                    if (!isDatabaseConnected) {
-                                                        alert('الاتصال بقاعدة البيانات مقطوع. حاول مرة أخرى بعد عودة الاتصال.');
-                                                        return;
-                                                    }
-                                                    if (button) button.disabled = true;
-                                                    try {
-                                                        const decodedRequestKey = decodeURIComponent(requestKey);
-                                                        const result = await db.ref(`csApprovalRequests/${decodedRequestKey}`).transaction(request => {
-                                                            if (!request ||
-                                                                request.requesterUsername !== currentUser.username ||
-                                                                request.status !== 'pending'
-                                                            ) return;
-                                                            return {
-                                                                ...request,
-                                                                status: 'cancelled',
-                                                                cancelledAt: getServerTime(),
-                                                                cancelledBy: currentUser.username
-                                                            };
-                                                        });
-                                                        if (!result.committed) {
-                                                            renderCsApprovalRequests();
-                                                            return;
-                                                        }
-                                                        csApprovalRequests = {
-                                                            ...csApprovalRequests,
-                                                            [decodedRequestKey]: result.snapshot.val()
-                                                        };
-                                                        renderCsApprovalRequests();
-                                                    } catch (error) {
-                                                        if (button && button.isConnected) button.disabled = false;
-                                                        console.error('تعذر إنهاء طلب خدمة العملاء:', error);
-                                                        alert(`تعذر إنهاء الطلب: ${error.message}`);
                                                     }
                                                 }
 
@@ -6142,9 +6219,12 @@ html, body {
                                                             pendingCount.classList.add('hidden');
                                                         }
                                                     } else if (inboxContainer && isCsCallAgent(currentUser)) {
+                                                        const visibleUsernames = new Set(
+                                                            entries.flatMap(([, request]) => getCsRequestVisibleAgents(request))
+                                                        );
                                                         const receivedCount = entries.filter(([, request]) =>
                                                             request.requesterUsername !== currentUser.username &&
-                                                            (request.assignedTo === currentUser.username ||
+                                                            (getCsRequestVisibleAgents(request).includes(currentUser.username) ||
                                                                 request.poolAvailable === true ||
                                                                 Boolean(request.declinedBy && request.declinedBy[currentUser.username]) ||
                                                                 request.respondedByUsername === currentUser.username)
@@ -6157,14 +6237,15 @@ html, body {
                                                         const handledCountElement = document.getElementById('csCallsHandledCount');
                                                         if (receivedCountElement) receivedCountElement.innerText = String(receivedCount);
                                                         if (handledCountElement) handledCountElement.innerText = String(handledCount);
-                                                        const pending = entries.filter(([, request]) =>
-                                                            request.status === 'pending' &&
-                                                            request.requesterUsername !== currentUser.username &&
-                                                            (request.assignedTo === currentUser.username ||
-                                                                (request.poolAvailable === true && !request.assignedTo)) &&
-                                                            (!(request.declinedBy && request.declinedBy[currentUser.username]) ||
-                                                                (request.poolAvailable === true && !request.assignedTo))
-                                                        );
+                                                        const pending = entries.filter(([, request]) => {
+                                                            const visibleAgents = getCsRequestVisibleAgents(request);
+                                                            return request.status === 'pending' &&
+                                                                request.requesterUsername !== currentUser.username &&
+                                                                (visibleAgents.includes(currentUser.username) ||
+                                                                    (request.poolAvailable === true && !request.assignedTo)) &&
+                                                                (!(request.declinedBy && request.declinedBy[currentUser.username]) ||
+                                                                    (request.poolAvailable === true && !request.assignedTo));
+                                                        });
                                                         const activeCalls = entries.filter(([, request]) =>
                                                             request.status === 'approved' &&
                                                             request.respondedByUsername === currentUser.username &&
@@ -6246,12 +6327,12 @@ html, body {
                                                         const assignedAgent = request.assignedTo
                                                             ? allUsersData[request.assignedTo]
                                                             : null;
-                                                        const status = request.status === 'completed'
+                                                        const status = request.status === 'cancelled'
+                                                            ? '<span style="color:#94a3b8; font-weight:bold;">أُلغي الطلب</span>'
+                                                            : request.status === 'completed'
                                                             ? '<span style="color:#38bdf8; font-weight:bold;">انتهت المكالمة ✅</span>'
                                                             : request.status === 'approved'
                                                             ? '<span style="color:#34d399; font-weight:bold;">مقبول — ماشي ✅</span>'
-                                                            : request.status === 'cancelled'
-                                                                ? '<span style="color:#94a3b8; font-weight:bold;">المكالمة خلصت — أُلغي الطلب</span>'
                                                             : request.status === 'rejected'
                                                                 ? '<span style="color:#fb7185; font-weight:bold;">مرفوض — لأ ❌</span>'
                                                                 : request.poolAvailable === true
@@ -6302,12 +6383,17 @@ html, body {
                                                         alert('لا يوجد موظف خدمة عملاء متاح لاستلام المكالمة حاليًا. أبلغ المشرف لتفعيل موظف متاح.');
                                                         return;
                                                     }
-                                                    const targetAgent = chooseCsApprovalAgent(agents);
-                                                    if (!targetAgent) {
+                                                    const primaryAgent = chooseCsApprovalAgent(agents);
+                                                    if (!primaryAgent) {
                                                         alert('لا يوجد موظف خدمة عملاء متاح للتحويل إليه حاليًا.');
                                                         return;
                                                     }
-                                                    const targetUsername = targetAgent.username;
+                                                    const secondaryCandidates = agents.filter(agent => agent.username !== primaryAgent.username);
+                                                    const secondaryAgent = secondaryCandidates.length
+                                                        ? chooseCsApprovalAgent(secondaryCandidates)
+                                                        : null;
+                                                    const targetUsername = primaryAgent.username;
+                                                    const secondaryUsername = secondaryAgent ? secondaryAgent.username : null;
                                                     const message = 'مكالمة جديدة';
                                                     const originalText = button.innerText;
                                                     button.disabled = true;
@@ -6318,7 +6404,9 @@ html, body {
                                                         requesterName: currentUser.realName || currentUser.username,
                                                         message,
                                                         assignedTo: targetUsername,
-                                                        assignedToName: targetAgent.realName || targetAgent.username,
+                                                        assignedToName: primaryAgent.realName || primaryAgent.username,
+                                                        secondaryAgent: secondaryUsername,
+                                                        visibleTo: [targetUsername, ...(secondaryUsername ? [secondaryUsername] : [])],
                                                         assignedAt: timestamp,
                                                         status: 'pending',
                                                         poolAvailable: false,
@@ -6376,8 +6464,10 @@ html, body {
 
                                                         const result = await db.ref(`csApprovalRequests/${requestKey}`).transaction(request => {
                                                             if (!request || request.status !== 'pending') return;
+                                                            const visibleAgents = getCsRequestVisibleAgents(request);
+                                                            const isTargetUser = visibleAgents.includes(currentUser.username);
                                                             const isSharedPool = request.poolAvailable === true && !request.assignedTo;
-                                                            if (isSharedPool ? decision !== 'approved' : request.assignedTo !== currentUser.username) return;
+                                                            if (isSharedPool ? decision !== 'approved' : !isTargetUser) return;
                                                             if (decision !== 'approved' && Number(request.snoozedUntil || 0) > currentAgent.timestamp) return;
                                                             if (decision === 'snoozed') {
                                                                 return {
@@ -6388,6 +6478,21 @@ html, body {
                                                             }
                                                             if (decision === 'rejected') {
                                                                 const declinedBy = { ...(request.declinedBy || {}), [currentUser.username]: currentAgent };
+                                                                const remainingVisible = visibleAgents.filter(username => username !== currentUser.username && !declinedBy[username]);
+                                                                if (remainingVisible.length > 0) {
+                                                                    return {
+                                                                        ...request,
+                                                                        declinedBy,
+                                                                        assignedTo: remainingVisible[0],
+                                                                        assignedToName: (allUsersData[remainingVisible[0]] && (allUsersData[remainingVisible[0]].realName || remainingVisible[0])) || remainingVisible[0],
+                                                                        visibleTo: remainingVisible,
+                                                                        secondaryAgent: remainingVisible[1] || null,
+                                                                        assignedAt: currentAgent.timestamp,
+                                                                        poolAvailable: false,
+                                                                        snoozedUntil: null,
+                                                                        snoozedBy: null
+                                                                    };
+                                                                }
                                                                 const availableAgents = csAgents
                                                                     .filter(username => username !== currentUser.username && !declinedBy[username])
                                                                     .map(username => (allUsersData || {})[username] || { username });
@@ -6398,6 +6503,8 @@ html, body {
                                                                         declinedBy,
                                                                         assignedTo: null,
                                                                         assignedToName: 'صندوق المكالمات المتاحة',
+                                                                        visibleTo: [],
+                                                                        secondaryAgent: null,
                                                                         assignedAt: currentAgent.timestamp,
                                                                         poolAvailable: true,
                                                                         snoozedUntil: null,
@@ -6409,6 +6516,8 @@ html, body {
                                                                     declinedBy,
                                                                     assignedTo: nextAgent.username,
                                                                     assignedToName: nextAgent.realName || nextAgent.username,
+                                                                    visibleTo: [nextAgent.username],
+                                                                    secondaryAgent: null,
                                                                     assignedAt: currentAgent.timestamp,
                                                                     poolAvailable: false,
                                                                     snoozedUntil: null,
@@ -6421,6 +6530,8 @@ html, body {
                                                                 respondedBy: currentAgent.name,
                                                                 respondedByUsername: currentAgent.username,
                                                                 respondedAt: currentAgent.timestamp,
+                                                                visibleTo: [currentUser.username],
+                                                                secondaryAgent: null,
                                                                 poolAvailable: false,
                                                                 snoozedUntil: null,
                                                                 snoozedBy: null
