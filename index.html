@@ -2294,13 +2294,13 @@
         position: relative;
         width: 100%;
         max-width: 420px;
-        padding-top: 100px;
+        padding-top: 120px;
     }
 
     /* الموظف */
     .worker-desk-area {
         position: absolute;
-        top: 0;
+        top: -12px;
         left: 50%;
         transform: translateX(-50%);
         width: 200px;
@@ -2405,23 +2405,6 @@
         color: #94a3b8;
         font-size: 0.85rem;
         margin: 0;
-    }
-
-    .count-badge {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 90px;
-        height: 90px;
-        margin: 8px auto 18px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, rgba(34, 211, 238, 0.2), rgba(14, 165, 233, 0.08));
-        border: 2px solid rgba(103, 232, 249, 0.45);
-        box-shadow: inset 0 0 20px rgba(34, 211, 238, 0.12), 0 15px 30px rgba(14, 165, 233, 0.2);
-        color: #67e8f9;
-        font-size: 2.4rem;
-        font-weight: 900;
-        font-family: 'Cairo';
     }
 
     /* المدخلات */
@@ -2596,8 +2579,8 @@
     }
 
     .login-mode-toggle {
-        margin-top: 14px;
-        padding: 6px 10px;
+        margin-top: 0;
+        padding: 16px 10px;
         border: 0;
         background: transparent;
         color: #94a3b8;
@@ -3503,13 +3486,9 @@ html, body {
             <!-- الكارت الزجاجي المنظم -->
             <div class="glass-login-card" id="loginCard">
                 <div class="login-header">
-                    <div class="header-top">
-                        <span class="header-tag">مكالمات</span>
-                        <span class="header-name">محمد</span>
-                    </div>
-                    <h1>المكالمات المتاحة</h1>
-                    <p>اختر اسمك من الأسماء المسجلة على السيستم</p>
-                    <div class="count-badge">1</div>
+                   
+                    <h1>تسجيل الدخول</h1>
+                    <p>سجّل الدخول إلى حسابك للمتابعة</p>
                 </div>
 
                 <div class="input-fields">
@@ -3526,9 +3505,9 @@ html, body {
                     </div>
                 </div>
 
-                <div style="display:flex; gap:12px; margin-top:8px;">
+                <div style="display:flex; align-items:stretch; gap:12px; margin-top:8px;">
                     <button onclick="mockAttemptLogin()" class="btn-submit-elegant" style="flex:1;">تأكيد</button>
-                    <button type="button" id="loginModeToggle" class="login-mode-toggle" onclick="toggleManagerLogin()" style="flex:1; border:1px solid rgba(52,211,153,0.4); background:linear-gradient(135deg, rgba(16,185,129,0.16), rgba(52,211,153,0.3)); border-radius:18px; color:#d1fae5; font-weight:800;">موافق</button>
+                    <button type="button" id="loginModeToggle" class="login-mode-toggle" onclick="toggleManagerLogin()" style="flex:1; border:1px solid rgba(52,211,153,0.4); background:linear-gradient(135deg, rgba(16,185,129,0.16), rgba(52,211,153,0.3)); border-radius:18px; color:#d1fae5; font-weight:800;">دخول المديرين</button>
                 </div>
                 
                 <div class="card-footer">
@@ -14906,7 +14885,7 @@ const isSohra = document.getElementById('isSohraBreak').checked;
             : 'دخول المديرين';
         document.querySelector('.login-header p').textContent = isManagerLogin
             ? 'أدخل اسم المستخدم وكلمة المرور الخاصة بالمدير'
-            : 'اختر اسمك من الأسماء المسجلة على السيستم';
+            : 'سجّل الدخول إلى حسابك للمتابعة';
     }
 
     function osmanFocus() {
