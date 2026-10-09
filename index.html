@@ -866,6 +866,132 @@
                                                         color: var(--daily-notes-text) !important;
                                                     }
 
+                                                    #dailyNotesModal {
+                                                        position: fixed;
+                                                        inset: 0;
+                                                        z-index: 20010;
+                                                        display: flex;
+                                                        align-items: center;
+                                                        justify-content: center;
+                                                        background: rgba(2,6,23,0.88);
+                                                        padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+                                                        overflow-y: auto;
+                                                        overscroll-behavior: contain;
+                                                        -webkit-overflow-scrolling: touch;
+                                                        backdrop-filter: blur(8px);
+                                                    }
+
+                                                    #dailyNotesPanel {
+                                                        width: min(100%, 620px);
+                                                        margin: auto;
+                                                        padding: 20px;
+                                                        border: 1px solid #6366f1;
+                                                        border-radius: 18px;
+                                                        background: #1e293b;
+                                                        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+                                                        max-height: calc(100vh - 20px);
+                                                        max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 20px);
+                                                        overflow-x: hidden;
+                                                        overflow-y: auto;
+                                                        overscroll-behavior: contain;
+                                                        -webkit-overflow-scrolling: touch;
+                                                    }
+
+                                                    #dailyNotesPanel input,
+                                                    #dailyNotesPanel textarea {
+                                                        width: 100%;
+                                                        min-width: 0;
+                                                        font-size: 16px;
+                                                        line-height: 1.5;
+                                                        touch-action: manipulation;
+                                                    }
+
+                                                    #dailyNotesPanel textarea {
+                                                        min-height: 120px;
+                                                    }
+
+                                                    #dailyNotesPanel button {
+                                                        min-height: 44px;
+                                                        touch-action: manipulation;
+                                                    }
+
+                                                    #dailyNotesLockError {
+                                                        overflow-wrap: anywhere;
+                                                    }
+
+                                                    #dailyNotesList {
+                                                        overscroll-behavior: contain;
+                                                        -webkit-overflow-scrolling: touch;
+                                                    }
+
+                                                    #installAppButton {
+                                                        position: fixed;
+                                                        z-index: 99999;
+                                                        left: 50%;
+                                                        bottom: calc(12px + env(safe-area-inset-bottom));
+                                                        transform: translateX(-50%);
+                                                        width: min(90vw, 360px);
+                                                        min-height: 48px;
+                                                        padding: 12px 20px;
+                                                        border: 0;
+                                                        border-radius: 999px;
+                                                        background: linear-gradient(135deg, #6366f1, #06b6d4);
+                                                        color: #fff;
+                                                        font-family: 'Cairo', sans-serif;
+                                                        font-size: clamp(0.9rem, 3.8vw, 1rem);
+                                                        font-weight: 700;
+                                                        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                                                        cursor: pointer;
+                                                        animation: pulse 2s infinite;
+                                                        touch-action: manipulation;
+                                                    }
+
+                                                    #installAppButton[hidden] {
+                                                        display: none !important;
+                                                    }
+
+                                                    @media (max-width: 768px) {
+                                                        #dailyNotesModal {
+                                                            align-items: flex-start !important;
+                                                        }
+
+                                                        #dailyNotesPanel {
+                                                            width: 100% !important;
+                                                            max-height: calc(100vh - 20px);
+                                                            max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 20px);
+                                                            margin: 0 auto !important;
+                                                            padding: 16px !important;
+                                                            border-radius: 16px !important;
+                                                        }
+
+                                                        .daily-note-row {
+                                                            gap: 6px;
+                                                        }
+
+                                                        #dailyNotesPanel #dailyNotesList .daily-note-delete {
+                                                            min-width: 46px;
+                                                        }
+                                                    }
+
+                                                    @media (max-width: 380px) {
+                                                        #dailyNotesPanel {
+                                                            padding: 12px !important;
+                                                        }
+
+                                                        #dailyNotesPanel > div:first-child {
+                                                            align-items: flex-start !important;
+                                                        }
+
+                                                        #dailyNotesTitle {
+                                                            font-size: 1rem;
+                                                        }
+
+                                                        #dailyNotesPanel #dailyNotesList .daily-note-delete {
+                                                            min-width: 42px;
+                                                            padding-inline: 7px;
+                                                        }
+                                                    }
+
                                                     .cs-call-stats {
                                                         margin-top: 12px;
                                                         padding: 12px 14px;
@@ -2616,8 +2742,8 @@ html, body {
                                                 </div>
                                             </div>
 
-                                            <div id="dailyNotesModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="dailyNotesTitle" style="position:fixed; inset:0; z-index:20010; background:rgba(2,6,23,0.88); display:flex; align-items:center; justify-content:center; padding:16px;">
-                                                <div id="dailyNotesPanel" style="width:min(100%,620px); max-height:90vh; overflow:auto; padding:20px; border:1px solid #6366f1; border-radius:18px; background:#1e293b; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+                                            <div id="dailyNotesModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="dailyNotesTitle">
+                                                <div id="dailyNotesPanel">
                                                     <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px;">
                                                         <h3 id="dailyNotesTitle" style="margin:0;">📝 سجل اليومي</h3>
                                                         <button type="button" onclick="closeDailyNotes()" class="btn btn-dark btn-sm">إغلاق ✖</button>
@@ -4410,6 +4536,8 @@ html, body {
                                                 let dailyNotesPasswordRecord = null;
                                                 let dailyNotesPasswordSetup = false;
                                                 let isDailyNotesUnlocked = false;
+                                                let dailyNotesEncryptionKey = null;
+                                                let dailyNotesPreviousBodyOverflow = '';
                                                 let csApprovalExpiryTimer = null;
                                                 let csApprovalSoundUnlocked = false;
                                                 let loadingHintTimer = setTimeout(() => {
@@ -4961,7 +5089,7 @@ html, body {
                                                     const confirmInput = document.getElementById('dailyNotesPasswordConfirm');
                                                     const button = document.getElementById('dailyNotesUnlockBtn');
                                                     if (message) message.textContent = isSetup
-                                                        ? 'أنشئ كلمة مرور مستقلة للسجل اليومي (6 أحرف على الأقل).'
+                                                        ? 'أنشئ كلمة مرور مستقلة للسجل اليومي (6 أحرف على الأقل). السجل مشفر؛ احتفظ بكلمة المرور لأن نسيانها يمنع استعادة ملاحظاتك.'
                                                         : 'أدخل كلمة مرور السجل اليومي لفتحه.';
                                                     if (passwordInput) {
                                                         passwordInput.value = '';
@@ -5024,6 +5152,9 @@ html, body {
                                                     if (!modal || !lock || !content) return;
                                                     isDailyNotesUnlocked = false;
                                                     myDailyNotes = {};
+                                                    dailyNotesEncryptionKey = null;
+                                                    dailyNotesPreviousBodyOverflow = document.body.style.overflow;
+                                                    document.body.style.overflow = 'hidden';
                                                     content.classList.add('hidden');
                                                     lock.classList.remove('hidden');
                                                     setDailyNotesPasswordMode(false);
@@ -5166,6 +5297,8 @@ html, body {
                                                     isDailyNotesUnlocked = false;
                                                     myDailyNotes = {};
                                                     dailyNotesEncryptionKey = null;
+                                                    document.body.style.overflow = dailyNotesPreviousBodyOverflow;
+                                                    dailyNotesPreviousBodyOverflow = '';
                                                     const content = document.getElementById('dailyNotesContent');
                                                     const lock = document.getElementById('dailyNotesLock');
                                                     if (content) content.classList.add('hidden');
@@ -13039,34 +13172,65 @@ const isSohra = document.getElementById('isSohraBreak').checked;
             }
 
                         // ===== كود نافذة التثبيت المخصصة (Install Prompt) =====
-                        let deferredPrompt;
+                        const installedAppStorageKey = 'elshamaa_pwa_installed';
+                        let deferredPrompt = null;
                         const installBtn = document.createElement('button');
-                        installBtn.style.display = 'none';
+                        installBtn.id = 'installAppButton';
+                        installBtn.type = 'button';
+                        installBtn.hidden = true;
                         installBtn.innerHTML = '📥 تثبيت التطبيق على جهازك';
-                        installBtn.style.cssText = 'position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg, #6366f1, #06b6d4); color:white; border:none; padding:15px 30px; border-radius:50px; font-family:Cairo; font-weight:bold; font-size:1.1rem; z-index:99999; box-shadow: 0 10px 30px rgba(0,0,0,0.5); cursor:pointer; animation: pulse 2s infinite;';
                         document.body.appendChild(installBtn);
+
+                        function isPwaInstalled() {
+                            return Boolean(
+                                (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+                                (window.navigator && window.navigator.standalone === true) ||
+                                localStorage.getItem(installedAppStorageKey) === 'true'
+                            );
+                        }
 
                         window.addEventListener('beforeinstallprompt', (e) => {
                             e.preventDefault();
+                            localStorage.removeItem(installedAppStorageKey);
                             deferredPrompt = e;
-                            installBtn.style.display = 'block';
+                            installBtn.hidden = isPwaInstalled();
+                        });
 
-                            installBtn.addEventListener('click', async () => {
-                                installBtn.style.display = 'none';
-                                deferredPrompt.prompt();
-                                const { outcome } = await deferredPrompt.userChoice;
+                        installBtn.addEventListener('click', async () => {
+                            if (!deferredPrompt || isPwaInstalled()) {
+                                installBtn.hidden = true;
+                                return;
+                            }
+                            const promptEvent = deferredPrompt;
+                            deferredPrompt = null;
+                            installBtn.hidden = true;
+                            try {
+                                await promptEvent.prompt();
+                                const { outcome } = await promptEvent.userChoice;
                                 if (outcome === 'accepted') {
+                                    localStorage.setItem(installedAppStorageKey, 'true');
                                     console.log('User accepted the install prompt');
                                 }
-                                deferredPrompt = null;
-                            });
+                            } catch (error) {
+                                console.error('تعذر فتح نافذة تثبيت التطبيق:', error);
+                            }
                         });
 
                         window.addEventListener('appinstalled', () => {
-                            installBtn.style.display = 'none';
+                            localStorage.setItem(installedAppStorageKey, 'true');
+                            installBtn.hidden = true;
                             deferredPrompt = null;
                             console.log('PWA was installed');
                         });
+
+                        if (window.matchMedia) {
+                            window.matchMedia('(display-mode: standalone)').addEventListener('change', event => {
+                                if (event.matches) {
+                                    installBtn.hidden = true;
+                                    deferredPrompt = null;
+                                }
+                            });
+                        }
                         // دالة لإدارة الجلسة الواحدة
         // دالة إدارة الجلسات: موبايل حر + كمبيوتر واحد فقط
     function manageSingleSession(username) {
