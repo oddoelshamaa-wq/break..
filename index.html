@@ -5949,7 +5949,7 @@ html, body {
                                                         <div style="text-align:center; color:#fbbf24; font-size:0.82rem; font-weight:700; line-height:1.6;" role="status">
                                                             <div>${waitingMessage}</div>
                                                             <small style="color:#cbd5e1; font-weight:400;">${targetMessage}</small>
-                                                            <button type="button" class="btn btn-danger btn-sm" style="width:100%; margin-top:7px;" onclick="cancelCsApprovalRequest(this.dataset.requestKey, this)" data-request-key="${encodeURIComponent(latestRequest[0])}">إلغاء الطلب</button>
+                                                            <button type="button" class="btn btn-danger btn-sm" style="width:100%; margin-top:7px;" onclick="cancelCsApprovalRequest(this.dataset.requestKey, this)" data-request-key="${encodeURIComponent(latestRequest[0])}">📴 المكالمة خلصت</button>
                                                         </div>`;
                                                 }
 
@@ -5996,7 +5996,6 @@ html, body {
                                                         alert('الاتصال بقاعدة البيانات مقطوع. حاول مرة أخرى بعد عودة الاتصال.');
                                                         return;
                                                     }
-                                                    if (!confirm('هل تريد إلغاء طلب خدمة العملاء؟')) return;
                                                     if (button) button.disabled = true;
                                                     try {
                                                         const decodedRequestKey = decodeURIComponent(requestKey);
@@ -6023,8 +6022,8 @@ html, body {
                                                         renderCsApprovalRequests();
                                                     } catch (error) {
                                                         if (button && button.isConnected) button.disabled = false;
-                                                        console.error('تعذر إلغاء طلب خدمة العملاء:', error);
-                                                        alert(`تعذر إلغاء الطلب: ${error.message}`);
+                                                        console.error('تعذر إنهاء طلب خدمة العملاء:', error);
+                                                        alert(`تعذر إنهاء الطلب: ${error.message}`);
                                                     }
                                                 }
 
@@ -6252,7 +6251,7 @@ html, body {
                                                             : request.status === 'approved'
                                                             ? '<span style="color:#34d399; font-weight:bold;">مقبول — ماشي ✅</span>'
                                                             : request.status === 'cancelled'
-                                                                ? '<span style="color:#94a3b8; font-weight:bold;">أُلغي الطلب</span>'
+                                                                ? '<span style="color:#94a3b8; font-weight:bold;">المكالمة خلصت — أُلغي الطلب</span>'
                                                             : request.status === 'rejected'
                                                                 ? '<span style="color:#fb7185; font-weight:bold;">مرفوض — لأ ❌</span>'
                                                                 : request.poolAvailable === true
