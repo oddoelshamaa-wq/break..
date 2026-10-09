@@ -2553,6 +2553,14 @@
     #chatWindow {
         background: color-mix(in srgb, var(--surface-color) 95%, transparent) !important;
         border-color: color-mix(in srgb, var(--primary) 55%, transparent) !important;
+        font-family: 'Cairo', sans-serif;
+    }
+
+    #chatWindow button,
+    #chatWindow input,
+    #chatWindow textarea,
+    #chatWindow select {
+        font-family: inherit;
     }
 
     #chatWindow > div:first-child {
@@ -4062,10 +4070,13 @@ html, body {
                                                                 <h3 style="color:var(--accent); margin:0;">📜 سجل طلبات تحويل مكمله</h3>
                                                                 <small style="color:#94a3b8;">سجل الطلبات والقرارات التي اتخذتها خدمة العملاء.</small>
                                                             </div>
-                                                            <button onclick="renderAdminCsApprovalHistory()" class="btn btn-dark btn-sm">🔄 تحديث السجل</button>
+                                                            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                                                <button onclick="deleteAllCsApprovalRequests(this)" class="btn btn-sm" style="background:linear-gradient(135deg, #fbbf24, #d97706); color:#111827; font-weight:800;">🗑 حذف جميع السجلات</button>
+                                                                <button onclick="renderAdminCsApprovalHistory()" class="btn btn-dark btn-sm">🔄 تحديث السجل</button>
+                                                            </div>
                                                         </div>
                                                         <div class="table-responsive">
-                                                            <table style="min-width:850px; width:100%;">
+                                                            <table style="min-width:950px; width:100%;">
                                                                 <thead>
                                                                     <tr>
                                                                         <th>وقت الطلب</th>
@@ -4074,10 +4085,11 @@ html, body {
                                                                         <th>القرار</th>
                                                                         <th>بواسطة خدمة العملاء</th>
                                                                         <th>وقت القرار</th>
+                                                                        <th>إجراء</th>
                                                                     </tr>
                                                                 </thead>
                                                                 <tbody id="adminCsApprovalHistoryBody">
-                                                                    <tr><td colspan="6" style="text-align:center; color:#94a3b8;">لا توجد طلبات مسجلة حتى الآن.</td></tr>
+                                                                    <tr><td colspan="7" style="text-align:center; color:#94a3b8;">لا توجد طلبات مسجلة حتى الآن.</td></tr>
                                                                 </tbody>
                                                             </table>
                                                         </div>
@@ -6355,16 +6367,14 @@ html, body {
                                                                     const time = Number.isFinite(timestamp) && timestamp > 0
                                                                         ? new Date(timestamp).toLocaleString('ar-EG')
                                                                         : '—';
-                                                                    const requester = escapeHtml(request.requesterName || request.requesterUsername || 'موظف');
+                                                                    const agentName = escapeHtml(currentUser.realName || currentUser.username);
                                                                     const message = escapeHtml(request.message === 'تحويل مكالمة' ? 'مكالمة جديدة' : request.message || '');
-                                                                    const responder = escapeHtml(request.respondedBy || request.respondedByUsername || '—');
                                                                     const status = escapeHtml(statusLabels[request.status] || 'غير محددة');
                                                                     return `<article style="padding:12px; margin-top:10px; border-radius:12px; background:var(--employee-record-background, rgba(255,255,255,0.04)); border-right:3px solid var(--accent);">
                                                                         <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-                                                                            <strong>${requester}</strong><small style="color:#94a3b8;">${escapeHtml(time)}</small>
+                                                                            <strong>${agentName}</strong><small style="color:#94a3b8;">${escapeHtml(time)}</small>
                                                                         </div>
                                                                         <div style="margin:6px 0; color:#cbd5e1;">${message || 'مكالمة جديدة'} · ${status}</div>
-                                                                        <div style="margin-bottom:10px; color:#94a3b8; font-size:0.8rem;">الرد بواسطة: ${responder}</div>
                                                                         <button type="button" class="btn btn-danger btn-sm" onclick="hideCsCallFromMyHistory(this.dataset.requestKey, this)" data-request-key="${encodeURIComponent(key)}">🗑 حذف من سجلي</button>
                                                                     </article>`;
                                                                 }).join('');
@@ -6456,14 +6466,14 @@ html, body {
                                                         .sort((a, b) => Number(b[1].timestamp || 0) - Number(a[1].timestamp || 0));
 
                                                     if (!entries.length) {
-                                                        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:20px;">لا توجد طلبات مسجلة حتى الآن.</td></tr>';
+                                                        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#94a3b8; padding:20px;">لا توجد طلبات مسجلة حتى الآن.</td></tr>';
                                                         return;
                                                     }
 
                                                     const formatTime = value => value
                                                         ? escapeHtml(new Date(Number(value)).toLocaleString('ar-EG'))
                                                         : '—';
-                                                    tbody.innerHTML = entries.map(([, request]) => {
+                                                    tbody.innerHTML = entries.map(([requestKey, request]) => {
                                                         const declinedBy = Object.values(request.declinedBy || {})
                                                             .map(agent => agent && agent.name ? agent.name : '')
                                                             .filter(Boolean);
@@ -6493,8 +6503,78 @@ html, body {
                                                             <td>${status}</td>
                                                             <td>${escapeHtml(responder)}</td>
                                                             <td>${request.respondedAt ? formatTime(request.respondedAt) : '—'}</td>
+                                                            <td><button type="button" class="btn btn-sm" style="background:linear-gradient(135deg, #fbbf24, #d97706); color:#111827; font-weight:800;" onclick="deleteCsApprovalRequest(this.dataset.requestKey, this)" data-request-key="${encodeURIComponent(requestKey)}">🗑 حذف</button></td>
                                                         </tr>`;
                                                     }).join('');
+                                                }
+
+                                                async function deleteCsApprovalRequest(requestKey, button) {
+                                                    if (!currentUser || currentUser.role !== 'admin') {
+                                                        alert('حذف طلبات المكالمات متاح للمشرف فقط.');
+                                                        return;
+                                                    }
+                                                    try {
+                                                        requestKey = decodeURIComponent(requestKey);
+                                                    } catch (error) {
+                                                        alert('تعذر تحديد المكالمة المطلوبة.');
+                                                        return;
+                                                    }
+                                                    if (!csApprovalRequests[requestKey]) {
+                                                        alert('المكالمة غير موجودة أو تم حذفها بالفعل.');
+                                                        return;
+                                                    }
+                                                    if (!isDatabaseConnected) {
+                                                        alert('الاتصال بقاعدة البيانات مقطوع. حاول مرة أخرى بعد عودة الاتصال.');
+                                                        return;
+                                                    }
+                                                    if (!confirm('سيتم حذف المكالمة نهائيًا من سجل المشرف وسجل الموظف. هل تريد المتابعة؟')) return;
+
+                                                    if (button) button.disabled = true;
+                                                    try {
+                                                        await db.ref(`csApprovalRequests/${requestKey}`).remove();
+                                                        const remainingRequests = { ...csApprovalRequests };
+                                                        delete remainingRequests[requestKey];
+                                                        csApprovalRequests = remainingRequests;
+                                                        renderCsApprovalRequests();
+                                                        renderAdminCsApprovalHistory();
+                                                        alert('تم حذف المكالمة نهائيًا من سجل المشرف وسجل الموظف.');
+                                                    } catch (error) {
+                                                        console.error('فشل حذف طلب مكالمة خدمة العملاء:', error);
+                                                        alert(`تعذر حذف المكالمة: ${error.message || 'حدث خطأ غير معروف.'}`);
+                                                    } finally {
+                                                        if (button) button.disabled = false;
+                                                    }
+                                                }
+
+                                                async function deleteAllCsApprovalRequests(button) {
+                                                    if (!currentUser || currentUser.role !== 'admin') {
+                                                        alert('حذف سجلات المكالمات متاح للمشرف فقط.');
+                                                        return;
+                                                    }
+                                                    if (!isDatabaseConnected) {
+                                                        alert('الاتصال بقاعدة البيانات مقطوع. حاول مرة أخرى بعد عودة الاتصال.');
+                                                        return;
+                                                    }
+                                                    const requestCount = Object.keys(csApprovalRequests || {}).length;
+                                                    if (requestCount === 0) {
+                                                        alert('لا توجد سجلات لحذفها.');
+                                                        return;
+                                                    }
+                                                    if (!confirm(`سيتم حذف جميع سجلات المكالمات (${requestCount} سجلًا) نهائيًا من عند المشرف والموظفين. لا يمكن التراجع عن هذا الإجراء. هل تريد المتابعة؟`)) return;
+
+                                                    if (button) button.disabled = true;
+                                                    try {
+                                                        await db.ref('csApprovalRequests').remove();
+                                                        csApprovalRequests = {};
+                                                        renderCsApprovalRequests();
+                                                        renderAdminCsApprovalHistory();
+                                                        alert('تم حذف جميع سجلات المكالمات نهائيًا من عند المشرف والموظفين.');
+                                                    } catch (error) {
+                                                        console.error('فشل حذف جميع سجلات مكالمات خدمة العملاء:', error);
+                                                        alert(`تعذر حذف جميع السجلات: ${error.message || 'حدث خطأ غير معروف.'}`);
+                                                    } finally {
+                                                        if (button) button.disabled = false;
+                                                    }
                                                 }
 
                                                 async function submitCsApprovalRequest() {
@@ -17047,7 +17127,7 @@ function checkChatCommands(msgText, senderUsername) {
         const linkedText = escapeHtml(messageText).replace(/(https?:\/\/[^\s<]+)/g, (url) => {
             return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: underline; font-weight: bold;">${url}</a>`;
         });
-            contentHtml = `<div>${linkedText}</div>`;
+            contentHtml = `<div style="white-space:pre-wrap;">${linkedText}</div>`;
 
             } else if (m.audioRecord) {
                 contentHtml = `
@@ -17072,7 +17152,7 @@ function checkChatCommands(msgText, senderUsername) {
                     ${!isMe ? `<small class="chat-message-sender">${safeSenderName}</small>` : ''}
                     <div style="display:flex; gap:8px; align-items:flex-end; flex-direction:${isMe ? 'row' : 'row-reverse'}">
                         ${!isMe ? avatar : ''}
-                        <div class="chat-message-bubble${isMe ? ' is-mine' : ''}" style="white-space:pre-wrap; overflow-wrap:anywhere; border-bottom-${isMe ? 'right' : 'left'}-radius:5px;">
+                        <div class="chat-message-bubble${isMe ? ' is-mine' : ''}" style="overflow-wrap:anywhere; border-bottom-${isMe ? 'right' : 'left'}-radius:5px;">
                             ${contentHtml}
                             <span class="chat-message-time">${messageTime}</span>
                         </div>
