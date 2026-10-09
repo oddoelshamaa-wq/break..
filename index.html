@@ -839,6 +839,27 @@
                                                         opacity: 0.82;
                                                     }
 
+                                                    .daily-note-row {
+                                                        display: flex;
+                                                        align-items: stretch;
+                                                        gap: 7px;
+                                                        margin-top: 7px;
+                                                    }
+
+                                                    #dailyNotesPanel #dailyNotesList .daily-note-select {
+                                                        flex: 1;
+                                                        min-width: 0;
+                                                        text-align: right;
+                                                    }
+
+                                                    #dailyNotesPanel #dailyNotesList .daily-note-delete {
+                                                        flex-shrink: 0;
+                                                        padding: 8px 10px;
+                                                        border: 1px solid rgba(244, 63, 94, 0.5) !important;
+                                                        background: rgba(244, 63, 94, 0.16) !important;
+                                                        color: #fecdd3 !important;
+                                                    }
+
                                                     #dailyNotesPanel #saveDailyNoteBtn {
                                                         background: linear-gradient(135deg, var(--daily-notes-accent), var(--primary)) !important;
                                                         border-color: var(--daily-notes-accent) !important;
@@ -2601,13 +2622,22 @@ html, body {
                                                         <h3 id="dailyNotesTitle" style="margin:0;">📝 سجل اليومي</h3>
                                                         <button type="button" onclick="closeDailyNotes()" class="btn btn-dark btn-sm">إغلاق ✖</button>
                                                     </div>
-                                                    <label for="dailyNoteDate" style="display:block; margin-bottom:6px;">التاريخ</label>
-                                                    <input type="date" id="dailyNoteDate" class="form-control-glass" style="margin:0 0 12px;" onchange="loadDailyNoteForDate()">
-                                                    <textarea id="dailyNoteText" class="form-control-glass" rows="6" placeholder="اكتب ملاحظات هذا اليوم هنا..." style="margin:0; resize:vertical;"></textarea>
-                                                    <button id="saveDailyNoteBtn" type="button" onclick="saveDailyNote()" class="btn btn-primary" style="width:100%; margin-top:12px; padding:12px; font-weight:bold;">💾 حفظ ملاحظة اليوم</button>
-                                                    <h4 style="margin:18px 0 8px;">الأيام المسجلة</h4>
-                                                    <div id="dailyNotesList" aria-live="polite" style="max-height:220px; overflow:auto;">
-                                                        <div style="color:#94a3b8;">لا توجد أيام مسجلة بعد.</div>
+                                                    <div id="dailyNotesLock">
+                                                        <p id="dailyNotesLockMessage" style="margin:0 0 12px; color:#cbd5e1;">جاري التحقق من قفل السجل...</p>
+                                                        <input type="password" id="dailyNotesPassword" class="form-control-glass" autocomplete="current-password" placeholder="كلمة مرور السجل" style="width:100%; box-sizing:border-box;">
+                                                        <input type="password" id="dailyNotesPasswordConfirm" class="form-control-glass hidden" autocomplete="new-password" placeholder="أعد كتابة كلمة المرور" style="width:100%; box-sizing:border-box;">
+                                                        <button id="dailyNotesUnlockBtn" type="button" onclick="unlockDailyNotes()" class="btn btn-primary" style="width:100%; margin-top:4px;">فتح السجل</button>
+                                                        <div id="dailyNotesLockError" role="alert" style="color:#fb7185; margin-top:8px;"></div>
+                                                    </div>
+                                                    <div id="dailyNotesContent" class="hidden">
+                                                        <label for="dailyNoteDate" style="display:block; margin-bottom:6px;">التاريخ</label>
+                                                        <input type="date" id="dailyNoteDate" class="form-control-glass" style="margin:0 0 12px;" onchange="loadDailyNoteForDate()">
+                                                        <textarea id="dailyNoteText" class="form-control-glass" rows="6" placeholder="اكتب ملاحظات هذا اليوم هنا..." style="margin:0; resize:vertical;"></textarea>
+                                                        <button id="saveDailyNoteBtn" type="button" onclick="saveDailyNote()" class="btn btn-primary" style="width:100%; margin-top:12px; padding:12px; font-weight:bold;">💾 حفظ ملاحظة اليوم</button>
+                                                        <h4 style="margin:18px 0 8px;">الأيام المسجلة</h4>
+                                                        <div id="dailyNotesList" aria-live="polite" style="max-height:220px; overflow:auto;">
+                                                            <div style="color:#94a3b8;">لا توجد أيام مسجلة بعد.</div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -3441,6 +3471,11 @@ html, body {
                                                             <h3 style="color:#ec4899; margin:0;">🎧 صندوق بلاغات خدمة العملاء والجودة</h3>
                                                             <button onclick="renderAdminCsReports()" class="btn btn-dark btn-sm">🔄 تحديث القائمة</button>
                                                         </div>
+                                                        <div style="background:var(--glass); border:1px solid var(--glass-border); border-radius:18px; padding:18px; margin-bottom:20px;">
+                                                            <h4 style="margin:0 0 6px; color:var(--primary);">🎧 إتاحة موظفي خدمة العملاء</h4>
+                                                            <p style="margin:0 0 12px; color:#94a3b8; font-size:0.85rem;">أوقف استقبال المكالمات عن الموظف الغائب؛ الطلبات المعلقة والجديدة ستتجه للموظف المتاح.</p>
+                                                            <div id="adminCsAvailabilityList" style="display:flex; flex-wrap:wrap; gap:10px;"></div>
+                                                        </div>
                                                         
                                                         <div class="table-responsive">
                                                             <table style="min-width: 1000px;">
@@ -3727,6 +3762,13 @@ html, body {
                 <!-- لوحة خدمة العملاء المحدثة -->
                 <div id="csAgentDashboard" class="hidden" style="margin-top:20px;">
                     <div style="background:var(--cs-dashboard-background, rgba(16,185,129,0.08)); border:1px solid color-mix(in srgb, var(--primary) 55%, transparent); padding:20px; border-radius:20px; margin-bottom:20px;">
+                        <div id="csSelfAvailabilityControl" style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; padding:12px 14px; margin-bottom:14px; border-radius:14px; background:rgba(0,0,0,0.18);">
+                            <div>
+                                <strong>حالة استقبال المكالمات:</strong>
+                                <span id="csSelfAvailabilityStatus" style="margin-inline-start:6px;"></span>
+                            </div>
+                            <button type="button" id="csSelfAvailabilityButton" class="btn btn-sm" onclick="window.toggleCsAgentAvailability(encodeURIComponent(currentUser.username), currentUser.isCSAvailable === false)">...</button>
+                        </div>
                         <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
                             <h3 style="margin:0; color:var(--primary);">📥 طلبات الموظفين <span id="csApprovalPendingCount" class="badge-count hidden">0</span></h3>
                             <button type="button" id="enableCsApprovalSoundBtn" onclick="enableCsApprovalSound()" class="btn btn-warning btn-sm">🔊 تفعيل صوت الطلبات</button>
@@ -4365,6 +4407,9 @@ html, body {
                                                 let allUsersData = {}, currentUser = null, timerInterval = null, isLoaded = false;
                                                 let csApprovalRequests = {};
                                                 let myDailyNotes = {};
+                                                let dailyNotesPasswordRecord = null;
+                                                let dailyNotesPasswordSetup = false;
+                                                let isDailyNotesUnlocked = false;
                                                 let csApprovalExpiryTimer = null;
                                                 let csApprovalSoundUnlocked = false;
                                                 let loadingHintTimer = setTimeout(() => {
@@ -4842,6 +4887,96 @@ html, body {
                                                     return dateKey.split('-').reverse().join('/');
                                                 }
 
+                                                async function hashDailyNotesPassword(password, salt, iterations) {
+                                                    if (!window.crypto || !window.crypto.subtle) {
+                                                        throw new Error('المتصفح لا يدعم حماية كلمة المرور. افتح الموقع عبر HTTPS أو متصفح حديث.');
+                                                    }
+                                                    const keyMaterial = await window.crypto.subtle.importKey(
+                                                        'raw',
+                                                        new TextEncoder().encode(password),
+                                                        'PBKDF2',
+                                                        false,
+                                                        ['deriveBits']
+                                                    );
+                                                    const saltBytes = Uint8Array.from(atob(salt), character => character.charCodeAt(0));
+                                                    const derivedBits = await window.crypto.subtle.deriveBits({
+                                                        name: 'PBKDF2',
+                                                        salt: saltBytes,
+                                                        iterations,
+                                                        hash: 'SHA-256'
+                                                    }, keyMaterial, 256);
+                                                    return Array.from(new Uint8Array(derivedBits), byte => byte.toString(16).padStart(2, '0')).join('');
+                                                }
+
+                                                async function deriveDailyNotesEncryptionKey(password, salt, iterations) {
+                                                    const keyMaterial = await window.crypto.subtle.importKey(
+                                                        'raw',
+                                                        new TextEncoder().encode(password),
+                                                        'PBKDF2',
+                                                        false,
+                                                        ['deriveKey']
+                                                    );
+                                                    const saltBytes = Uint8Array.from(atob(salt), character => character.charCodeAt(0));
+                                                    return window.crypto.subtle.deriveKey({
+                                                        name: 'PBKDF2',
+                                                        salt: saltBytes,
+                                                        iterations,
+                                                        hash: 'SHA-256'
+                                                    }, keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+                                                }
+
+                                                function bytesToBase64(bytes) {
+                                                    let binary = '';
+                                                    bytes.forEach(byte => { binary += String.fromCharCode(byte); });
+                                                    return btoa(binary);
+                                                }
+
+                                                function base64ToBytes(value) {
+                                                    return Uint8Array.from(atob(value), character => character.charCodeAt(0));
+                                                }
+
+                                                async function encryptDailyNoteText(text, key) {
+                                                    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+                                                    const encrypted = await window.crypto.subtle.encrypt(
+                                                        { name: 'AES-GCM', iv },
+                                                        key,
+                                                        new TextEncoder().encode(text)
+                                                    );
+                                                    return { encrypted: true, iv: bytesToBase64(iv), cipher: bytesToBase64(new Uint8Array(encrypted)) };
+                                                }
+
+                                                async function decryptDailyNoteText(note, key) {
+                                                    const decrypted = await window.crypto.subtle.decrypt(
+                                                        { name: 'AES-GCM', iv: base64ToBytes(note.iv) },
+                                                        key,
+                                                        base64ToBytes(note.cipher)
+                                                    );
+                                                    return new TextDecoder().decode(decrypted);
+                                                }
+
+                                                function setDailyNotesPasswordMode(isSetup) {
+                                                    dailyNotesPasswordSetup = isSetup;
+                                                    const message = document.getElementById('dailyNotesLockMessage');
+                                                    const passwordInput = document.getElementById('dailyNotesPassword');
+                                                    const confirmInput = document.getElementById('dailyNotesPasswordConfirm');
+                                                    const button = document.getElementById('dailyNotesUnlockBtn');
+                                                    if (message) message.textContent = isSetup
+                                                        ? 'أنشئ كلمة مرور مستقلة للسجل اليومي (6 أحرف على الأقل).'
+                                                        : 'أدخل كلمة مرور السجل اليومي لفتحه.';
+                                                    if (passwordInput) {
+                                                        passwordInput.value = '';
+                                                        passwordInput.autocomplete = isSetup ? 'new-password' : 'current-password';
+                                                        passwordInput.placeholder = isSetup ? 'أنشئ كلمة مرور للسجل' : 'كلمة مرور السجل';
+                                                    }
+                                                    if (confirmInput) {
+                                                        confirmInput.value = '';
+                                                        confirmInput.classList.toggle('hidden', !isSetup);
+                                                    }
+                                                    if (button) button.textContent = isSetup ? 'حفظ كلمة المرور وفتح السجل' : 'فتح السجل';
+                                                    const error = document.getElementById('dailyNotesLockError');
+                                                    if (error) error.textContent = '';
+                                                }
+
                                                 function renderDailyNotes() {
                                                     const list = document.getElementById('dailyNotesList');
                                                     if (!list) return;
@@ -4850,15 +4985,19 @@ html, body {
                                                         .sort(([dateA], [dateB]) => dateB.localeCompare(dateA));
                                                     list.innerHTML = entries.length
                                                         ? entries.map(([date, note]) => `
-                                                            <button type="button" onclick="selectDailyNote(this.dataset.noteDate)" data-note-date="${escapeHtml(date)}" style="display:block; width:100%; text-align:right; padding:10px 12px; margin-top:7px; border:1px solid rgba(148,163,184,0.2); border-radius:10px; background:rgba(15,23,42,0.7); color:#e2e8f0; cursor:pointer;">
-                                                                <strong style="color:#a5b4fc;">${escapeHtml(getDailyNoteDateLabel(date))}</strong>
-                                                                <div style="margin-top:5px; white-space:pre-wrap; overflow-wrap:anywhere; color:#cbd5e1;">${escapeHtml(note.note || '')}</div>
-                                                            </button>
+                                                            <div class="daily-note-row">
+                                                                <button type="button" class="daily-note-select" onclick="selectDailyNote(this.dataset.noteDate)" data-note-date="${escapeHtml(date)}" style="padding:10px 12px; border:1px solid rgba(148,163,184,0.2); border-radius:10px; background:rgba(15,23,42,0.7); color:#e2e8f0; cursor:pointer;">
+                                                                    <strong style="color:#a5b4fc;">${escapeHtml(getDailyNoteDateLabel(date))}</strong>
+                                                                    <div style="margin-top:5px; white-space:pre-wrap; overflow-wrap:anywhere; color:#cbd5e1;">${escapeHtml(note.note || '')}</div>
+                                                                </button>
+                                                                <button type="button" class="daily-note-delete" onclick="deleteDailyNote(this.dataset.noteDate)" data-note-date="${escapeHtml(date)}" aria-label="حذف ملاحظة ${escapeHtml(getDailyNoteDateLabel(date))}" title="حذف هذا اليوم">🗑</button>
+                                                            </div>
                                                         `).join('')
                                                         : '<div style="color:#94a3b8; padding:8px 0;">لا توجد أيام مسجلة بعد.</div>';
                                                 }
 
                                                 function loadDailyNoteForDate() {
+                                                    if (!isDailyNotesUnlocked) return;
                                                     const dateInput = document.getElementById('dailyNoteDate');
                                                     const noteInput = document.getElementById('dailyNoteText');
                                                     if (!dateInput || !noteInput) return;
@@ -4867,6 +5006,7 @@ html, body {
                                                 }
 
                                                 function selectDailyNote(date) {
+                                                    if (!isDailyNotesUnlocked) return;
                                                     const dateInput = document.getElementById('dailyNoteDate');
                                                     if (!dateInput || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
                                                     dateInput.value = date;
@@ -4879,34 +5019,192 @@ html, body {
                                                         return;
                                                     }
                                                     const modal = document.getElementById('dailyNotesModal');
-                                                    const dateInput = document.getElementById('dailyNoteDate');
-                                                    const list = document.getElementById('dailyNotesList');
-                                                    if (!modal || !dateInput || !list) return;
-                                                    const today = new Date(getServerTime());
-                                                    dateInput.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-                                                    document.getElementById('dailyNoteText').value = '';
+                                                    const lock = document.getElementById('dailyNotesLock');
+                                                    const content = document.getElementById('dailyNotesContent');
+                                                    if (!modal || !lock || !content) return;
+                                                    isDailyNotesUnlocked = false;
+                                                    myDailyNotes = {};
+                                                    content.classList.add('hidden');
+                                                    lock.classList.remove('hidden');
+                                                    setDailyNotesPasswordMode(false);
                                                     modal.classList.remove('hidden');
-                                                    list.innerHTML = '<div style="color:#94a3b8;">جاري تحميل الأيام المسجلة...</div>';
+                                                    document.getElementById('dailyNotesLockMessage').textContent = 'جاري التحقق من كلمة مرور السجل...';
                                                     try {
-                                                        const snapshot = await db.ref(`users/${currentUser.username}/dailyNotes`).once('value');
-                                                        myDailyNotes = snapshot.val() || {};
+                                                        const snapshot = await db.ref(`users/${currentUser.username}/dailyNotesPassword`).once('value');
+                                                        dailyNotesPasswordRecord = snapshot.val();
+                                                        setDailyNotesPasswordMode(!dailyNotesPasswordRecord);
+                                                        document.getElementById('dailyNotesPassword').focus();
+                                                    } catch (error) {
+                                                        console.error('فشل تحميل إعداد كلمة مرور السجل اليومي:', error);
+                                                        document.getElementById('dailyNotesLockMessage').textContent = 'تعذر تحميل إعدادات القفل.';
+                                                        document.getElementById('dailyNotesLockError').textContent = error.message;
+                                                    }
+                                                }
+
+                                                async function unlockDailyNotes() {
+                                                    if (!currentUser || currentUser.role === 'admin') {
+                                                        alert('سجل اليومي متاح للموظفين فقط.');
+                                                        return;
+                                                    }
+                                                    if (!isDatabaseConnected) {
+                                                        document.getElementById('dailyNotesLockError').textContent = 'الاتصال بقاعدة البيانات مقطوع. حاول مرة أخرى بعد عودة الاتصال.';
+                                                        return;
+                                                    }
+                                                    const passwordInput = document.getElementById('dailyNotesPassword');
+                                                    const confirmInput = document.getElementById('dailyNotesPasswordConfirm');
+                                                    const button = document.getElementById('dailyNotesUnlockBtn');
+                                                    const error = document.getElementById('dailyNotesLockError');
+                                                    const password = passwordInput.value;
+                                                    error.textContent = '';
+                                                    if (!password) {
+                                                        error.textContent = 'اكتب كلمة المرور أولًا.';
+                                                        return;
+                                                    }
+                                                    if (dailyNotesPasswordSetup && password.length < 6) {
+                                                        error.textContent = 'كلمة المرور لازم تكون 6 أحرف على الأقل.';
+                                                        return;
+                                                    }
+                                                    if (dailyNotesPasswordSetup && password !== confirmInput.value) {
+                                                        error.textContent = 'كلمتا المرور غير متطابقتين.';
+                                                        return;
+                                                    }
+                                                    button.disabled = true;
+                                                    button.textContent = dailyNotesPasswordSetup ? 'جاري حفظ كلمة المرور...' : 'جاري التحقق...';
+                                                    try {
+                                                        let encryptionKey;
+                                                        if (dailyNotesPasswordSetup) {
+                                                            const saltBytes = window.crypto.getRandomValues(new Uint8Array(16));
+                                                            const salt = bytesToBase64(saltBytes);
+                                                            const encryptionSalt = bytesToBase64(window.crypto.getRandomValues(new Uint8Array(16)));
+                                                            const record = {
+                                                                algorithm: 'PBKDF2-SHA256',
+                                                                iterations: 120000,
+                                                                salt,
+                                                                hash: await hashDailyNotesPassword(password, salt, 120000),
+                                                                encryptionSalt
+                                                            };
+                                                            encryptionKey = await deriveDailyNotesEncryptionKey(password, encryptionSalt, record.iterations);
+                                                            const notesSnapshot = await db.ref(`users/${currentUser.username}/dailyNotes`).once('value');
+                                                            const savedNotes = notesSnapshot.val() || {};
+                                                            const updates = {
+                                                                [`users/${currentUser.username}/dailyNotesPassword`]: record
+                                                            };
+                                                            for (const [date, note] of Object.entries(savedNotes)) {
+                                                                if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !note || typeof note !== 'object' ||
+                                                                    typeof note.note !== 'string') continue;
+                                                                const { note: plainText, ...metadata } = note;
+                                                                updates[`users/${currentUser.username}/dailyNotes/${date}`] = {
+                                                                    ...metadata,
+                                                                    ...await encryptDailyNoteText(plainText, encryptionKey)
+                                                                };
+                                                            }
+                                                            await db.ref().update(updates);
+                                                            dailyNotesPasswordRecord = record;
+                                                        } else {
+                                                            const record = dailyNotesPasswordRecord;
+                                                            if (!record || record.algorithm !== 'PBKDF2-SHA256' ||
+                                                                !Number.isInteger(record.iterations) || !record.salt || !record.hash || !record.encryptionSalt) {
+                                                                throw new Error('إعداد كلمة المرور غير صالح. أغلق النافذة وأعد فتحها.');
+                                                            }
+                                                            const enteredHash = await hashDailyNotesPassword(password, record.salt, record.iterations);
+                                                            if (enteredHash !== record.hash) {
+                                                                error.textContent = 'كلمة المرور غير صحيحة.';
+                                                                return;
+                                                            }
+                                                            encryptionKey = await deriveDailyNotesEncryptionKey(
+                                                                password,
+                                                                record.encryptionSalt,
+                                                                record.iterations
+                                                            );
+                                                        }
+
+                                                        const notesSnapshot = await db.ref(`users/${currentUser.username}/dailyNotes`).once('value');
+                                                        const savedNotes = notesSnapshot.val() || {};
+                                                        myDailyNotes = {};
+                                                        const legacyUpdates = {};
+                                                        for (const [date, note] of Object.entries(savedNotes)) {
+                                                            if (!note || typeof note !== 'object') continue;
+                                                            if (note.encrypted === true) {
+                                                                myDailyNotes[date] = {
+                                                                    ...note,
+                                                                    note: await decryptDailyNoteText(note, encryptionKey)
+                                                                };
+                                                            } else if (typeof note.note === 'string') {
+                                                                myDailyNotes[date] = note;
+                                                                const { note: plainText, ...metadata } = note;
+                                                                legacyUpdates[`users/${currentUser.username}/dailyNotes/${date}`] = {
+                                                                    ...metadata,
+                                                                    ...await encryptDailyNoteText(plainText, encryptionKey)
+                                                                };
+                                                            }
+                                                        }
+                                                        if (Object.keys(legacyUpdates).length) {
+                                                            await db.ref().update(legacyUpdates);
+                                                        }
+                                                        dailyNotesEncryptionKey = encryptionKey;
+                                                        isDailyNotesUnlocked = true;
+                                                        document.getElementById('dailyNotesLock').classList.add('hidden');
+                                                        document.getElementById('dailyNotesContent').classList.remove('hidden');
+                                                        const today = new Date(getServerTime());
+                                                        document.getElementById('dailyNoteDate').value =
+                                                            `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+                                                        document.getElementById('dailyNoteText').value = '';
                                                         renderDailyNotes();
                                                         loadDailyNoteForDate();
                                                     } catch (error) {
-                                                        console.error('فشل تحميل السجل اليومي:', error);
-                                                        list.innerHTML = '<div style="color:#fb7185;">تعذر تحميل الأيام المسجلة.</div>';
-                                                        alert(`تعذر تحميل السجل اليومي: ${error.message}`);
+                                                        console.error('فشل فتح السجل اليومي:', error);
+                                                        document.getElementById('dailyNotesLockError').textContent = `تعذر فتح السجل: ${error.message}`;
+                                                    } finally {
+                                                        button.disabled = false;
+                                                        button.textContent = dailyNotesPasswordSetup ? 'حفظ كلمة المرور وفتح السجل' : 'فتح السجل';
                                                     }
                                                 }
 
                                                 function closeDailyNotes() {
                                                     const modal = document.getElementById('dailyNotesModal');
                                                     if (modal) modal.classList.add('hidden');
+                                                    isDailyNotesUnlocked = false;
+                                                    myDailyNotes = {};
+                                                    dailyNotesEncryptionKey = null;
+                                                    const content = document.getElementById('dailyNotesContent');
+                                                    const lock = document.getElementById('dailyNotesLock');
+                                                    if (content) content.classList.add('hidden');
+                                                    if (lock) lock.classList.remove('hidden');
+                                                    const passwordInput = document.getElementById('dailyNotesPassword');
+                                                    const confirmInput = document.getElementById('dailyNotesPasswordConfirm');
+                                                    if (passwordInput) passwordInput.value = '';
+                                                    if (confirmInput) confirmInput.value = '';
+                                                }
+
+                                                async function deleteDailyNote(date) {
+                                                    if (!currentUser || currentUser.role === 'admin' || !isDailyNotesUnlocked ||
+                                                        !/^\d{4}-\d{2}-\d{2}$/.test(date) || !myDailyNotes[date]) return;
+                                                    if (!isDatabaseConnected) {
+                                                        alert('الاتصال بقاعدة البيانات مقطوع. حاول مرة أخرى بعد عودة الاتصال.');
+                                                        return;
+                                                    }
+                                                    if (!confirm(`هل تريد حذف ملاحظة يوم ${getDailyNoteDateLabel(date)}؟`)) return;
+                                                    try {
+                                                        await db.ref(`users/${currentUser.username}/dailyNotes/${date}`).remove();
+                                                        delete myDailyNotes[date];
+                                                        if (document.getElementById('dailyNoteDate').value === date) {
+                                                            document.getElementById('dailyNoteText').value = '';
+                                                        }
+                                                        renderDailyNotes();
+                                                        alert('تم حذف الملاحظة.');
+                                                    } catch (error) {
+                                                        console.error('فشل حذف ملاحظة من السجل اليومي:', error);
+                                                        alert(`تعذر حذف الملاحظة: ${error.message}`);
+                                                    }
                                                 }
 
                                                 async function saveDailyNote() {
                                                     if (!currentUser || currentUser.role === 'admin') {
                                                         alert('سجل اليومي متاح للموظفين فقط.');
+                                                        return;
+                                                    }
+                                                    if (!isDailyNotesUnlocked) {
+                                                        alert('افتح السجل بكلمة المرور أولًا.');
                                                         return;
                                                     }
                                                     if (!isDatabaseConnected) {
@@ -4923,10 +5221,13 @@ html, body {
                                                     const originalText = button.innerText;
                                                     button.disabled = true;
                                                     button.innerText = 'جاري الحفظ...';
-                                                    const note = { note: noteText, updatedAt: getServerTime() };
                                                     try {
+                                                        const note = {
+                                                            ...await encryptDailyNoteText(noteText, dailyNotesEncryptionKey),
+                                                            updatedAt: getServerTime()
+                                                        };
                                                         await db.ref(`users/${currentUser.username}/dailyNotes/${date}`).set(note);
-                                                        myDailyNotes[date] = note;
+                                                        myDailyNotes[date] = { note: noteText, updatedAt: note.updatedAt };
                                                         renderDailyNotes();
                                                         alert('تم حفظ ملاحظة اليوم بنجاح.');
                                                     } catch (error) {
@@ -5014,7 +5315,8 @@ html, body {
 
                                                 function chooseCsApprovalAgent(agents, excludedUsernames = []) {
                                                     const availableAgents = agents.filter(agent =>
-                                                        agent && agent.username && !excludedUsernames.includes(agent.username)
+                                                        agent && agent.username && agent.isCSAvailable !== false &&
+                                                        !excludedUsernames.includes(agent.username)
                                                     );
                                                     if (availableAgents.length === 0) return null;
 
@@ -5031,6 +5333,44 @@ html, body {
                                                     );
                                                     const selectionPool = differentAgents.length ? differentAgents : availableAgents;
                                                     return selectionPool[Math.floor(Math.random() * selectionPool.length)];
+                                                }
+
+                                                const csUnavailableReassignmentInProgress = new Set();
+                                                function reassignUnavailableCsRequests() {
+                                                    Object.entries(csApprovalRequests || {}).forEach(([requestKey, request]) => {
+                                                        if (!request || request.status !== 'pending' || !request.assignedTo ||
+                                                            (allUsersData[request.assignedTo] &&
+                                                                allUsersData[request.assignedTo].isCS &&
+                                                                allUsersData[request.assignedTo].isCSAvailable !== false) ||
+                                                            csUnavailableReassignmentInProgress.has(requestKey)) return;
+
+                                                        csUnavailableReassignmentInProgress.add(requestKey);
+                                                        const declinedBy = request.declinedBy || {};
+                                                        const availableAgents = Object.values(allUsersData || {}).filter(user =>
+                                                            user && user.isCS && user.username && !MANAGERS.includes(user.username) &&
+                                                            user.isCSAvailable !== false && !declinedBy[user.username]
+                                                        );
+                                                        const nextAgent = chooseCsApprovalAgent(availableAgents);
+                                                        db.ref(`csApprovalRequests/${requestKey}`).transaction(currentRequest => {
+                                                            if (!currentRequest || currentRequest.status !== 'pending' ||
+                                                                currentRequest.assignedTo !== request.assignedTo) return;
+                                                            return {
+                                                                ...currentRequest,
+                                                                assignedTo: nextAgent ? nextAgent.username : null,
+                                                                assignedToName: nextAgent
+                                                                    ? (nextAgent.realName || nextAgent.username)
+                                                                    : 'صندوق المكالمات المتاحة',
+                                                                assignedAt: getServerTime(),
+                                                                poolAvailable: !nextAgent,
+                                                                snoozedUntil: null,
+                                                                snoozedBy: null
+                                                            };
+                                                        }).catch(error => {
+                                                            console.error('فشل تحويل طلب خدمة العملاء من موظف غير متاح:', error);
+                                                        }).finally(() => {
+                                                            csUnavailableReassignmentInProgress.delete(requestKey);
+                                                        });
+                                                    });
                                                 }
 
                                                 function renderCsContactAction(entries) {
@@ -5150,7 +5490,14 @@ html, body {
                                                         csApprovalExpiryTimer = setTimeout(renderCsApprovalRequests, nextExpiry - now);
                                                     }
 
-                                                    if (inboxContainer && currentUser.isCS) {
+                                                    if (inboxContainer && currentUser.isCS && currentUser.isCSAvailable === false) {
+                                                        inboxContainer.innerHTML = '<p style="color:#fbbf24;">استقبال المكالمات متوقف لهذا الحساب حاليًا. تواصل مع المشرف لإعادة تفعيله.</p>';
+                                                        const pendingCount = document.getElementById('csApprovalPendingCount');
+                                                        if (pendingCount) {
+                                                            pendingCount.innerText = '0';
+                                                            pendingCount.classList.add('hidden');
+                                                        }
+                                                    } else if (inboxContainer && currentUser.isCS) {
                                                         const receivedCount = entries.filter(([, request]) =>
                                                             request.requesterUsername !== currentUser.username &&
                                                             (request.assignedTo === currentUser.username ||
@@ -5280,9 +5627,10 @@ html, body {
                                                     const button = document.getElementById('csContactRequestBtn');
                                                     if (!button) return;
                                                     const agents = Object.values(allUsersData || {})
-                                                        .filter(user => user && user.isCS && user.username && !MANAGERS.includes(user.username));
+                                                        .filter(user => user && user.isCS && user.username &&
+                                                            user.isCSAvailable !== false && !MANAGERS.includes(user.username));
                                                     if (agents.length === 0) {
-                                                        alert('لا يوجد موظفو خدمة عملاء متاحون حاليًا.');
+                                                        alert('لا يوجد موظف خدمة عملاء متاح لاستلام المكالمة حاليًا. أبلغ المشرف لتفعيل موظف متاح.');
                                                         return;
                                                     }
                                                     const targetAgent = chooseCsApprovalAgent(agents);
@@ -5325,7 +5673,8 @@ html, body {
                                                 }
 
                                                 async function respondToCsApprovalRequest(requestKey, decision) {
-                                                    if (!currentUser || !currentUser.isCS || currentUser.role === 'admin' || currentUser.isOnBreak) {
+                                                    if (!currentUser || !currentUser.isCS || currentUser.isCSAvailable === false ||
+                                                        currentUser.role === 'admin' || currentUser.isOnBreak) {
                                                         alert('الرد على الطلبات متاح لموظف خدمة العملاء أثناء العمل فقط.');
                                                         return;
                                                     }
@@ -5420,7 +5769,8 @@ html, body {
                                                 }
 
                                                 async function muteSharedCsCall(requestKey) {
-                                                    if (!currentUser || !currentUser.isCS || currentUser.role === 'admin' || currentUser.isOnBreak) {
+                                                    if (!currentUser || !currentUser.isCS || currentUser.isCSAvailable === false ||
+                                                        currentUser.role === 'admin' || currentUser.isOnBreak) {
                                                         alert('كتم جرس المكالمة متاح لموظف خدمة العملاء أثناء العمل فقط.');
                                                         return;
                                                     }
@@ -5466,6 +5816,7 @@ html, body {
                                                     csApprovalRequests = snap.val() || {};
                                                     renderCsApprovalRequests();
                                                     renderAdminCsApprovalHistory();
+                                                    reassignUnavailableCsRequests();
                                                 }, error => {
                                                     console.error('فشل تحميل طلبات خدمة العملاء:', error);
                                                 });
@@ -6318,6 +6669,8 @@ html, body {
                                                         if (pending) { if (ring.paused) ring.play().catch(e=>{}); } else { ring.pause(); ring.currentTime = 0; }
                                                     }
                                                     allUsersData = newData;
+                                                    reassignUnavailableCsRequests();
+                                                    renderAdminCsAvailability();
                                                     updateLoginUserOptions();
                                                     if (currentUser) {
                                                         renderBroadcastLog(); // ضيف السطر ده هنا عشان أول ما يتعرف عليك يظهر التوجيهات فوراً
@@ -6562,26 +6915,6 @@ html, body {
                                                 
                                                 // متغير لمنع تشغيل الصوت عند تحميل الصفحة لأول مرة للرسائل القديمة
                                                 let isInitialLoad = true;
-                // --- تسجيل وقت الحضور (Clock-In) ---
-                const todayKey = getServerDateKey();
-                const attendanceRef = db.ref(`users/${currentUser.username}/attendance/${todayKey}`);
-                const dbTime = getServerTime24h();
-                const displayTime = getServerTimeString();
-
-                attendanceRef.once('value', (snap) => {
-                    if (!snap.exists() || !snap.val().clockIn) {
-                        attendanceRef.update({
-                            clockIn: dbTime,
-                            clockInDisplay: displayTime,
-                            status: "Present",
-                            date: todayKey,
-                            lastSeen: displayTime
-                        });
-                    } else {
-                        attendanceRef.update({ lastSeen: displayTime });
-                    }
-                });
-                // ----------------------------------
                                                 // --- نظام رفع الصور الجديد ---
                                                 function updateMyProfilePic() { document.getElementById('selfPicInput').click(); }
 
@@ -7670,6 +8003,7 @@ function renderMyBreakReport() {
                                                     const stopArea = document.getElementById('stopArea');
 
                                                     if (u.isCS) {
+                                                        renderCsSelfAvailabilityControl();
                                                         // لو الموظف خدمة عملاء (CS)
                                                         if (!u.isOnBreak) {
                                                             // وهو شغال (مش في بريك):
@@ -8280,7 +8614,6 @@ if (sohraBtn) {
 
                                                         // اللقب
                                                         const funTitle = u.funTitle ? `<span style="color:#ffd700">${u.funTitle}</span>` : '---';
-
                                                         tb.innerHTML += `
                                                         <tr>
                                                             <td>${u.realName || u.username}</td>
@@ -8299,6 +8632,91 @@ if (sohraBtn) {
                                                             </td>
                                                         </tr>`;
                                                     });
+                                                }
+
+                                                window.toggleCsAgentAvailability = async function(username, makeAvailable) {
+                                                    if (!currentUser) {
+                                                        alert('تعذر تحديد المستخدم الحالي.');
+                                                        return;
+                                                    }
+                                                    try {
+                                                        username = decodeURIComponent(username);
+                                                    } catch (error) {
+                                                        alert('تعذر تحديد حساب موظف خدمة العملاء.');
+                                                        return;
+                                                    }
+                                                    const isSelf = currentUser.username === username;
+                                                    const isAdmin = currentUser.role === 'admin';
+                                                    if (!isSelf && !isAdmin) {
+                                                        alert('يمكنك تغيير حالة استقبال المكالمات لحسابك فقط.');
+                                                        return;
+                                                    }
+                                                    const agent = allUsersData[username];
+                                                    if (!agent || !agent.isCS) {
+                                                        alert('الحساب المحدد غير مفعّل كموظف خدمة عملاء.');
+                                                        return;
+                                                    }
+
+                                                    const button = isSelf
+                                                        ? document.getElementById('csSelfAvailabilityButton')
+                                                        : null;
+                                                    try {
+                                                        if (button) {
+                                                            button.disabled = true;
+                                                            button.textContent = '⏳ جاري التحديث...';
+                                                        }
+                                                        await db.ref(`users/${username}/isCSAvailable`).set(makeAvailable);
+                                                        agent.isCSAvailable = makeAvailable;
+                                                        if (isSelf) {
+                                                            currentUser.isCSAvailable = makeAvailable;
+                                                            renderCsSelfAvailabilityControl();
+                                                            renderCsApprovalRequests();
+                                                            alert(makeAvailable
+                                                                ? 'تم تفعيل استقبال المكالمات لحسابك.'
+                                                                : 'تم إيقاف استقبال المكالمات لحسابك وتحويل الطلبات المعلقة.');
+                                                        }
+                                                        renderAdminCsAvailability();
+                                                    } catch (error) {
+                                                        console.error('فشل تحديث إتاحة موظف خدمة العملاء:', error);
+                                                        alert(`تعذر تحديث الإتاحة: ${error.message}`);
+                                                        renderCsSelfAvailabilityControl();
+                                                    } finally {
+                                                        if (button) button.disabled = false;
+                                                    }
+                                                };
+
+                                                function renderCsSelfAvailabilityControl() {
+                                                    const control = document.getElementById('csSelfAvailabilityControl');
+                                                    const status = document.getElementById('csSelfAvailabilityStatus');
+                                                    const button = document.getElementById('csSelfAvailabilityButton');
+                                                    if (!control || !status || !button || !currentUser || !currentUser.isCS) return;
+                                                    const isAvailable = currentUser.isCSAvailable !== false;
+                                                    control.classList.remove('hidden');
+                                                    status.textContent = isAvailable ? 'متاح لاستقبال المكالمات' : 'متوقف عن استقبال المكالمات';
+                                                    status.style.color = isAvailable ? 'var(--success)' : 'var(--warning)';
+                                                    button.className = `btn btn-sm ${isAvailable ? 'btn-danger' : 'btn-success'}`;
+                                                    button.textContent = isAvailable ? '⏸️ إيقاف الاستقبال' : '🎧 تفعيل الاستقبال';
+                                                    button.disabled = false;
+                                                }
+
+                                                function renderAdminCsAvailability() {
+                                                    const container = document.getElementById('adminCsAvailabilityList');
+                                                    if (!container) return;
+                                                    const agents = Object.values(allUsersData || {}).filter(user =>
+                                                        user && user.isCS && user.username && !MANAGERS.includes(user.username)
+                                                    );
+                                                    if (!agents.length) {
+                                                        container.innerHTML = '<span style="color:#94a3b8;">لا يوجد موظفون مفعّلون لخدمة العملاء.</span>';
+                                                        return;
+                                                    }
+                                                    container.innerHTML = agents.map(agent => {
+                                                        const isAvailable = agent.isCSAvailable !== false;
+                                                        const label = escapeHtml(agent.realName || agent.username);
+                                                        return `<div style="display:flex; align-items:center; gap:10px; background:rgba(0,0,0,0.2); border-radius:12px; padding:10px 12px;">
+                                                            <strong>${label}</strong>
+                                                            <button onclick="toggleCsAgentAvailability('${encodeURIComponent(agent.username)}', ${!isAvailable})" class="btn ${isAvailable ? 'btn-success' : 'btn-danger'} btn-sm">${isAvailable ? '🎧 متاح' : '⛔ غائب / غير متاح'}</button>
+                                                        </div>`;
+                                                    }).join('');
                                                 }
 
                                         // تأكد أن هذه الدالة موجودة مرة واحدة فقط وغير محاطة بأقواس دالة أخرى
@@ -8343,6 +8761,7 @@ if (sohraBtn) {
                         ...data, 
                         username: un, 
                         role: 'employee', 
+                        isCSAvailable: true,
                         usedSeconds: 0, 
                         prayerSeconds: 0, 
                         meetingSeconds: 0, 
@@ -11197,7 +11616,10 @@ if (sohraBtn) {
 
         // استدعاء دالة التحديث الخاصة بكل تبويب
         if(t === 'reports') updateReportSelect();
-        if(t === 'cs-reports') renderAdminCsReports(); 
+        if(t === 'cs-reports') {
+            renderAdminCsReports();
+            renderAdminCsAvailability();
+        }
         if(t === 'cs-approval-history') renderAdminCsApprovalHistory();
         if(t === 'groups') { updateMembersSelector(); renderGroupsTable(); }
         if(t === 'monitor') { populateQueueSelect(); renderPrayerQueue(); }
@@ -16301,4 +16723,3 @@ function shareFilmGameLink() {
         
                     </body>
                     </html>
-                                                          
