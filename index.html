@@ -132,11 +132,337 @@
                                                     th { background: rgba(255,255,255,0.05); color: var(--primary); padding: 15px; font-size: 0.85rem; }
                                                     td { padding: 12px; border-bottom: 1px solid var(--glass-border); text-align: center; font-size: 0.85rem; }
 
-                                                    .complaint-details-cell { min-width: 250px; max-width: 400px; text-align: right; line-height: 1.8; }
-                                                    .complaint-detail-section { padding: 8px 10px; border-right: 3px solid rgba(99, 102, 241, 0.65); border-radius: 4px 10px 10px 4px; background: rgba(255,255,255,0.035); overflow-wrap: anywhere; }
-                                                    .complaint-detail-section + .complaint-detail-section { margin-top: 8px; }
-                                                    .complaint-detail-label { display: block; margin-bottom: 3px; color: #a5b4fc; font-size: 0.76rem; font-weight: 700; }
-                                                    .complaint-detail-text { color: #f1f5f9; white-space: pre-wrap; }
+                                                    .complaint-history-table {
+                                                        min-width: 1270px;
+                                                        table-layout: fixed;
+                                                    }
+
+                                                    #profileModal > div {
+                                                        width: min(96vw, 1400px);
+                                                        max-width: 96vw !important;
+                                                    }
+
+                                                    .complaint-history-table th {
+                                                        white-space: nowrap;
+                                                    }
+
+                                                    .complaint-history-table th:nth-child(1) { width: 115px; }
+                                                    .complaint-history-table th:nth-child(2) { width: 170px; }
+                                                    .complaint-history-table th:nth-child(3) { width: 400px; }
+                                                    .complaint-history-table th:nth-child(4) { width: 105px; }
+                                                    .complaint-history-table th:nth-child(5) { width: 240px; }
+                                                    .complaint-history-table th:nth-child(6) { width: 130px; }
+                                                    .complaint-history-table th:nth-child(7) { width: 110px; }
+
+                                                    .complaint-history-table tbody tr {
+                                                        background: rgba(15, 23, 42, 0.58);
+                                                        transition: background 0.2s ease;
+                                                    }
+
+                                                    .complaint-history-table tbody tr:hover {
+                                                        background: rgba(99, 102, 241, 0.1);
+                                                    }
+
+                                                    .complaint-history-table ::selection {
+                                                        color: #fff;
+                                                        background: rgba(99, 102, 241, 0.48);
+                                                    }
+
+                                                    .complaint-history-table td {
+                                                        vertical-align: top;
+                                                        line-height: 1.7;
+                                                        overflow-wrap: anywhere;
+                                                    }
+
+                                                    .complaint-type-badge {
+                                                        display: inline-flex;
+                                                        align-items: center;
+                                                        gap: 5px;
+                                                        white-space: nowrap;
+                                                        padding: 4px 9px;
+                                                        border-radius: 999px;
+                                                        font-size: 0.75rem;
+                                                        font-weight: 800;
+                                                    }
+
+                                                    .complaint-type-badge.is-deduction {
+                                                        color: #fecaca;
+                                                        border: 1px solid rgba(248, 113, 113, 0.4);
+                                                        background: rgba(239, 68, 68, 0.16);
+                                                    }
+
+                                                    .complaint-type-badge.is-warning {
+                                                        color: #bfdbfe;
+                                                        border: 1px solid rgba(96, 165, 250, 0.4);
+                                                        background: rgba(59, 130, 246, 0.16);
+                                                    }
+
+                                                    .complaint-details-cell {
+                                                        min-width: 0;
+                                                        text-align: right;
+                                                    }
+
+                                                    .complaint-detail-section {
+                                                        padding: 10px 12px;
+                                                        border: 1px solid rgba(148, 163, 184, 0.13);
+                                                        border-right: 3px solid rgba(99, 102, 241, 0.75);
+                                                        border-radius: 12px;
+                                                        background: rgba(255, 255, 255, 0.035);
+                                                        overflow-wrap: anywhere;
+                                                    }
+
+                                                    .complaint-detail-section + .complaint-detail-section {
+                                                        margin-top: 8px;
+                                                    }
+
+                                                    .complaint-detail-section.is-client {
+                                                        border-right-color: #22d3ee;
+                                                        background: rgba(6, 182, 212, 0.075);
+                                                    }
+
+                                                    .complaint-detail-section.is-quality {
+                                                        border-right-color: #a78bfa;
+                                                        background: rgba(139, 92, 246, 0.075);
+                                                    }
+
+                                                    .complaint-detail-section.is-agent {
+                                                        border-right-color: #34d399;
+                                                        background: rgba(16, 185, 129, 0.075);
+                                                    }
+
+                                                    .complaint-detail-section.is-employee {
+                                                        border-right-color: #fbbf24;
+                                                        background: rgba(245, 158, 11, 0.075);
+                                                    }
+
+                                                    .complaint-detail-label {
+                                                        display: block;
+                                                        margin-bottom: 5px;
+                                                        color: #a5b4fc;
+                                                        font-size: 0.76rem;
+                                                        font-weight: 800;
+                                                    }
+
+                                                    .complaint-detail-section.is-client .complaint-detail-label { color: #67e8f9; }
+                                                    .complaint-detail-section.is-quality .complaint-detail-label { color: #c4b5fd; }
+                                                    .complaint-detail-section.is-agent .complaint-detail-label { color: #6ee7b7; }
+                                                    .complaint-detail-section.is-employee .complaint-detail-label { color: #fcd34d; }
+
+                                                    .complaint-detail-text {
+                                                        color: #f1f5f9;
+                                                        white-space: pre-wrap;
+                                                        line-height: 1.85;
+                                                    }
+
+                                                    .complaint-deduction-amount {
+                                                        display: inline-block;
+                                                        padding: 4px 10px;
+                                                        border: 1px solid rgba(251, 191, 36, 0.3);
+                                                        border-radius: 999px;
+                                                        background: rgba(245, 158, 11, 0.12);
+                                                        color: #fcd34d;
+                                                        font-weight: 800;
+                                                        white-space: nowrap;
+                                                    }
+
+                                                    .complaint-proof-cell .audio-wrapper {
+                                                        box-sizing: border-box;
+                                                        width: 100% !important;
+                                                        max-width: 320px;
+                                                        margin-inline: auto;
+                                                    }
+
+                                                    .complaint-proof-content {
+                                                        display: grid;
+                                                        justify-items: center;
+                                                        gap: 10px;
+                                                        min-width: 0;
+                                                        width: 100%;
+                                                    }
+
+                                                    .complaint-evidence-button {
+                                                        display: inline-flex;
+                                                        align-items: center;
+                                                        justify-content: center;
+                                                        gap: 8px;
+                                                        min-height: 42px;
+                                                        padding-inline: 14px;
+                                                        white-space: nowrap;
+                                                    }
+
+                                                    .complaint-audio-title {
+                                                        margin-bottom: 8px;
+                                                        color: #a5b4fc;
+                                                        font-size: 0.82rem;
+                                                        font-weight: 800;
+                                                        text-align: center;
+                                                    }
+
+                                                    .complaint-audio-player {
+                                                        display: block;
+                                                        box-sizing: border-box;
+                                                        width: 100%;
+                                                        max-width: 100%;
+                                                        height: 45px;
+                                                    }
+
+                                                    .complaint-audio-actions {
+                                                        display: grid;
+                                                        grid-template-columns: repeat(2, minmax(0, 1fr));
+                                                        gap: 8px;
+                                                        margin-top: 8px;
+                                                    }
+
+                                                    .complaint-audio-actions button {
+                                                        width: 100%;
+                                                        padding-inline: 6px !important;
+                                                        min-height: 40px;
+                                                    }
+
+                                                    .complaint-history-table .complaint-action-cell > * + * {
+                                                        margin-top: 6px;
+                                                    }
+
+                                                    @media (max-width: 1100px) {
+                                                        #profileModal > div {
+                                                            width: min(100%, 800px);
+                                                            padding: 22px !important;
+                                                        }
+
+                                                        #profileModal .complaint-history-filters {
+                                                            width: 100%;
+                                                            flex-wrap: wrap;
+                                                            align-items: center;
+                                                            gap: 7px !important;
+                                                            margin-top: 10px;
+                                                        }
+
+                                                        #profileModal .complaint-history-filters input[type="date"] {
+                                                            flex: 1 1 120px;
+                                                            width: auto !important;
+                                                            min-width: 0;
+                                                            font-size: 14px !important;
+                                                        }
+
+                                                        #profileModal .complaint-history-filters button {
+                                                            min-width: 44px;
+                                                            min-height: 42px;
+                                                        }
+
+                                                        .complaint-history-wrapper {
+                                                            overflow: visible;
+                                                            border: 0;
+                                                            margin-inline: -4px;
+                                                        }
+
+                                                        .complaint-history-table {
+                                                            display: block;
+                                                            width: 100%;
+                                                            min-width: 0 !important;
+                                                            background: transparent;
+                                                        }
+
+                                                        .complaint-history-table thead {
+                                                            display: none;
+                                                        }
+
+                                                        .complaint-history-table tbody {
+                                                            display: grid;
+                                                            gap: 12px;
+                                                        }
+
+                                                        .complaint-history-table tbody tr {
+                                                            display: grid;
+                                                            gap: 0;
+                                                            padding: 8px 12px;
+                                                            border: 1px solid rgba(129, 140, 248, 0.25);
+                                                            border-radius: 16px;
+                                                            background: linear-gradient(145deg, rgba(30, 41, 59, 0.96), rgba(15, 23, 42, 0.94));
+                                                            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
+                                                        }
+
+                                                        .complaint-history-table tbody tr:hover {
+                                                            background: linear-gradient(145deg, rgba(37, 50, 76, 0.98), rgba(15, 23, 42, 0.96));
+                                                        }
+
+                                                        .complaint-history-table td {
+                                                            display: grid;
+                                                            grid-template-columns: minmax(76px, 0.32fr) minmax(0, 1fr);
+                                                            align-items: start;
+                                                            gap: 10px;
+                                                            padding: 10px 2px !important;
+                                                            border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+                                                            text-align: right !important;
+                                                        }
+
+                                                        .complaint-history-table td:last-child {
+                                                            border-bottom: 0;
+                                                        }
+
+                                                        .complaint-history-table td::before {
+                                                            content: attr(data-label);
+                                                            color: #94a3b8;
+                                                            font-size: 0.76rem;
+                                                            font-weight: 700;
+                                                        }
+
+                                                        .complaint-history-table .complaint-details-cell {
+                                                            display: block;
+                                                            padding-top: 12px !important;
+                                                            background: transparent !important;
+                                                        }
+
+                                                        .complaint-history-table .complaint-details-cell::before {
+                                                            display: block;
+                                                            margin-bottom: 9px;
+                                                            color: #67e8f9;
+                                                        }
+
+                                                        .complaint-detail-section {
+                                                            padding: 9px 10px;
+                                                        }
+
+                                                        .complaint-history-table .complaint-proof-cell {
+                                                            display: block;
+                                                            box-sizing: border-box;
+                                                            width: 100% !important;
+                                                            min-width: 0;
+                                                            padding-top: 12px !important;
+                                                        }
+
+                                                        .complaint-history-table .complaint-proof-cell::before {
+                                                            display: block;
+                                                            margin-bottom: 9px;
+                                                        }
+
+                                                        .complaint-proof-content {
+                                                            justify-items: stretch;
+                                                            box-sizing: border-box;
+                                                            width: 100%;
+                                                        }
+
+                                                        .complaint-history-table .complaint-action-cell {
+                                                            display: flex;
+                                                            flex-wrap: wrap;
+                                                            align-items: center;
+                                                            gap: 8px;
+                                                        }
+
+                                                        .complaint-history-table .complaint-action-cell::before {
+                                                            width: 100%;
+                                                        }
+
+                                                        .complaint-history-table .complaint-action-cell > * + * {
+                                                            margin-top: 0;
+                                                        }
+
+                                                        .complaint-proof-cell .audio-wrapper {
+                                                            box-sizing: border-box;
+                                                            width: 100% !important;
+                                                            min-width: 0;
+                                                            max-width: none;
+                                                        }
+                                                    }
 
                                                     /* العداد الدائري */
     .timer-container { 
@@ -2275,6 +2601,36 @@
         color: white;
         border-bottom-left-radius: 4px;
     }
+    .chat-message-bubble {
+        max-width: min(100%, 520px);
+        padding: 10px 14px;
+        border: 1px solid rgba(148, 163, 184, 0.32);
+        border-radius: 18px;
+        background: rgba(15, 23, 42, 0.96);
+        color: #f8fafc;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+        font-size: 0.9rem;
+        line-height: 1.6;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+    }
+    .chat-message-bubble.is-mine {
+        border-color: rgba(199, 210, 254, 0.38);
+        background: linear-gradient(135deg, #4f46e5, #3730a3);
+    }
+    .chat-message-sender {
+        margin: 0 10px 3px;
+        color: #c7d2fe;
+        font-size: 0.72rem;
+        font-weight: 800;
+    }
+    .chat-message-time {
+        display: block;
+        margin-top: 5px;
+        color: #e2e8f0;
+        font-size: 0.65rem;
+        opacity: 0.8;
+        text-shadow: none;
+    }
     .chat-time {
         font-size: 0.65rem;
         opacity: 0.6;
@@ -2955,7 +3311,7 @@ html, body {
                                                         <h3 style="color:var(--text-light); margin:0;">📂 السجل الوظيفي</h3>
 
                                                         <!-- قسم الفلترة الجديد -->
-                                                        <div style="display:flex; gap:5px; background:rgba(0,0,0,0.3); padding:5px; border-radius:10px; border:1px solid var(--glass-border);">
+                                                        <div class="complaint-history-filters" style="display:flex; gap:5px; background:rgba(0,0,0,0.3); padding:5px; border-radius:10px; border:1px solid var(--glass-border);">
                                                             <input type="date" id="historyDateFrom" style="margin:0; padding:5px; font-size:0.8rem; width:110px;">
                                                             <span style="color:white; align-self:center;">:</span>
                                                             <input type="date" id="historyDateTo" style="margin:0; padding:5px; font-size:0.8rem; width:110px;">
@@ -2964,8 +3320,8 @@ html, body {
                                                         </div>
                                                     </div>
 
-                                                    <div class="table-responsive">
-                                                        <table>
+                                                    <div class="table-responsive complaint-history-wrapper">
+                                                        <table id="complaintHistoryTable" class="complaint-history-table">
                                                             <thead>
                                                                 <tr>
                                                                     <th>التاريخ</th>
@@ -3203,6 +3559,11 @@ html, body {
                                 <textarea id="broadcastInput" class="form-control-glass" style="height: 100px; resize: none; font-size: 1rem; line-height: 1.5; background: rgba(0,0,0,0.5);" placeholder="اكتب هنا.. مثلاً: 'عاش يا بطل على أعلى مكالمة النهاردة!'"></textarea>
                             </div>
                         </div>
+
+                        <label for="broadcastSilent" style="display:flex; align-items:center; gap:9px; margin:0 4px 15px; color:#cbd5e1; font-size:0.9rem; cursor:pointer;">
+                            <input type="checkbox" id="broadcastSilent" style="width:18px; height:18px; accent-color:var(--primary);">
+                            🔇 إرسال التنبيه بدون صوت للموظفين
+                        </label>
 
                         <div style="display: flex; gap: 12px;">
                             <!-- زر رفع السكرين -->
@@ -3526,7 +3887,10 @@ html, body {
 
                                                     <!-- الكود الجديد: خيار خدمة العملاء -->
                                                     <label style="color:var(--primary); font-weight:bold; border:1px solid var(--primary); padding:0 10px; border-radius:10px;">
-                                                        <input type="checkbox" id="isCSAgent"> 🎧 خدمة عملاء (مكالمات + بريك فقط)
+                                                        <input type="checkbox" id="isCSAgent" onchange="if(this.checked) document.getElementById('isCSAssistant').checked=false"> 🎧 خدمة عملاء (مكالمات + بلاغات)
+                                                    </label>
+                                                    <label style="color:#06b6d4; font-weight:bold; border:1px solid #06b6d4; padding:0 10px; border-radius:10px;">
+                                                        <input type="checkbox" id="isCSAssistant" onchange="if(this.checked) document.getElementById('isCSAgent').checked=false"> 🎧 مساعد خدمة عملاء (استقبال مكالمات فقط)
                                                     </label>
     <label style="color:#a78bfa; font-weight:bold; border:1px solid #a78bfa; padding:0 10px; border-radius:10px;">
         <input type="checkbox" id="isSohraBreak"> 🌙 بريك سهرة (VIP)
@@ -3884,17 +4248,19 @@ html, body {
                                                     <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 30px; padding: 25px; text-align: center;">
                                                         
                                                         <!-- لوحة الجودة / خدمة العملاء -->
+                                                    <div id="csAvailabilityPanel" class="hidden" style="margin:20px auto; max-width:800px; padding:20px; background:var(--cs-dashboard-background, rgba(16,185,129,0.08)); border:1px solid color-mix(in srgb, var(--primary) 55%, transparent); border-radius:20px; text-align:right;">
+                                                        <h3 style="margin:0 0 12px; color:var(--primary);">📞 حالة استقبال المكالمات</h3>
+                                                        <div id="csSelfAvailabilityControl" style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; padding:12px 14px; border-radius:14px; background:rgba(0,0,0,0.18);">
+                                                            <div>
+                                                                <strong>الحالة:</strong>
+                                                                <span id="csSelfAvailabilityStatus" style="margin-inline-start:6px;"></span>
+                                                            </div>
+                                                            <button type="button" id="csSelfAvailabilityButton" class="btn btn-sm" onclick="window.toggleCsAgentAvailability(encodeURIComponent(currentUser.username), currentUser.isCSAvailable === false)">...</button>
+                                                        </div>
+                                                    </div>
                                                     <!-- لوحة خدمة العملاء المحدثة -->
-                <!-- لوحة خدمة العملاء المحدثة -->
-                <div id="csAgentDashboard" class="hidden" style="margin-top:20px;">
-                    <div style="background:var(--cs-dashboard-background, rgba(16,185,129,0.08)); border:1px solid color-mix(in srgb, var(--primary) 55%, transparent); padding:20px; border-radius:20px; margin-bottom:20px;">
-                        <div id="csSelfAvailabilityControl" style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; padding:12px 14px; margin-bottom:14px; border-radius:14px; background:rgba(0,0,0,0.18);">
-                            <div>
-                                <strong>حالة استقبال المكالمات:</strong>
-                                <span id="csSelfAvailabilityStatus" style="margin-inline-start:6px;"></span>
-                            </div>
-                            <button type="button" id="csSelfAvailabilityButton" class="btn btn-sm" onclick="window.toggleCsAgentAvailability(encodeURIComponent(currentUser.username), currentUser.isCSAvailable === false)">...</button>
-                        </div>
+                                                    <div id="csAgentDashboard" class="hidden" style="margin-top:20px;">
+                                                        <div style="background:rgba(255,255,255,0.04); border:1px solid var(--glass-border); padding:20px; border-radius:20px; margin-bottom:20px;">
                         <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
                             <h3 style="margin:0; color:var(--primary);">📥 طلبات الموظفين <span id="csApprovalPendingCount" class="badge-count hidden">0</span></h3>
                             <button type="button" id="enableCsApprovalSoundBtn" onclick="enableCsApprovalSound()" class="btn btn-warning btn-sm">🔊 تفعيل صوت الطلبات</button>
@@ -4018,8 +4384,8 @@ html, body {
         <button onclick="document.getElementById('followUpPickerModal').classList.remove('hidden')" class="btn btn-success" style="width:100%; background:#10b981;">ابدأ</button>
     </div>
                                                                 <div style="border:1px solid var(--danger); padding:8px; border-radius:15px;"><h4>🚨 طوارئ</h4><div id="emStatusArea"><button onclick="sendEmRequest()" class="btn btn-danger" style="width:100%">طلب</button></div></div>
-                                                                <div id="csContactToggleCard" class="hidden" style="border:1px solid var(--accent); padding:8px; border-radius:15px;">
-                                                                    <h4>📨 خدمة العملاء</h4>
+                                                                <div id="csContactToggleCard" class="hidden" style="border:1px solid var(--accent); padding:8px; border-radius:20px;">
+                                                                    <h4>📨خدمة العملاء</h4>
                                                                     <div id="csContactActionArea" aria-live="polite">
                                                                         <button id="csContactRequestBtn" type="button" onclick="submitCsApprovalRequest()" class="btn btn-primary" style="width:100%; background:linear-gradient(135deg, #06b6d4, #6366f1);">
                                                                             تواصل
@@ -4546,6 +4912,7 @@ html, body {
                                                 }, 8000);
                                                 let adminTypingBuffer = {}, adminSelectBuffer = {}, editingUserKey = null, soundActive = false;
                                                 let maxBreaksAllowed = 3, maxPrayersAllowed = 2, lastReceivedBroadcastID = localStorage.getItem('last_broadcast_id') || "";
+                                                let activeBroadcastSoundKey = null;
                                                 let currentProfileTarget = null; // الموظف الذي نعرض ملفه حالياً
                                                 let csAudioBase64 = null;
                                                 let csImageBase64 = null;
@@ -4805,13 +5172,13 @@ html, body {
                             }
 
                             // 1. تحديد "وسم" النوع (تنبيه أو خصم)
-                            const typeBadge = c.type === 'خصم مالي' 
-                                ? `<span style="background:#ef4444; color:white; padding:3px 8px; border-radius:6px; font-size:0.7rem; margin-left:5px; font-weight:900; box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);">💸 خصم</span>`
-                                : `<span style="background:#3b82f6; color:white; padding:3px 8px; border-radius:6px; font-size:0.7rem; margin-left:5px; font-weight:900;">📝 تنبيه</span>`;
+                            const typeBadge = c.type === 'خصم مالي'
+                                ? `<span class="complaint-type-badge is-deduction">💸 خصم مالي</span>`
+                                : `<span class="complaint-type-badge is-warning">📝 تنبيه</span>`;
 
                             // 2. معالجة عرض القيمة (نص أو رقم)
                             const displayAmount = (c.amount && c.amount !== "0" && c.amount !== "بدون خصم") 
-                                ? `<b style="color:#ffd700;">${c.amount}</b>` 
+                                ? `<span class="complaint-deduction-amount">${escapeHtml(String(c.amount))}</span>`
                                 : `<span style="color:#666;">-</span>`;
 
                             // 3. أزرار التحكم والظهور
@@ -5372,13 +5739,17 @@ html, body {
                                                     }
                                                 }
 
+                                                function isCsCallAgent(user) {
+                                                    return Boolean(user && (user.isCS || user.isCSAssistant));
+                                                }
+
                                                 function updateCsApprovalRing() {
                                                     const ring = document.getElementById('csApprovalRing');
                                                     if (!ring) return;
                                                     const hasAssignedPendingRequest = Boolean(
                                                         currentUser &&
                                                         currentUser.role !== 'admin' &&
-                                                        currentUser.isCS &&
+                                                        isCsCallAgent(currentUser) &&
                                                         soundActive &&
                                                         csApprovalSoundUnlocked &&
                                                         Object.values(csApprovalRequests || {}).some(request =>
@@ -5415,7 +5786,7 @@ html, body {
                                                     const ring = document.getElementById('csApprovalRing');
                                                     const button = document.getElementById('enableCsApprovalSoundBtn');
                                                     const status = document.getElementById('csApprovalSoundStatus');
-                                                    if (!ring || !currentUser || !currentUser.isCS) return;
+                                                    if (!ring || !isCsCallAgent(currentUser)) return;
                                                     if (button) button.disabled = true;
                                                     try {
                                                         ring.volume = 0;
@@ -5448,7 +5819,7 @@ html, body {
 
                                                 function chooseCsApprovalAgent(agents, excludedUsernames = []) {
                                                     const availableAgents = agents.filter(agent =>
-                                                        agent && agent.username && agent.isCSAvailable !== false &&
+                                                        agent && agent.username && isCsCallAgent(agent) && agent.isCSAvailable !== false &&
                                                         !excludedUsernames.includes(agent.username)
                                                     );
                                                     if (availableAgents.length === 0) return null;
@@ -5473,14 +5844,14 @@ html, body {
                                                     Object.entries(csApprovalRequests || {}).forEach(([requestKey, request]) => {
                                                         if (!request || request.status !== 'pending' || !request.assignedTo ||
                                                             (allUsersData[request.assignedTo] &&
-                                                                allUsersData[request.assignedTo].isCS &&
+                                                                isCsCallAgent(allUsersData[request.assignedTo]) &&
                                                                 allUsersData[request.assignedTo].isCSAvailable !== false) ||
                                                             csUnavailableReassignmentInProgress.has(requestKey)) return;
 
                                                         csUnavailableReassignmentInProgress.add(requestKey);
                                                         const declinedBy = request.declinedBy || {};
                                                         const availableAgents = Object.values(allUsersData || {}).filter(user =>
-                                                            user && user.isCS && user.username && !MANAGERS.includes(user.username) &&
+                                                            isCsCallAgent(user) && user.username && !MANAGERS.includes(user.username) &&
                                                             user.isCSAvailable !== false && !declinedBy[user.username]
                                                         );
                                                         const nextAgent = chooseCsApprovalAgent(availableAgents);
@@ -5511,7 +5882,7 @@ html, body {
                                                     const actionArea = document.getElementById('csContactActionArea');
                                                     if (!card || !actionArea || !currentUser) return;
 
-                                                    card.classList.toggle('hidden', currentUser.role === 'admin' || Boolean(currentUser.isCS));
+                                                    card.classList.toggle('hidden', currentUser.role === 'admin' || isCsCallAgent(currentUser));
                                                     const latestRequest = entries.find(([, request]) =>
                                                         request.requesterUsername === currentUser.username
                                                     );
@@ -5560,7 +5931,7 @@ html, body {
                                                 }
 
                                                 async function acknowledgeCsApprovalRequest(requestKey, button) {
-                                                    if (!currentUser || currentUser.role === 'admin' || currentUser.isCS) return;
+                                                    if (!currentUser || currentUser.role === 'admin' || isCsCallAgent(currentUser)) return;
                                                     if (!isDatabaseConnected) {
                                                         alert('الاتصال بقاعدة البيانات مقطوع. حاول مرة أخرى بعد عودة الاتصال.');
                                                         return;
@@ -5623,14 +5994,14 @@ html, body {
                                                         csApprovalExpiryTimer = setTimeout(renderCsApprovalRequests, nextExpiry - now);
                                                     }
 
-                                                    if (inboxContainer && currentUser.isCS && currentUser.isCSAvailable === false) {
+                                                    if (inboxContainer && isCsCallAgent(currentUser) && currentUser.isCSAvailable === false) {
                                                         inboxContainer.innerHTML = '<p style="color:#fbbf24;">استقبال المكالمات متوقف لهذا الحساب حاليًا. تواصل مع المشرف لإعادة تفعيله.</p>';
                                                         const pendingCount = document.getElementById('csApprovalPendingCount');
                                                         if (pendingCount) {
                                                             pendingCount.innerText = '0';
                                                             pendingCount.classList.add('hidden');
                                                         }
-                                                    } else if (inboxContainer && currentUser.isCS) {
+                                                    } else if (inboxContainer && isCsCallAgent(currentUser)) {
                                                         const receivedCount = entries.filter(([, request]) =>
                                                             request.requesterUsername !== currentUser.username &&
                                                             (request.assignedTo === currentUser.username ||
@@ -5739,7 +6110,7 @@ html, body {
                                                 }
 
                                                 async function submitCsApprovalRequest() {
-                                                    if (!currentUser || currentUser.role === 'admin' || currentUser.isCS) {
+                                                    if (!currentUser || currentUser.role === 'admin' || isCsCallAgent(currentUser)) {
                                                         alert('إرسال المكالمة متاح للموظفين من غير خدمة العملاء.');
                                                         return;
                                                     }
@@ -5760,7 +6131,7 @@ html, body {
                                                     const button = document.getElementById('csContactRequestBtn');
                                                     if (!button) return;
                                                     const agents = Object.values(allUsersData || {})
-                                                        .filter(user => user && user.isCS && user.username &&
+                                                        .filter(user => isCsCallAgent(user) && user.username &&
                                                             user.isCSAvailable !== false && !MANAGERS.includes(user.username));
                                                     if (agents.length === 0) {
                                                         alert('لا يوجد موظف خدمة عملاء متاح لاستلام المكالمة حاليًا. أبلغ المشرف لتفعيل موظف متاح.');
@@ -5806,7 +6177,7 @@ html, body {
                                                 }
 
                                                 async function respondToCsApprovalRequest(requestKey, decision) {
-                                                    if (!currentUser || !currentUser.isCS || currentUser.isCSAvailable === false ||
+                                                    if (!isCsCallAgent(currentUser) || currentUser.isCSAvailable === false ||
                                                         currentUser.role === 'admin' || currentUser.isOnBreak) {
                                                         alert('الرد على الطلبات متاح لموظف خدمة العملاء أثناء العمل فقط.');
                                                         return;
@@ -5829,7 +6200,7 @@ html, body {
                                                             timestamp: getServerTime()
                                                         };
                                                         const csAgents = Object.values(allUsersData || {})
-                                                            .filter(user => user && user.isCS && user.username && !MANAGERS.includes(user.username))
+                                                            .filter(user => isCsCallAgent(user) && user.username && !MANAGERS.includes(user.username))
                                                             .map(user => user.username)
                                                             .sort((a, b) => a.localeCompare(b));
                                                         if (!csAgents.includes(currentUser.username)) csAgents.push(currentUser.username);
@@ -5902,7 +6273,7 @@ html, body {
                                                 }
 
                                                 async function muteSharedCsCall(requestKey) {
-                                                    if (!currentUser || !currentUser.isCS || currentUser.isCSAvailable === false ||
+                                                    if (!isCsCallAgent(currentUser) || currentUser.isCSAvailable === false ||
                                                         currentUser.role === 'admin' || currentUser.isOnBreak) {
                                                         alert('كتم جرس المكالمة متاح لموظف خدمة العملاء أثناء العمل فقط.');
                                                         return;
@@ -6249,7 +6620,7 @@ html, body {
             }
 
             document.getElementById('forceSoundOverlay').style.display = 'none';
-            if (currentUser && currentUser.isCS) enableCsApprovalSound();
+            if (isCsCallAgent(currentUser)) enableCsApprovalSound();
             startGlobalTimer();
         }
 
@@ -6305,30 +6676,6 @@ html, body {
                                                     }
                                                 }
 
-        // الاستماع للرسائل الجديدة (نسخة مصلحة تمنع الصوت في الرسائل الصامتة)
-    db.ref('broadcasts').limitToLast(50).on('value', (snap) => { 
-            if (isInitialLoad) return; 
-
-            const b = snap.val();
-            const bKey = snap.key;
-
-            if (currentUser && currentUser.role !== 'admin') {
-                let forMe = (!b.target || b.target === 'all');
-                if(!forMe) {
-                    let targets = Array.isArray(b.target) ? b.target : [b.target];
-                    if(targets.includes(currentUser.username)) forMe = true;
-                }
-
-                if(forMe) {
-                    showBroadcastOverlay(b);
-                    // التعديل هنا: تشغيل الصوت فقط إذا لم تكن الرسالة صامتة
-                    if (soundActive && !b.silent) { 
-                        document.getElementById('broadcastSound').play().catch(e => {});
-                    }
-                }
-            }
-        });
-
                                                 // تحديث السجل فقط عند حدوث أي تغيير (إضافة أو حذف) بدون صوت
                                                 // متغير عالمي لحفظ الرسايل في الذاكرة
                                                 let cachedBroadcasts = {};
@@ -6361,7 +6708,7 @@ html, body {
                                                                 }
 
                                                         if(forMe) {
-                                                            showBroadcastOverlay(b); // هذه الدالة الآن تشغل الصوت تلقائياً
+                                                            showBroadcastOverlay(b, latestKey);
                                                         }
                                                             }
                                                         }
@@ -6389,7 +6736,10 @@ html, body {
                                                         // رسم لوحة الإدارة (الأدمن)
                                                         const adminImageTag = b.image ? `<br><img src="${b.image}" style="width:100px; border-radius:8px; margin-top:5px; cursor:pointer;" onclick="showZoomImage('${b.image}')">` : "";
                                                         if (adminLog) {
-                                                            adminLog.innerHTML += `<div style="padding:4px; border-bottom:1px solid rgba(255,255,255,0.1)"><b>[${timeStr}]</b> ${b.message} ${adminImageTag} <button onclick="deleteBroadcast('${key}')" style="background:none; border:none; color:red; cursor:pointer;">🗑</button></div>`;
+                                                            const soundControl = !b.silent && !b.soundStopped
+                                                                ? `<button onclick="stopBroadcastSound('${key}')" class="btn btn-warning btn-sm" style="margin:4px;">🔇 إيقاف الصوت</button>`
+                                                                : `<span style="color:#94a3b8; font-size:0.75rem;">🔇 الصوت متوقف</span>`;
+                                                            adminLog.innerHTML += `<div style="padding:8px 4px; border-bottom:1px solid rgba(255,255,255,0.1)"><b>[${timeStr}]</b> ${b.message || ''} ${adminImageTag}<div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">${soundControl}<button onclick="deleteBroadcast('${key}')" style="background:none; border:none; color:red; cursor:pointer;">🗑</button></div></div>`;
                                                         }
 
                                                         // رسم لوحة الموظف (بشرط يكون مسجل دخول)
@@ -6446,6 +6796,7 @@ html, body {
                                                     const imageFile = document.getElementById('broadcastImageInput').files[0];
                                                     const select = document.getElementById('broadcastTarget');
                                                     const sendBtn = document.getElementById('sendBrBtn');
+                                                    const silent = document.getElementById('broadcastSilent')?.checked === true;
 
                                                     let selectedValues = Array.from(select.selectedOptions).map(option => option.value);
                                                     if (selectedValues.length === 0) selectedValues = ['all'];
@@ -6462,16 +6813,18 @@ html, body {
                                                             imageUrl = await uploadToCloudinary(imageFile); // استخدام دالة الرفع الموجودة لديك
                                                         }
 
-                                                        db.ref('broadcasts').push({
+                                                        await db.ref('broadcasts').push({
                                                             message: msg,
                                                             image: imageUrl,
                                                             timestamp: getServerTime(),
                                                             sender: currentUser.username,
-                                                            target: selectedValues.includes('all') ? 'all' : selectedValues
+                                                            target: selectedValues.includes('all') ? 'all' : selectedValues,
+                                                            silent: silent
                                                         });
 
                                                         // إعادة ضبط الحقول
                                                         document.getElementById('broadcastInput').value = "";
+                                                        document.getElementById('broadcastSilent').checked = false;
                                                         removeBrImg();
                                                         alert("تم إرسال الإعلان بنجاح ✅");
                                                     } catch (e) {
@@ -6574,11 +6927,47 @@ html, body {
                                                         triggerGlobalRefresh(); // تحديث الشاشة
                                                     });
                                                 }
-        function showBroadcastOverlay(data) {
+        function stopBroadcastSound(key) {
+            if (!currentUser || currentUser.role !== 'admin') {
+                alert("إيقاف صوت التنبيه متاح للمشرفين فقط.");
+                return;
+            }
+
+            db.ref('broadcasts/' + key).update({
+                soundStopped: true,
+                soundStoppedBy: currentUser.realName || currentUser.username,
+                soundStoppedAt: getServerTime()
+            }).then(() => {
+                if (cachedBroadcasts[key]) cachedBroadcasts[key].soundStopped = true;
+                const sound = document.getElementById('broadcastSound');
+                if (sound) {
+                    sound.pause();
+                    sound.currentTime = 0;
+                }
+                renderBroadcastLog();
+            }).catch(error => {
+                console.error("فشل إيقاف صوت التنبيه:", error);
+                alert("تعذر إيقاف صوت التنبيه: " + error.message);
+            });
+        }
+
+        db.ref('broadcasts').on('child_changed', (snap) => {
+            const data = snap.val();
+            if (!data || !data.soundStopped || snap.key !== activeBroadcastSoundKey) return;
+
+            const sound = document.getElementById('broadcastSound');
+            if (sound) {
+                sound.pause();
+                sound.currentTime = 0;
+            }
+        });
+
+        function showBroadcastOverlay(data, broadcastKey = null) {
             const overlay = document.getElementById('broadcastOverlay');
             const msgText = document.getElementById('broadcastMsgText');
             const sound = document.getElementById('broadcastSound');
 
+            activeBroadcastSoundKey = broadcastKey;
             let contentHtml = "";
             if (data.image) {
                 contentHtml += `<img src="${data.image}" style="max-width:100%; border-radius:20px; margin-bottom:20px; border:3px solid #6366f1;">`;
@@ -6588,7 +6977,7 @@ html, body {
             overlay.style.display = 'flex';
 
             // التعديل: تشغيل الصوت فقط إذا لم تكن الرسالة محددة كصامتة (silent)
-            if (soundActive && sound && !data.silent) {
+            if (soundActive && sound && !data.silent && !data.soundStopped) {
                 sound.currentTime = 0;
                 sound.play().catch(e => console.log("Sound blocked"));
             }
@@ -8109,7 +8498,7 @@ function renderMyBreakReport() {
                                                     if(!currentUser || currentUser.role === 'admin') return;
                                                     const u = currentUser;
                                                     const csContactToggleCard = document.getElementById('csContactToggleCard');
-                                                    if (csContactToggleCard) csContactToggleCard.classList.toggle('hidden', Boolean(u.isCS));
+                                                    if (csContactToggleCard) csContactToggleCard.classList.toggle('hidden', isCsCallAgent(u));
                                                     const timerText = document.getElementById('userTimer');
                                                     const lbl = document.getElementById('timerLabel');
                                                     const msg = document.getElementById('userStatusMsg');
@@ -8132,11 +8521,15 @@ function renderMyBreakReport() {
 
                                                     // منطق خدمة العملاء (CS Agent)
                                                     const csDashboard = document.getElementById('csAgentDashboard');
+                                                    const csAvailabilityPanel = document.getElementById('csAvailabilityPanel');
+                                                    const csCallForm = document.getElementById('csCallForm');
                                                     const normalControls = document.getElementById('controlsArea');
                                                     const stopArea = document.getElementById('stopArea');
 
-                                                    if (u.isCS) {
+                                                    if (isCsCallAgent(u)) {
                                                         renderCsSelfAvailabilityControl();
+                                                        csAvailabilityPanel.classList.remove('hidden');
+                                                        if (csCallForm) csCallForm.classList.toggle('hidden', !u.isCS);
                                                         // لو الموظف خدمة عملاء (CS)
                                                         if (!u.isOnBreak) {
                                                             // وهو شغال (مش في بريك):
@@ -8162,6 +8555,8 @@ function renderMyBreakReport() {
                                                     } else {
                                                         // ... (باقي الكود للموظف العادي زي ما هو ماتغيروش) ...
                                                         csDashboard.classList.add('hidden');
+                                                        csAvailabilityPanel.classList.add('hidden');
+                                                        if (csCallForm) csCallForm.classList.add('hidden');
                                                         if (u.isOnBreak) {
                                                             normalControls.classList.add('hidden');
                                                             stopArea.classList.remove('hidden');
@@ -8785,7 +9180,7 @@ if (sohraBtn) {
                                                         return;
                                                     }
                                                     const agent = allUsersData[username];
-                                                    if (!agent || !agent.isCS) {
+                                                    if (!isCsCallAgent(agent)) {
                                                         alert('الحساب المحدد غير مفعّل كموظف خدمة عملاء.');
                                                         return;
                                                     }
@@ -8822,7 +9217,7 @@ if (sohraBtn) {
                                                     const control = document.getElementById('csSelfAvailabilityControl');
                                                     const status = document.getElementById('csSelfAvailabilityStatus');
                                                     const button = document.getElementById('csSelfAvailabilityButton');
-                                                    if (!control || !status || !button || !currentUser || !currentUser.isCS) return;
+                                                    if (!control || !status || !button || !isCsCallAgent(currentUser)) return;
                                                     const isAvailable = currentUser.isCSAvailable !== false;
                                                     control.classList.remove('hidden');
                                                     status.textContent = isAvailable ? 'متاح لاستقبال المكالمات' : 'متوقف عن استقبال المكالمات';
@@ -8836,7 +9231,7 @@ if (sohraBtn) {
                                                     const container = document.getElementById('adminCsAvailabilityList');
                                                     if (!container) return;
                                                     const agents = Object.values(allUsersData || {}).filter(user =>
-                                                        user && user.isCS && user.username && !MANAGERS.includes(user.username)
+                                                        isCsCallAgent(user) && user.username && !MANAGERS.includes(user.username)
                                                     );
                                                     if (!agents.length) {
                                                         container.innerHTML = '<span style="color:#94a3b8;">لا يوجد موظفون مفعّلون لخدمة العملاء.</span>';
@@ -8847,6 +9242,7 @@ if (sohraBtn) {
                                                         const label = escapeHtml(agent.realName || agent.username);
                                                         return `<div style="display:flex; align-items:center; gap:10px; background:rgba(0,0,0,0.2); border-radius:12px; padding:10px 12px;">
                                                             <strong>${label}</strong>
+                                                            <small style="color:#94a3b8;">${agent.isCSAssistant ? 'مساعد خدمة عملاء' : 'خدمة عملاء'}</small>
                                                             <button onclick="toggleCsAgentAvailability('${encodeURIComponent(agent.username)}', ${!isAvailable})" class="btn ${isAvailable ? 'btn-success' : 'btn-danger'} btn-sm">${isAvailable ? '🎧 متاح' : '⛔ غائب / غير متاح'}</button>
                                                         </div>`;
                                                     }).join('');
@@ -8860,9 +9256,10 @@ if (sohraBtn) {
                 const allow = parseInt(document.getElementById('newAllowance').value);
                 const isVIP = document.getElementById('isVIPUser').checked;
                 const follow = document.getElementById('canFollowUp').checked;
+                const isCSAssistant = document.getElementById('isCSAssistant').checked;
                 const funTitle = document.getElementById('newFunTitle').value.trim();
                 const profilePic = document.getElementById('newProfilePic').value.trim();
-                const isCS = document.getElementById('isCSAgent').checked;
+                const isCS = document.getElementById('isCSAgent').checked && !isCSAssistant;
                 const group = document.getElementById('newUserGroup').value;
 
                 if (!un || !pass || !name) {
@@ -8875,7 +9272,8 @@ if (sohraBtn) {
                     allowance: allow, 
                     isVIP: isVIP, 
                     canFollowUp: follow, 
-                    isCS: isCS, 
+                    isCS: isCS,
+                    isCSAssistant: isCSAssistant,
                     funTitle: funTitle, 
                     profilePic: profilePic, 
                     groupName: group 
@@ -8917,6 +9315,7 @@ if (sohraBtn) {
                                                     document.getElementById('newProfilePic').value = u.profilePic || '';
                                                     document.getElementById('isVIPUser').checked = !!u.isVIP; document.getElementById('canFollowUp').checked = !!u.canFollowUp;
                                                     document.getElementById('isCSAgent').checked = !!u.isCS;
+                                                    document.getElementById('isCSAssistant').checked = !!u.isCSAssistant;
                                                         document.getElementById('isSohraBreak').checked = !!u.isSohra; 
 
                                                     document.getElementById('newUserGroup').value = u.groupName || '';
@@ -9331,14 +9730,14 @@ if (sohraBtn) {
                             }
 
                             // 1. تحديد "وسم" النوع (تنبيه أو خصم)
-                            const typeBadge = c.type === 'خصم مالي' 
-                                ? `<span style="background:#ef4444; color:white; padding:3px 8px; border-radius:6px; font-size:0.7rem; margin-left:5px; font-weight:900; box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);">💸 خصم</span>`
-                                : `<span style="background:#3b82f6; color:white; padding:3px 8px; border-radius:6px; font-size:0.7rem; margin-left:5px; font-weight:900;">📝 تنبيه</span>`;
+                            const typeBadge = c.type === 'خصم مالي'
+                                ? `<span class="complaint-type-badge is-deduction">💸 خصم مالي</span>`
+                                : `<span class="complaint-type-badge is-warning">📝 تنبيه</span>`;
 
                             // 2. معالجة عرض القيمة (نص أو رقم)
                             const displayAmount = (c.amount && c.amount !== "0" && c.amount !== "بدون خصم") 
-                                ? `<b style="color:#ffd700;">${c.amount}</b>` 
-                                : `<span style="color:#666;">-</span>`;
+                                ? `<span class="complaint-deduction-amount">${escapeHtml(String(c.amount))}</span>`
+                                : `<span style="color:#64748b;">—</span>`;
 
                             // 3. أزرار التحكم والظهور
                             let actionCell = '';
@@ -9369,26 +9768,28 @@ if (sohraBtn) {
                             }
 
                             // المرفقات
-                            const evidenceBtn = c.evidence ? `<button onclick="showZoomImage('${c.evidence}')" class="btn btn-primary btn-sm">📷</button>` : '';
-            // ابحث عن هذا الجزء داخل renderComplaintsHistory
-            // البحث عن هذا السطر واستبداله:
+            const evidenceBtn = c.evidence ? `<button onclick="showZoomImage('${c.evidence}')" class="btn btn-primary complaint-evidence-button" title="فتح صورة الدليل">📷 <span>فتح الصورة</span></button>` : '';
             const audioPlayer = c.audioRecord ? `
-                <div class="audio-wrapper" style="margin-top:10px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); width: 260px;">
-                    <audio src="${c.audioRecord}" controls style="width: 100%; height: 45px;"></audio>
-                    <div style="display: flex; justify-content: center; gap: 15px; margin-top: 8px;">
+                <div class="audio-wrapper" style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1);">
+                    <div class="complaint-audio-title">🎧 تشغيل المكالمة</div>
+                    <audio class="complaint-audio-player" src="${c.audioRecord}" controls preload="none"></audio>
+                    <div class="complaint-audio-actions">
                         <button onclick="skipAudio(this, -10)" class="btn btn-dark" style="padding: 5px 12px; font-size: 0.8rem;" title="تأخير 10 ثوانٍ">
-                            <i class="fa-solid fa-backward"></i> -10s
+            <i class="fa-solid fa-backward"></i> -10s
                         </button>
                         <button onclick="skipAudio(this, 10)" class="btn btn-dark" style="padding: 5px 12px; font-size: 0.8rem;" title="تقديم 10 ثوانٍ">
                             +10s <i class="fa-solid fa-forward"></i>
                         </button>
                     </div>
                     <div style="text-align: center; margin-top: 8px;">
-                        <a href="${c.audioRecord}" download target="_blank" style="color: var(--accent); font-size: 0.75rem; text-decoration: none;">
+                        <a href="${c.audioRecord}" download style="color: var(--accent); font-size: 0.8rem; text-decoration: none;">
                             <i class="fa-solid fa-download"></i> تحميل المقطع
                         </a>
                     </div>
-                </div>` : '';          const proofCell = (evidenceBtn || audioPlayer) ? `<div>${evidenceBtn} ${audioPlayer}</div>` : '-';
+                </div>` : '';
+                            const proofCell = (evidenceBtn || audioPlayer)
+                                ? `<div class="complaint-proof-content">${evidenceBtn}${audioPlayer}</div>`
+                                : '-';
 
                             const detailSections = [];
                             const detailLabels = {
@@ -9397,22 +9798,28 @@ if (sohraBtn) {
                                 'ملاحظة الجودة': 'ملاحظة فريق الجودة',
                                 'ملاحظة خدمة العملاء': 'ملاحظة خدمة العملاء'
                             };
+                            const detailClasses = {
+                                'الموظف المشكو في حقه': 'is-employee',
+                                'شكوى العميل': 'is-client',
+                                'ملاحظة الجودة': 'is-quality',
+                                'ملاحظة خدمة العملاء': 'is-agent'
+                            };
                             String(c.details || '').split(/\r?\n/).forEach(line => {
                                 const text = line.trim();
                                 if (!text) return;
 
                                 const match = text.match(/^(الموظف المشكو في حقه|شكوى العميل|ملاحظة الجودة|ملاحظة خدمة العملاء)\s*[:：]\s*(.*)$/);
                                 if (match) {
-                                    detailSections.push({ label: detailLabels[match[1]], text: match[2] });
+                                    detailSections.push({ label: detailLabels[match[1]], className: detailClasses[match[1]], text: match[2] });
                                 } else if (detailSections.length) {
                                     detailSections[detailSections.length - 1].text += `\n${text}`;
                                 } else {
-                                    detailSections.push({ label: '', text });
+                                    detailSections.push({ label: '', className: '', text });
                                 }
                             });
                             const formattedDetails = detailSections.length
                                 ? detailSections.map(section => `
-                                    <div class="complaint-detail-section">
+                                    <div class="complaint-detail-section ${section.className}">
                                         ${section.label ? `<strong class="complaint-detail-label">${escapeHtml(section.label)}</strong>` : ''}
                                         <div class="complaint-detail-text">${escapeHtml(section.text)}</div>
                                     </div>
@@ -9420,21 +9827,21 @@ if (sohraBtn) {
                                 : '<span style="color:#94a3b8;">لا توجد تفاصيل مكتوبة</span>';
 
                             tbody.innerHTML += `
-                                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                                    <td style="font-size:0.85rem;">${c.date}<br><small style="opacity:0.6;">${c.time}</small></td>
-                                    <td style="text-align:right;">
-                                        ${typeBadge} <span style="font-weight:bold; color:white;">${c.title}</span>
+                                <tr>
+                                    <td data-label="التاريخ"><span>${escapeHtml(c.date || '—')}<br><small style="color:#94a3b8;">${escapeHtml(c.time || '')}</small></span></td>
+                                    <td data-label="نوع الإجراء" style="text-align:right;">
+                                        <span style="display:grid; justify-items:start; gap:7px;">${typeBadge}<strong style="color:#f8fafc;">${escapeHtml(c.title || 'إجراء إداري')}</strong></span>
                                     </td>
-                                    <td class="complaint-details-cell" style="font-size:0.9rem; padding:12px; background:rgba(255,255,255,0.02);">${formattedDetails}</td>
-                                    <td style="text-align:center;">${displayAmount}</td>
-                                    <td>${proofCell}</td>
-                                    <td style="font-size:0.85rem; color:#aaa;">${c.admin || 'الإدارة'}</td>
-                                    <td style="text-align:center;">${actionCell}</td>
+                                    <td data-label="التفاصيل" class="complaint-details-cell">${formattedDetails}</td>
+                                    <td data-label="الخصم">${displayAmount}</td>
+                                    <td data-label="الدليل" class="complaint-proof-cell">${proofCell}</td>
+                                    <td data-label="بواسطة" style="color:#cbd5e1;">${escapeHtml(c.admin || 'الإدارة')}</td>
+                                    <td data-label="إجراء" class="complaint-action-cell">${actionCell || '<span style="color:#64748b;">—</span>'}</td>
                                 </tr>
                             `;
                         });
                     } else {
-                        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:#666;">لا توجد سجلات حالياً 🌟</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:#94a3b8;">لا توجد سجلات حالياً 🌟</td></tr>';
                     }
                 }
 
@@ -9654,6 +10061,10 @@ if (sohraBtn) {
 
                 // 3. وظيفة الرفع والحفظ الذكية
                 async function uploadCsCall() {
+                    if (!currentUser || !currentUser.isCS || currentUser.isCSAssistant) {
+                        alert('إرسال البلاغات متاح لموظف خدمة العملاء فقط.');
+                        return;
+                    }
                     const destType = document.getElementById('csDestinationType').value;
                     const targetUser = document.getElementById('csTargetUser').value; 
                     const clientPhone = document.getElementById('csCallTitle').value.trim();
@@ -10790,6 +11201,7 @@ if (sohraBtn) {
                         const btn = document.getElementById('btnSendPerformance');
                         const select = document.getElementById('broadcastTarget');
                         let targets = Array.from(select.selectedOptions).map(o => o.value);
+                        const silent = document.getElementById('broadcastSilent')?.checked === true;
 
                         if (!file && !text) return alert("اكتب وصفاً أو ارفع صورة أولاً ⚠️");
 
@@ -10809,7 +11221,8 @@ if (sohraBtn) {
                                 image: imageUrl,
                                 timestamp: getServerTime(),
                                 sender: currentUser.realName || currentUser.username,
-                                target: targets.includes('all') ? 'all' : targets
+                                target: targets.includes('all') ? 'all' : targets,
+                                silent: silent
                             };
 
                             // الإرسال لـ Firebase
@@ -10819,6 +11232,7 @@ if (sohraBtn) {
                             
                             // تصفير الحقول
                             document.getElementById('broadcastInput').value = "";
+                            document.getElementById('broadcastSilent').checked = false;
                             clearPerfImg();
 
                         } catch (e) {
@@ -11343,6 +11757,10 @@ if (sohraBtn) {
 
                 // 3. الوظيفة الكبرى: الرفع والحفظ
                 async function uploadCsCall() {
+                    if (!currentUser || !currentUser.isCS || currentUser.isCSAssistant) {
+                        alert('إرسال البلاغات متاح لموظف خدمة العملاء فقط.');
+                        return;
+                    }
                     const targetUser = document.getElementById('csTargetUser').value;
                     const destType = document.getElementById('csDestinationType').value;
                     const clientPhone = document.getElementById('csCallTitle').value.trim();
@@ -11427,6 +11845,10 @@ if (sohraBtn) {
 
                 // 3. الدالة الرئيسية لرفع الشكوى/التقرير
                 async function uploadCsCall() {
+                    if (!currentUser || !currentUser.isCS || currentUser.isCSAssistant) {
+                        alert('إرسال البلاغات متاح لموظف خدمة العملاء فقط.');
+                        return;
+                    }
                     const destType = document.getElementById('csDestinationType').value;
                     const targetUser = document.getElementById('csTargetUser').value; 
                     const clientPhone = document.getElementById('csCallTitle').value.trim();
@@ -11952,7 +12374,7 @@ if (sohraBtn) {
                     document.getElementById('loginSection').classList.add('hidden'); 
                     document.getElementById('employeeSection').classList.remove('hidden'); 
                     const csContactToggleCard = document.getElementById('csContactToggleCard');
-                    if (csContactToggleCard) csContactToggleCard.classList.toggle('hidden', Boolean(currentUser.isCS));
+                    if (csContactToggleCard) csContactToggleCard.classList.toggle('hidden', isCsCallAgent(currentUser));
                     document.getElementById('csFormThemeControls').classList.toggle('hidden', !currentUser.isCS);
                     applyPersonalTheme(currentUser.themeColors);
                     applyCsCallFormTheme(currentUser.themeColors);
@@ -12227,7 +12649,8 @@ if (sohraBtn) {
                 const allow = parseInt(document.getElementById('newAllowance').value) || 45;
                 const isVIP = document.getElementById('isVIPUser').checked;
                 const follow = document.getElementById('canFollowUp').checked;
-                const isCS = document.getElementById('isCSAgent').checked;
+                const isCSAssistant = document.getElementById('isCSAssistant').checked;
+                const isCS = document.getElementById('isCSAgent').checked && !isCSAssistant;
                 const funTitle = document.getElementById('newFunTitle').value.trim();
                 const profilePic = document.getElementById('newProfilePic').value.trim();
                 const group = document.getElementById('newUserGroup').value;
@@ -12245,6 +12668,7 @@ const isSohra = document.getElementById('isSohraBreak').checked;
                     isVIP: isVIP,
                     canFollowUp: follow,
                     isCS: isCS,
+                    isCSAssistant: isCSAssistant,
                         isSohra: isSohra, // السطر الجديد
 
                     funTitle: funTitle,
@@ -12295,6 +12719,7 @@ const isSohra = document.getElementById('isSohraBreak').checked;
                 document.getElementById('isVIPUser').checked = !!u.isVIP;
                 document.getElementById('canFollowUp').checked = !!u.canFollowUp;
                 document.getElementById('isCSAgent').checked = !!u.isCS;
+                document.getElementById('isCSAssistant').checked = !!u.isCSAssistant;
                 document.getElementById('newUserGroup').value = u.groupName || '';
                     document.getElementById('isSohraBreak').checked = !!u.isSohra; 
 
@@ -12316,6 +12741,7 @@ const isSohra = document.getElementById('isSohraBreak').checked;
                 document.getElementById('isVIPUser').checked = false;
                 document.getElementById('canFollowUp').checked = false;
                 document.getElementById('isCSAgent').checked = false;
+                document.getElementById('isCSAssistant').checked = false;
                 document.getElementById('newUserGroup').value = '';
                 document.getElementById('saveUserBtn').innerText = "حفظ الموظف الجديد";
             };
@@ -16192,14 +16618,12 @@ function checkChatCommands(msgText, senderUsername) {
             
             container.insertAdjacentHTML('beforeend', `
                 <div style="display:flex; flex-direction:column; align-items:${isMe ? 'flex-start' : 'flex-end'}; max-width:85%; ${isMe ? 'margin-right:auto' : 'margin-left:auto'}">
-                    ${!isMe ? `<small style="font-size:0.65rem; color:var(--primary); margin-bottom:2px; margin-left:10px;">${safeSenderName}</small>` : ''}
+                    ${!isMe ? `<small class="chat-message-sender">${safeSenderName}</small>` : ''}
                     <div style="display:flex; gap:8px; align-items:flex-end; flex-direction:${isMe ? 'row' : 'row-reverse'}">
                         ${!isMe ? avatar : ''}
-                        <div style="padding:10px 14px; border-radius:18px; font-size:0.9rem; white-space:pre-wrap; overflow-wrap:anywhere;
-                                    background:${isMe ? 'linear-gradient(135deg, var(--employee-button-background), var(--primary))' : 'rgba(255,255,255,0.08)'}; 
-                                    color:white; border-bottom-${isMe ? 'right' : 'left'}-radius:5px; box-shadow:0 4px 15px rgba(0,0,0,0.1);">
+                        <div class="chat-message-bubble${isMe ? ' is-mine' : ''}" style="white-space:pre-wrap; overflow-wrap:anywhere; border-bottom-${isMe ? 'right' : 'left'}-radius:5px;">
                             ${contentHtml}
-                            <span style="display:block; font-size:0.6rem; opacity:0.5; margin-top:5px;">${messageTime}</span>
+                            <span class="chat-message-time">${messageTime}</span>
                         </div>
                     </div>
                 </div>
