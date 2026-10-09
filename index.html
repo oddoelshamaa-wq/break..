@@ -621,8 +621,15 @@
                                                         }
 
                                                         /* 4. زراير التحكم (بريك - صلاة - ميتنج) */
-                                                        #controlsArea > div {
-                                                            grid-template-columns: 1fr 1fr !important; /* زرارين جنب بعض */
+                                                        #controlsArea .activity-controls-grid {
+                                                            grid-template-columns: none !important;
+                                                            grid-auto-flow: column;
+                                                            grid-auto-columns: 145px;
+                                                            justify-content: start;
+                                                            max-width: 100% !important;
+                                                            overflow-x: auto;
+                                                            padding-bottom: 8px;
+                                                            -webkit-overflow-scrolling: touch;
                                                         }
 
                                                         /* 5. الجداول (عشان متبوظش الشكل) */
@@ -3067,8 +3074,8 @@ html, body {
                                             <div id="forceSoundOverlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.98); z-index:20000; display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
                                                 <div class="broadcast-content" style="border-color: var(--primary); box-shadow: 0 0 50px var(--primary);">
                                                     <h1 style="color:var(--primary)">نظام الإدارة الذكي 2026</h1>
-                                                    <p>يرجى تفعيل الواجهة لبدء استلام التنبيهات والرسائل الإدارية اللحظية.</p>
-                                                    <button onclick="activateSystemAndSound()" class="btn btn-primary" style="width:100%; padding:20px; font-size:1.3rem; margin-top:20px;">✅ بدء الدوام وتفعيل الصوت</button>
+                                                    <p>تفعيل الصوت إلزامي لبدء الدوام واستقبال المكالمات. أعد تفعيله عند بدء يوم عمل جديد.</p>
+                                                    <button onclick="activateSystemAndSound()" class="btn btn-primary" style="width:100%; padding:20px; font-size:1.3rem; margin-top:20px;">✅ تفعيل الصوت وبدء الدوام</button>
                                                 </div>
 
                                             </div>
@@ -4357,12 +4364,12 @@ html, body {
 <button id="sohraBreakBtn" onclick="confirmVIPAction('بريك سهر')" class="btn hidden" style="background: linear-gradient(135deg, #4c1d95, #2e1065); border: 1px solid #a78bfa; padding:20px; font-size:1.1rem; color:white;">
     <span style="font-size:1.8rem;">🌙</span><br>بريك سهر
 </button>
-                                                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; max-width: 800px; margin: 0 auto;">
-    <div style="border:1px solid var(--success); padding:8px; border-radius:15px;">
+                                                            <div class="activity-controls-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; max-width: 1200px; margin: 0 auto;">
+    <div class="activity-control-card" style="border:1px solid var(--success); padding:8px; border-radius:15px;">
         <h4>🍔 بريك</h4>
         <button onclick="document.getElementById('breakPickerModal').classList.remove('hidden')" class="btn btn-success" style="width:100%">ابدأ</button>
     </div>
-    <div style="border:1px solid var(--primary); padding:8px; border-radius:15px;">
+    <div class="activity-control-card" style="border:1px solid var(--primary); padding:8px; border-radius:15px;">
         <h4>🕌 صلاة</h4>
         <button onclick="document.getElementById('prayerTypePickerModal').classList.remove('hidden')" class="btn btn-primary" style="width:100%">ابدأ</button>
     </div>
@@ -4371,7 +4378,7 @@ html, body {
                     🔄 تبديل دوري مع زميل
                 </button>
             </div>
-    <div style="border:1px solid var(--warning); padding:8px; border-radius:15px;">
+    <div class="activity-control-card" style="border:1px solid var(--warning); padding:8px; border-radius:15px;">
         <h4>🤝 ميتنج</h4>
         <div id="meetingStatusArea">
             <!-- هنا التغيير -->
@@ -4379,12 +4386,12 @@ html, body {
         </div>
     </div>
     <!-- كارت المتابع المعدل -->
-    <div id="followUpCard" class="hidden" style="border:1px solid #10b981; padding:8px; border-radius:15px;">
+    <div id="followUpCard" class="activity-control-card hidden" style="border:1px solid #10b981; padding:8px; border-radius:15px;">
         <h4>📞 متابع</h4>
         <button onclick="document.getElementById('followUpPickerModal').classList.remove('hidden')" class="btn btn-success" style="width:100%; background:#10b981;">ابدأ</button>
     </div>
-                                                                <div style="border:1px solid var(--danger); padding:8px; border-radius:15px;"><h4>🚨 طوارئ</h4><div id="emStatusArea"><button onclick="sendEmRequest()" class="btn btn-danger" style="width:100%">طلب</button></div></div>
-                                                                <div id="csContactToggleCard" class="hidden" style="border:1px solid var(--accent); padding:8px; border-radius:20px;">
+                                                                <div class="activity-control-card" style="border:1px solid var(--danger); padding:8px; border-radius:15px;"><h4>🚨 طوارئ</h4><div id="emStatusArea"><button onclick="sendEmRequest()" class="btn btn-danger" style="width:100%">طلب</button></div></div>
+                                                                <div id="csContactToggleCard" class="activity-control-card hidden" style="border:1px solid var(--accent); padding:8px; border-radius:20px;">
                                                                     <h4>📨خدمة العملاء</h4>
                                                                     <div id="csContactActionArea" aria-live="polite">
                                                                         <button id="csContactRequestBtn" type="button" onclick="submitCsApprovalRequest()" class="btn btn-primary" style="width:100%; background:linear-gradient(135deg, #06b6d4, #6366f1);">
@@ -5786,23 +5793,25 @@ html, body {
                                                     const ring = document.getElementById('csApprovalRing');
                                                     const button = document.getElementById('enableCsApprovalSoundBtn');
                                                     const status = document.getElementById('csApprovalSoundStatus');
-                                                    if (!ring || !isCsCallAgent(currentUser)) return;
+                                                    if (!ring || !isCsCallAgent(currentUser)) return false;
                                                     if (button) button.disabled = true;
                                                     try {
                                                         ring.volume = 0;
                                                         await ring.play();
                                                         csApprovalSoundUnlocked = true;
-                                                        soundActive = true;
-                                                        sessionStorage.setItem('systemActive', 'true');
                                                         ring.pause();
                                                         ring.currentTime = 0;
                                                         ring.volume = 1;
-                                                        if (button) button.innerText = '🔊 صوت الطلبات مفعل';
+                                                        if (button) {
+                                                            button.innerText = '✅ صوت الطلبات مفعل إجباريًا';
+                                                            button.disabled = true;
+                                                        }
                                                         if (status) {
                                                             status.innerText = 'الصوت مفعل — الجرس يرن للطلبات الموجهة لك حتى ترد أو تحوّلها.';
                                                             status.style.color = '#34d399';
                                                         }
                                                         updateCsApprovalRing();
+                                                        return true;
                                                     } catch (error) {
                                                         ring.volume = 1;
                                                         if (button) button.innerText = '🔊 أعد تفعيل صوت الطلبات';
@@ -5812,8 +5821,9 @@ html, body {
                                                         }
                                                         console.error('تعذر تفعيل صوت طلبات خدمة العملاء:', error);
                                                         alert('المتصفح منع تشغيل الصوت. اضغط زر تفعيل صوت الطلبات مرة أخرى.');
+                                                        return false;
                                                     } finally {
-                                                        if (button) button.disabled = false;
+                                                        if (button && !csApprovalSoundUnlocked) button.disabled = false;
                                                     }
                                                 }
 
@@ -5886,12 +5896,20 @@ html, body {
                                                     const latestRequest = entries.find(([, request]) =>
                                                         request.requesterUsername === currentUser.username
                                                     );
-                                                    if (!latestRequest || latestRequest[1].status !== 'pending') {
-                                                        if (latestRequest &&
-                                                            latestRequest[1].status === 'approved' &&
-                                                            !latestRequest[1].requesterAcknowledgedAt
-                                                        ) {
-                                                            const request = latestRequest[1];
+                                                    if (latestRequest && latestRequest[1].status === 'completed') {
+                                                        const request = latestRequest[1];
+                                                        if (!request.requesterCompletionAcknowledgedAt) {
+                                                            actionArea.innerHTML = `
+                                                                <div style="text-align:center; line-height:1.5;" role="status">
+                                                                    <div style="color:#34d399; font-size:0.82rem; font-weight:700;">📴 خلاص، المكالمة وقعت</div>
+                                                                    <button type="button" class="btn btn-success btn-sm" style="width:100%; margin-top:7px;" onclick="acknowledgeCsCallEnded(this.dataset.requestKey, this)" data-request-key="${encodeURIComponent(latestRequest[0])}">تمام</button>
+                                                                </div>`;
+                                                            return;
+                                                        }
+                                                    }
+                                                    if (latestRequest && latestRequest[1].status === 'approved') {
+                                                        const request = latestRequest[1];
+                                                        if (!request.requesterAcknowledgedAt) {
                                                             const responderName = request.respondedBy ||
                                                                 request.assignedToName ||
                                                                 (allUsersData[request.respondedByUsername] &&
@@ -5905,6 +5923,10 @@ html, body {
                                                                 </div>`;
                                                             return;
                                                         }
+                                                        actionArea.innerHTML = `<div style="text-align:center; color:#34d399; font-size:0.82rem; font-weight:700;" role="status">📞 المكالمة جارية مع ${escapeHtml(request.respondedBy || 'خدمة العملاء')}</div>`;
+                                                        return;
+                                                    }
+                                                    if (!latestRequest || latestRequest[1].status !== 'pending') {
                                                         actionArea.innerHTML = `<button id="csContactRequestBtn" type="button" onclick="submitCsApprovalRequest()" class="btn btn-primary" style="width:100%; background:linear-gradient(135deg, #06b6d4, #6366f1);">تواصل</button>`;
                                                         return;
                                                     }
@@ -5927,6 +5949,7 @@ html, body {
                                                         <div style="text-align:center; color:#fbbf24; font-size:0.82rem; font-weight:700; line-height:1.6;" role="status">
                                                             <div>${waitingMessage}</div>
                                                             <small style="color:#cbd5e1; font-weight:400;">${targetMessage}</small>
+                                                            <button type="button" class="btn btn-danger btn-sm" style="width:100%; margin-top:7px;" onclick="cancelCsApprovalRequest(this.dataset.requestKey, this)" data-request-key="${encodeURIComponent(latestRequest[0])}">إلغاء الطلب</button>
                                                         </div>`;
                                                 }
 
@@ -5945,7 +5968,11 @@ html, body {
                                                                 request.status !== 'approved' ||
                                                                 request.requesterAcknowledgedAt
                                                             ) return;
-                                                            return { ...request, requesterAcknowledgedAt: acknowledgedAt };
+                                                            return {
+                                                                ...request,
+                                                                requesterAcknowledgedAt: acknowledgedAt,
+                                                                callStartedAt: acknowledgedAt
+                                                            };
                                                         });
                                                         if (!result.committed) {
                                                             renderCsApprovalRequests();
@@ -5960,6 +5987,120 @@ html, body {
                                                         if (button && button.isConnected) button.disabled = false;
                                                         console.error('تعذر تأكيد استلام موافقة خدمة العملاء:', error);
                                                         alert(`تعذر تأكيد الموافقة: ${error.message}`);
+                                                    }
+                                                }
+
+                                                async function cancelCsApprovalRequest(requestKey, button) {
+                                                    if (!currentUser || currentUser.role === 'admin' || isCsCallAgent(currentUser)) return;
+                                                    if (!isDatabaseConnected) {
+                                                        alert('الاتصال بقاعدة البيانات مقطوع. حاول مرة أخرى بعد عودة الاتصال.');
+                                                        return;
+                                                    }
+                                                    if (!confirm('هل تريد إلغاء طلب خدمة العملاء؟')) return;
+                                                    if (button) button.disabled = true;
+                                                    try {
+                                                        const decodedRequestKey = decodeURIComponent(requestKey);
+                                                        const result = await db.ref(`csApprovalRequests/${decodedRequestKey}`).transaction(request => {
+                                                            if (!request ||
+                                                                request.requesterUsername !== currentUser.username ||
+                                                                request.status !== 'pending'
+                                                            ) return;
+                                                            return {
+                                                                ...request,
+                                                                status: 'cancelled',
+                                                                cancelledAt: getServerTime(),
+                                                                cancelledBy: currentUser.username
+                                                            };
+                                                        });
+                                                        if (!result.committed) {
+                                                            renderCsApprovalRequests();
+                                                            return;
+                                                        }
+                                                        csApprovalRequests = {
+                                                            ...csApprovalRequests,
+                                                            [decodedRequestKey]: result.snapshot.val()
+                                                        };
+                                                        renderCsApprovalRequests();
+                                                    } catch (error) {
+                                                        if (button && button.isConnected) button.disabled = false;
+                                                        console.error('تعذر إلغاء طلب خدمة العملاء:', error);
+                                                        alert(`تعذر إلغاء الطلب: ${error.message}`);
+                                                    }
+                                                }
+
+                                                async function acknowledgeCsCallEnded(requestKey, button) {
+                                                    if (!currentUser || currentUser.role === 'admin' || isCsCallAgent(currentUser)) return;
+                                                    if (!isDatabaseConnected) {
+                                                        alert('الاتصال بقاعدة البيانات مقطوع. حاول مرة أخرى بعد عودة الاتصال.');
+                                                        return;
+                                                    }
+                                                    if (button) button.disabled = true;
+                                                    try {
+                                                        const result = await db.ref(`csApprovalRequests/${requestKey}`).transaction(request => {
+                                                            if (!request ||
+                                                                request.requesterUsername !== currentUser.username ||
+                                                                request.status !== 'completed' ||
+                                                                request.requesterCompletionAcknowledgedAt
+                                                            ) return;
+                                                            return {
+                                                                ...request,
+                                                                requesterCompletionAcknowledgedAt: getServerTime()
+                                                            };
+                                                        });
+                                                        if (!result.committed) {
+                                                            renderCsApprovalRequests();
+                                                            return;
+                                                        }
+                                                        csApprovalRequests = {
+                                                            ...csApprovalRequests,
+                                                            [requestKey]: result.snapshot.val()
+                                                        };
+                                                        renderCsApprovalRequests();
+                                                    } catch (error) {
+                                                        if (button && button.isConnected) button.disabled = false;
+                                                        console.error('تعذر تأكيد انتهاء مكالمة خدمة العملاء:', error);
+                                                        alert(`تعذر تأكيد انتهاء المكالمة: ${error.message}`);
+                                                    }
+                                                }
+
+                                                async function endCsApprovalCall(requestKey) {
+                                                    if (!isCsCallAgent(currentUser) || !soundActive || !csApprovalSoundUnlocked ||
+                                                        currentUser.isCSAvailable === false || currentUser.role === 'admin') {
+                                                        alert('إنهاء المكالمة متاح لموظف خدمة العملاء بعد تفعيل صوت المكالمات.');
+                                                        return;
+                                                    }
+                                                    if (!isDatabaseConnected) {
+                                                        alert('الاتصال بقاعدة البيانات مقطوع. حاول مرة أخرى بعد عودة الاتصال.');
+                                                        return;
+                                                    }
+                                                    try {
+                                                        const decodedRequestKey = decodeURIComponent(requestKey);
+                                                        const endedAt = getServerTime();
+                                                        const result = await db.ref(`csApprovalRequests/${decodedRequestKey}`).transaction(request => {
+                                                            if (!request ||
+                                                                request.status !== 'approved' ||
+                                                                request.respondedByUsername !== currentUser.username ||
+                                                                !request.requesterAcknowledgedAt
+                                                            ) return;
+                                                            return {
+                                                                ...request,
+                                                                status: 'completed',
+                                                                callEndedAt: endedAt,
+                                                                callEndedBy: currentUser.realName || currentUser.username
+                                                            };
+                                                        });
+                                                        if (!result.committed) {
+                                                            alert('المكالمة لم تعد جارية أو أنها أُنهيت بالفعل.');
+                                                            return;
+                                                        }
+                                                        csApprovalRequests = {
+                                                            ...csApprovalRequests,
+                                                            [decodedRequestKey]: result.snapshot.val()
+                                                        };
+                                                        renderCsApprovalRequests();
+                                                    } catch (error) {
+                                                        console.error('فشل إنهاء مكالمة خدمة العملاء:', error);
+                                                        alert(`تعذر إنهاء المكالمة: ${error.message}`);
                                                     }
                                                 }
 
@@ -6010,7 +6151,8 @@ html, body {
                                                                 request.respondedByUsername === currentUser.username)
                                                         ).length;
                                                         const handledCount = entries.filter(([, request]) =>
-                                                            request.status === 'approved' && request.respondedByUsername === currentUser.username
+                                                            ['approved', 'completed'].includes(request.status) &&
+                                                            request.respondedByUsername === currentUser.username
                                                         ).length;
                                                         const receivedCountElement = document.getElementById('csCallsReceivedCount');
                                                         const handledCountElement = document.getElementById('csCallsHandledCount');
@@ -6024,12 +6166,30 @@ html, body {
                                                             (!(request.declinedBy && request.declinedBy[currentUser.username]) ||
                                                                 (request.poolAvailable === true && !request.assignedTo))
                                                         );
+                                                        const activeCalls = entries.filter(([, request]) =>
+                                                            request.status === 'approved' &&
+                                                            request.respondedByUsername === currentUser.username &&
+                                                            Boolean(request.requesterAcknowledgedAt)
+                                                        );
                                                         const count = document.getElementById('csApprovalPendingCount');
                                                         if (count) {
                                                             count.innerText = String(pending.length);
                                                             count.classList.toggle('hidden', pending.length === 0);
                                                         }
-                                                        inboxContainer.innerHTML = pending.length
+                                                        inboxContainer.innerHTML = pending.length || activeCalls.length
+                                                            ? `${activeCalls.length
+                                                                ? `<h4 style="margin:16px 0 8px; color:#34d399;">📞 مكالمات جارية</h4>${activeCalls.map(([key, request]) => {
+                                                                    const requester = escapeHtml(request.requesterName || request.requesterUsername || 'موظف');
+                                                                    const time = request.callStartedAt ? new Date(Number(request.callStartedAt)).toLocaleString('ar-EG') : '';
+                                                                    return `<article style="padding:14px; margin-top:10px; border-radius:14px; background:var(--employee-record-background, rgba(255,255,255,0.04)); border-right:4px solid #34d399;">
+                                                                        <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:8px;">
+                                                                            <strong>${requester}</strong><small style="color:#94a3b8;">${escapeHtml(time)}</small>
+                                                                        </div>
+                                                                        <div style="color:#34d399; margin-bottom:12px;">المكالمة متصلة</div>
+                                                                        <button class="btn btn-danger" onclick="endCsApprovalCall(this.dataset.requestKey)" data-request-key="${encodeURIComponent(key)}">📴 خلاص، المكالمة وقعت</button>
+                                                                    </article>`;
+                                                                }).join('')}`
+                                                                : ''}${pending.length
                                                             ? pending.map(([key, request]) => {
                                                                 const requester = escapeHtml(request.requesterName || request.requesterUsername || 'موظف');
                                                                 const message = escapeHtml(request.message === 'تحويل مكالمة' ? 'مكالمة جديدة' : request.message || '');
@@ -6059,6 +6219,7 @@ html, body {
                                                                     </div>
                                                                 </article>`;
                                                             }).join('')
+                                                            : ''}`
                                                             : '<div style="color:#94a3b8; padding:8px 0;">مفيش طلبات جديدة دلوقتي.</div>';
                                                     }
                                                     updateCsApprovalRing();
@@ -6086,8 +6247,12 @@ html, body {
                                                         const assignedAgent = request.assignedTo
                                                             ? allUsersData[request.assignedTo]
                                                             : null;
-                                                        const status = request.status === 'approved'
+                                                        const status = request.status === 'completed'
+                                                            ? '<span style="color:#38bdf8; font-weight:bold;">انتهت المكالمة ✅</span>'
+                                                            : request.status === 'approved'
                                                             ? '<span style="color:#34d399; font-weight:bold;">مقبول — ماشي ✅</span>'
+                                                            : request.status === 'cancelled'
+                                                                ? '<span style="color:#94a3b8; font-weight:bold;">أُلغي الطلب</span>'
                                                             : request.status === 'rejected'
                                                                 ? '<span style="color:#fb7185; font-weight:bold;">مرفوض — لأ ❌</span>'
                                                                 : request.poolAvailable === true
@@ -6123,7 +6288,8 @@ html, body {
                                                         .sort((a, b) => Number(b.timestamp || 0) - Number(a.timestamp || 0))[0];
                                                     if (latestOwnRequest &&
                                                         (latestOwnRequest.status === 'pending' ||
-                                                            (latestOwnRequest.status === 'approved' && !latestOwnRequest.requesterAcknowledgedAt))
+                                                            latestOwnRequest.status === 'approved' ||
+                                                            (latestOwnRequest.status === 'completed' && !latestOwnRequest.requesterCompletionAcknowledgedAt))
                                                     ) {
                                                         renderCsApprovalRequests();
                                                         return;
@@ -6180,6 +6346,10 @@ html, body {
                                                     if (!isCsCallAgent(currentUser) || currentUser.isCSAvailable === false ||
                                                         currentUser.role === 'admin' || currentUser.isOnBreak) {
                                                         alert('الرد على الطلبات متاح لموظف خدمة العملاء أثناء العمل فقط.');
+                                                        return;
+                                                    }
+                                                    if (!soundActive || !csApprovalSoundUnlocked) {
+                                                        alert('لازم تفعّل صوت الطلبات قبل استلام المكالمات.');
                                                         return;
                                                     }
                                                     if (!['approved', 'rejected', 'snoozed'].includes(decision)) return;
@@ -6276,6 +6446,10 @@ html, body {
                                                     if (!isCsCallAgent(currentUser) || currentUser.isCSAvailable === false ||
                                                         currentUser.role === 'admin' || currentUser.isOnBreak) {
                                                         alert('كتم جرس المكالمة متاح لموظف خدمة العملاء أثناء العمل فقط.');
+                                                        return;
+                                                    }
+                                                    if (!soundActive || !csApprovalSoundUnlocked) {
+                                                        alert('لازم تفعّل صوت الطلبات قبل التعامل مع المكالمات.');
                                                         return;
                                                     }
                                                     try {
@@ -6601,28 +6775,48 @@ html, body {
 
                                                 function triggerGlobalRefresh() { db.ref('refreshSignal').set(getServerTime()); }
 
-        function activateSystemAndSound() {
-            sessionStorage.setItem('systemActive', 'true');
-            soundActive = true;
-            
-            // طلب إذن الإشعارات فوراً
-            if ("Notification" in window) {
-                Notification.requestPermission();
-            }
+                                                function getSoundActivationDay() {
+                                                    const now = new Date();
+                                                    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                                                }
 
-            // تشغيل الصوت الصامت
-            const silent = document.getElementById('silentLoop');
-            if(silent) {
-                silent.play().then(() => {
-                    console.log("العداد في الخلفية يعمل الآن ✅");
-                    updateLockScreenTimer(0, "جاهز للعمل"); // تفعيل شاشة القفل مبدئياً
-                }).catch(e => alert("يرجى الضغط مرة أخرى لتفعيل وضع الخلفية"));
-            }
+                                                async function activateSystemAndSound() {
+                                                    const activateButton = document.querySelector('#forceSoundOverlay button');
+                                                    if (activateButton) activateButton.disabled = true;
+                                                    const silent = document.getElementById('silentLoop');
+                                                    try {
+                                                        if (!silent) throw new Error('تعذر العثور على مشغل الصوت.');
+                                                        const silentPlayback = silent.play();
+                                                        const callSoundActivation = isCsCallAgent(currentUser)
+                                                            ? enableCsApprovalSound()
+                                                            : Promise.resolve(true);
 
-            document.getElementById('forceSoundOverlay').style.display = 'none';
-            if (isCsCallAgent(currentUser)) enableCsApprovalSound();
-            startGlobalTimer();
-        }
+                                                        if (typeof Notification !== 'undefined' && typeof Notification.requestPermission === 'function') {
+                                                            const permissionRequest = Notification.requestPermission();
+                                                            if (permissionRequest && typeof permissionRequest.catch === 'function') {
+                                                                permissionRequest.catch(error => console.warn('تعذر طلب إذن الإشعارات:', error));
+                                                            }
+                                                        }
+
+                                                        await silentPlayback;
+                                                        if (!await callSoundActivation) return;
+
+                                                        sessionStorage.setItem('systemActiveDay', `${currentUser.username}:${getSoundActivationDay()}`);
+                                                        sessionStorage.setItem('systemActive', 'true');
+                                                        soundActive = true;
+                                                        document.getElementById('forceSoundOverlay').style.display = 'none';
+                                                        console.log("تم تفعيل الصوت والعداد في الخلفية ✅");
+                                                        updateLockScreenTimer(0, "جاهز للعمل");
+                                                        updateCsApprovalRing();
+                                                        startGlobalTimer();
+                                                    } catch (error) {
+                                                        soundActive = false;
+                                                        console.error('تعذر تفعيل صوت النظام:', error);
+                                                        alert(`لازم تفعّل الصوت لبدء الدوام. ${error.message || 'اضغط للمتابعة مرة أخرى.'}`);
+                                                    } finally {
+                                                        if (activateButton) activateButton.disabled = false;
+                                                    }
+                                                }
 
                                                 function activateAdminSound() {
                                                     ['alarmSound', 'notifySound', 'requestRing', 'broadcastSound'].forEach(id => {
@@ -7339,8 +7533,8 @@ html, body {
                     if (currentUser.role === 'admin') showAdmin(); 
                     
                     else { setupPresence(s); showEmployee(); } 
-                    startGlobalTimer(); 
-                                listenForRemoteLogout(s); // إضافة السطر هنا
+                    if (currentUser.role === 'admin') startGlobalTimer();
+                    listenForRemoteLogout(s); // إضافة السطر هنا
 
                 } 
             }                                 
@@ -7396,6 +7590,7 @@ html, body {
             localStorage.removeItem('break_sys_user'); 
             localStorage.removeItem('active_pc_session_id'); 
             sessionStorage.removeItem('systemActive'); 
+            sessionStorage.removeItem('systemActiveDay');
             location.reload(); 
         }
 
@@ -12417,11 +12612,14 @@ if (sohraBtn) {
                     if(currentUser.funTitle) titleBox.innerHTML = `<div class="fun-title-badge">✨ ${currentUser.funTitle} ✨</div>`;
                     else titleBox.innerHTML = "";
                     
-                    if (sessionStorage.getItem('systemActive') === 'true') { 
+                    const soundEnabledToday = sessionStorage.getItem('systemActiveDay') === `${currentUser.username}:${getSoundActivationDay()}`;
+                    const callSoundReady = !isCsCallAgent(currentUser) || csApprovalSoundUnlocked;
+                    if (soundEnabledToday && callSoundReady) {
                         document.getElementById('forceSoundOverlay').style.display = 'none'; 
                         soundActive = true; 
                         startGlobalTimer(); 
                     } else { 
+                        soundActive = false;
                         document.getElementById('forceSoundOverlay').style.display = 'flex'; 
                     }
                     updateCsApprovalRing();
