@@ -18480,7 +18480,6 @@ function shareFilmGameLink() {
         }
 
         function handleBrowserActivity() {
-            if (!browserIdleContext.enabled || document.visibilityState !== 'visible') return;
             if (window.desktopIdle) {
                 const modal = document.getElementById('desktopIdleModal');
                 if (modal && !modal.classList.contains('hidden')) {
@@ -18489,6 +18488,7 @@ function shareFilmGameLink() {
                 }
                 return;
             }
+            if (!browserIdleContext.enabled || document.visibilityState !== 'visible') return;
             if (browserIdlePhase === 'prompt' || browserIdlePhase === 'sleeping') {
                 finishBrowserIdle('activity');
             } else {
@@ -18540,7 +18540,7 @@ function shareFilmGameLink() {
         }
 
         function initializeDesktopIdleMonitor() {
-            ['pointermove', 'keydown', 'mousedown', 'wheel', 'touchstart'].forEach(eventName => {
+            ['pointermove', 'pointerdown', 'mousemove', 'keydown', 'mousedown', 'wheel', 'touchstart', 'click'].forEach(eventName => {
                 document.addEventListener(eventName, handleBrowserActivity, { passive: true });
             });
             if (!window.desktopIdle) {
