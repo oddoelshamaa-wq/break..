@@ -18306,9 +18306,9 @@ function shareFilmGameLink() {
         <div style="width:min(100%,480px); padding:30px; border:2px solid #fbbf24; border-radius:28px; background:#0f172a; text-align:center; box-shadow:0 20px 70px rgba(0,0,0,.6);">
             <div id="desktopIdleIcon" style="font-size:3rem;">😴</div>
             <h2 id="desktopIdleTitle" style="margin:8px 0; color:#fbbf24;">إنت موجود؟</h2>
-            <p id="desktopIdleMessage" style="line-height:1.8; color:#e2e8f0;">مافيش تفاعل من الجهاز بقاله 10 دقايق. اضغط «أنا موجود» لو أنت صاحي.</p>
+            <p id="desktopIdleMessage" style="line-height:1.8;color:#e2e8f0;">إنت صاحي ولا الماوس دخل إجازة؟ 😴 حرّكه أو دوس «أيوه صاحي» قبل ما نبدأ نحسبها نومة!</p>
             <p id="desktopIdleCountdown" aria-live="polite" style="min-height:24px; color:#94a3b8;"></p>
-            <button id="desktopIdleRespondButton" onclick="acknowledgeDesktopIdle()" class="btn btn-success" style="width:100%; margin-top:8px; font-size:1rem;">✅ أنا موجود</button>
+            <button id="desktopIdleRespondButton" onclick="acknowledgeDesktopIdle()" class="btn btn-success" style="width:100%; margin-top:8px; font-size:1rem;">✅ أيوه صاحي 😂</button>
             <p id="desktopIdleError" role="alert" style="color:#fca5a5; font-size:.85rem;"></p>
         </div>
     </div>
@@ -18370,6 +18370,7 @@ function shareFilmGameLink() {
                 : '✅ أيوه صاحي 😂';
             document.getElementById('desktopIdleError').textContent = '';
             modal.classList.remove('hidden');
+            document.getElementById('desktopIdleRespondButton').focus();
         }
 
         function hideDesktopIdleDialog() {
@@ -18479,8 +18480,15 @@ function shareFilmGameLink() {
         }
 
         function handleBrowserActivity() {
-            if (window.desktopIdle || !browserIdleContext.enabled ||
-                document.visibilityState !== 'visible') return;
+            if (!browserIdleContext.enabled || document.visibilityState !== 'visible') return;
+            if (window.desktopIdle) {
+                const modal = document.getElementById('desktopIdleModal');
+                if (modal && !modal.classList.contains('hidden')) {
+                    hideDesktopIdleDialog();
+                    window.desktopIdle.respond();
+                }
+                return;
+            }
             if (browserIdlePhase === 'prompt' || browserIdlePhase === 'sleeping') {
                 finishBrowserIdle('activity');
             } else {
@@ -18532,10 +18540,10 @@ function shareFilmGameLink() {
         }
 
         function initializeDesktopIdleMonitor() {
+            ['pointermove', 'keydown', 'mousedown', 'wheel', 'touchstart'].forEach(eventName => {
+                document.addEventListener(eventName, handleBrowserActivity, { passive: true });
+            });
             if (!window.desktopIdle) {
-                ['pointermove', 'keydown', 'mousedown', 'wheel', 'touchstart', 'click'].forEach(eventName => {
-                    document.addEventListener(eventName, handleBrowserActivity, { passive: true });
-                });
                 document.addEventListener('visibilitychange', () => {
                     if (document.visibilityState === 'hidden') {
                         stopBrowserIdle('page-hidden');
