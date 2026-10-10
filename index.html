@@ -3989,6 +3989,7 @@ html, body {
                                                             <h4>📝 إدارة الموظفين</h4>
                                                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
                                                                 <input type="text" id="newRealName" placeholder="الاسم الحقيقي">
+                                                                <input type="text" id="newNameNote" placeholder="نص يظهر بجانب الاسم في القائمة">
                                                                 <input type="text" id="newUsername" placeholder="Username">
                                                                 <input type="text" id="newPassword" placeholder="Password">
                                                                 <input type="number" id="newAllowance" value="45">
@@ -5045,6 +5046,7 @@ html, body {
 
                                                 let allUsersData = {}, currentUser = null, timerInterval = null, isLoaded = false;
                                                 let csApprovalRequests = {};
+                                                const CS_APPROVAL_PREFERRED_AGENT_USERNAMES = ['cs2 2002', 'cs 2001'];
                                                 let csApprovalHiddenHistory = {};
                                                 let csApprovalHiddenHistoryUser = '';
                                                 let csApprovalHiddenHistoryLoading = false;
@@ -6079,6 +6081,11 @@ html, body {
                                                         !excludedUsernames.includes(agent.username)
                                                     );
                                                     if (availableAgents.length === 0) return null;
+                                                    const preferredUsernames = new Set(CS_APPROVAL_PREFERRED_AGENT_USERNAMES);
+                                                    const preferredAgents = availableAgents.filter(agent =>
+                                                        preferredUsernames.has(String(agent.username).trim().toLowerCase())
+                                                    );
+                                                    const selectionCandidates = preferredAgents.length ? preferredAgents : availableAgents;
 
                                                     const mostRecentlyAssigned = Object.values(csApprovalRequests || {})
                                                         .filter(request => request && request.assignedTo)
@@ -6088,10 +6095,10 @@ html, body {
                                                                 ? { username: request.assignedTo, assignedAt }
                                                                 : latest;
                                                         }, { username: '', assignedAt: -1 });
-                                                    const differentAgents = availableAgents.filter(agent =>
+                                                    const differentAgents = selectionCandidates.filter(agent =>
                                                         agent.username !== mostRecentlyAssigned.username
                                                     );
-                                                    const selectionPool = differentAgents.length ? differentAgents : availableAgents;
+                                                    const selectionPool = differentAgents.length ? differentAgents : selectionCandidates;
                                                     return selectionPool[Math.floor(Math.random() * selectionPool.length)];
                                                 }
 
@@ -6171,15 +6178,20 @@ html, body {
                                                     if (latestRequest && latestRequest[1].status === 'approved') {
                                                         const request = latestRequest[1];
                                                         if (!request.requesterAcknowledgedAt) {
+                                                            const responderUsername = request.respondedByUsername || request.assignedTo;
+                                                            const responder = allUsersData[responderUsername];
                                                             const responderName = request.respondedBy ||
                                                                 request.assignedToName ||
-                                                                (allUsersData[request.respondedByUsername] &&
-                                                                    (allUsersData[request.respondedByUsername].realName || request.respondedByUsername)) ||
+                                                                (responder && (responder.realName || responderUsername)) ||
                                                                 'موظف خدمة العملاء';
+                                                            const responderNote = responder && responder.nameNote
+                                                                ? `<small style="display:block; color:#67e8f9; margin:0 0 7px;">${escapeHtml(String(responder.nameNote))}</small>`
+                                                                : '';
                                                             actionArea.innerHTML = `
                                                                 <div style="text-align:center; line-height:1.5;" role="status">
                                                                     <div style="color:#34d399; font-size:0.82rem; font-weight:700;">✅ الموظف موافق</div>
                                                                     <small style="display:block; color:#cbd5e1; margin:3px 0 7px;">${escapeHtml(responderName)}</small>
+                                                                    ${responderNote}
                                                                     <button type="button" class="btn btn-success btn-sm" style="width:100%;" onclick="acknowledgeCsApprovalRequest(this.dataset.requestKey, this)" data-request-key="${encodeURIComponent(latestRequest[0])}">تمام</button>
                                                                 </div>`;
                                                             return;
@@ -13374,8 +13386,10 @@ if (sohraBtn) {
                 }
 const isSohra = document.getElementById('isSohraBreak').checked;
 
+                const nameNote = document.getElementById('newNameNote').value.trim();
                 const userData = {
                     realName: name,
+                    nameNote,
                     password: pass,
                     allowance: allow,
                     isVIP: isVIP,
@@ -13425,6 +13439,7 @@ const isSohra = document.getElementById('isSohraBreak').checked;
                 document.getElementById('newUsername').value = u.username || un;
                 document.getElementById('newUsername').disabled = true; // منع تغيير اليوزر نيم أثناء التعديل
                 document.getElementById('newRealName').value = u.realName || '';
+                document.getElementById('newNameNote').value = u.nameNote || '';
                 document.getElementById('newPassword').value = u.password || '';
                 document.getElementById('newAllowance').value = u.allowance || 45;
                 document.getElementById('newFunTitle').value = u.funTitle || '';
@@ -13447,6 +13462,7 @@ const isSohra = document.getElementById('isSohraBreak').checked;
                 document.getElementById('newUsername').disabled = false;
                 document.getElementById('newUsername').value = '';
                 document.getElementById('newRealName').value = '';
+                document.getElementById('newNameNote').value = '';
                 document.getElementById('newPassword').value = '';
                 document.getElementById('newAllowance').value = '45';
                 document.getElementById('newFunTitle').value = '';
