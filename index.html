@@ -10,10 +10,10 @@
                     <meta name="theme-color" content="#6366f1">
                     
                     <!-- أيقونة شريط التبويب في الكمبيوتر -->
-                <link rel="icon" type="image/jpeg" href="https://z-cdn-media.chatglm.cn/files/7d4d1edb-d8aa-482e-840e-0492871f2bdf.jpg?auth_key=1881098147-176910170c5241b9b6f31936865757ae-0-e94dd5a43309ee23faa863616eaf3400">
+                <link rel="icon" type="image/png" sizes="512x512" href="assets/elshamaa-logo.png">
                     <!-- أيقونة الآيفون والأندرويد عند التثبيت -->
                     
-            <link rel="apple-touch-icon" href="https://z-cdn-media.chatglm.cn/files/7d4d1edb-d8aa-482e-840e-0492871f2bdf.jpg?auth_key=1881098147-176910170c5241b9b6f31936865757ae-0-e94dd5a43309ee23faa863616eaf3400">
+            <link rel="apple-touch-icon" sizes="512x512" href="assets/elshamaa-logo.png">
                     <meta name="apple-mobile-web-app-capable" content="yes">
                     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
                     <meta name="apple-mobile-web-app-title" content="ELSHAMAA">
@@ -3337,6 +3337,17 @@ html, body {
                                                         <button onclick="document.getElementById('myBreakReportFrom').value=''; document.getElementById('myBreakReportTo').value=''; renderMyBreakReport();" class="btn btn-dark">عرض كل التواريخ</button>
                                                     </div>
                                                     <div id="myBreakReportSummary" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-bottom:18px;"></div>
+                                                    <section style="margin:0 0 22px; padding:16px; border:1px solid rgba(251,191,36,.45); border-radius:18px; background:rgba(251,191,36,.06);">
+                                                        <h3 style="margin:0 0 8px; color:#fbbf24;">😴 تقرير نايم أثناء العمل</h3>
+                                                        <p style="margin:0 0 12px; color:#cbd5e1;">النوبات المسجلة خارج البريك فقط، بعد تنبيه الخمول وعدم الرد خلال دقيقة.</p>
+                                                        <div id="myWorkSleepSummary" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;"></div>
+                                                        <div class="table-responsive" style="margin-top:0;">
+                                                            <table style="min-width:600px;">
+                                                                <thead><tr><th>تاريخ التنبيه</th><th>بداية النوم</th><th>نهاية النوم</th><th>المدة</th></tr></thead>
+                                                                <tbody id="myWorkSleepBody"></tbody>
+                                                            </table>
+                                                        </div>
+                                                    </section>
                                                     <h3 style="color:#f87171; margin:20px 0 10px;">⏱️ حساب البريك والأكسدة لكل يوم</h3>
                                                     <small style="display:block; color:#94a3b8; margin-bottom:8px;">الأكسدة هي الوقت الزائد عن رصيد البريك اليومي. المدد معروضة بصيغة ساعة:دقيقة:ثانية.</small>
                                                     <div class="table-responsive" style="margin-bottom:22px;">
@@ -3862,7 +3873,7 @@ html, body {
                                                             <button onclick="endDay()" class="btn btn-danger btn-sm">إقفال اليوم 🛑</button>
                                                         </div>
         <button onclick="forceUpdateAllClients()" class="btn" style="background: #7e22ce; color: white;">
-            🚀 تحديث إجباري لجميع الموظفين
+            🚀 نشر التحديث الحالي على أجهزة الموظفين
         </button>
                                                         <div class="table-responsive">
                                                             <table>
@@ -3942,6 +3953,17 @@ html, body {
                             </table>
                             
                         </div>
+                        <section style="margin-top:22px; padding:20px; border:1px solid rgba(251,191,36,.45); border-radius:20px; background:rgba(251,191,36,.06);">
+                            <h3 style="margin:0 0 8px; color:#fbbf24;">😴 تقرير نايم أثناء العمل</h3>
+                            <p style="margin:0 0 14px; color:#cbd5e1;">عدد مرات النوم ومدتها للموظف والفترة المحددين بالأعلى، بدون احتساب وقت البريك.</p>
+                            <div id="adminWorkSleepSummary" style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:14px;"></div>
+                            <div class="table-responsive" style="margin-top:0;">
+                                <table style="min-width:620px;">
+                                    <thead><tr><th>تاريخ التنبيه</th><th>بداية النوم</th><th>نهاية النوم</th><th>المدة</th></tr></thead>
+                                    <tbody id="adminWorkSleepBody"></tbody>
+                                </table>
+                            </div>
+                        </section>
 
                                 <!-- ======================================================= -->
                                 <!-- منطقة الخطر (Danger Zone) - معزولة وبعيدة جداً -->
@@ -4199,6 +4221,9 @@ html, body {
 
                                                 <!-- ================= لوحة الموظف ================= -->
                                                 <div id="employeeSection" class="hidden">
+                                                    <div id="desktopIdleNotice" class="hidden" style="margin:0 0 16px; padding:12px 16px; border:1px solid rgba(251,191,36,.45); border-radius:14px; background:rgba(251,191,36,.08); color:#fde68a; font-weight:700;">
+                                                        👀 المتابعة بعد 3 دقائق من عدم التفاعل مع الصفحة، وتتوقف أثناء البريك. في المتصفح تراقب هذه الصفحة فقط.
+                                                    </div>
                                                     <details style="margin:0 0 18px; padding:14px 18px; border:1px solid var(--glass-border); border-radius:18px; background:var(--glass);">
                                                         <summary style="cursor:pointer; color:var(--primary); font-weight:900;">🎨 تخصيص ألوان صفحتي</summary>
                                                         <p style="margin:10px 0; color:var(--text-light); opacity:0.8;">اختار قالبًا جاهزًا أو غيّر ألوان الصفحة والساعة وخانات تسجيل المكالمة والصور وأزرار الموظف وسجلات المكالمات وسجل اليوم. تقدر كمان تغيّر ألوان نموذج البلاغ بشكل مستقل. ألوانك محفوظة لحسابك.</p>
@@ -7873,9 +7898,10 @@ html, body {
                                                     if (currentUser) {
                                                         const updatedMe = allUsersData[currentUser.username];
                                                         if(updatedMe) { const r = currentUser.role; currentUser = updatedMe; currentUser.role = r; }
+                            syncDesktopIdleContext();
                             if (currentUser.role === 'admin') {
                                 // حساب "شكل" الجدول الحالي (عدد الموظفين + أسماؤهم + حالاتهم)
-                                const currentTableStructure = Object.values(allUsersData).filter(u => u && u.username && !MANAGERS.includes(u.username)).map(u => `${u.username}-${u.isOnBreak}-${u.breakType}-${u.state}`).join('|');
+                                const currentTableStructure = Object.values(allUsersData).filter(u => u && u.username && !MANAGERS.includes(u.username)).map(u => `${u.username}-${u.isOnBreak}-${u.breakType}-${u.state}-${isActiveDesktopIdle(u)}-${u.lastIdleSleep && u.lastIdleSleep.endedAt}`).join('|');
 
                                 // لو الشكل اتغير (موظف جديد أو غادر أو غير حالته)، نرسم الجدول من جديد
                                 if (currentTableStructure !== lastTableStructure) {
@@ -8004,6 +8030,7 @@ html, body {
                 if (s && allUsersData[s]) { 
                     currentUser = allUsersData[s]; 
                     currentUser.role = MANAGERS.includes(s) ? 'admin' : 'employee'; 
+                        syncDesktopIdleContext();
                     
                     // إعادة تفعيل الرقابة على الجلسة عند تحديث الصفحة
                     manageSingleSession(s);
@@ -8023,6 +8050,7 @@ html, body {
             if (allUsersData[u] && allUsersData[u].password === p) { 
                 currentUser = allUsersData[u]; 
                 currentUser.role = MANAGERS.includes(u) ? 'admin' : 'employee'; 
+                syncDesktopIdleContext();
                 localStorage.setItem('break_sys_user', u); 
 
                 // تفعيل نظام الجلسات المطور (موبايل حر + PC واحد)
@@ -8341,7 +8369,7 @@ html, body {
         tbody.innerHTML = '';
 
         // عدادات للحالة العامة في الأعلى
-        let actB = 0, actP = 0, onlineCount = 0;
+        let actB = 0, actP = 0, onlineCount = 0, sleepingCount = 0;
         let usersWithCredit = 0, usersFinishedPrayer = 0;
 
         // 1. تحويل البيانات لمصفوفة وترتيبها (المتصل أولاً)
@@ -8363,6 +8391,7 @@ html, body {
         usersList.forEach(u => {
             const isOnline = u.state === 'online';
             if (isOnline) onlineCount++;
+            if (isActiveDesktopIdle(u)) sleepingCount++;
             
             // عدادات إحصائيات الصلاة
             if (u.prayerLimit > 0) usersWithCredit++;
@@ -8398,7 +8427,15 @@ html, body {
                     : '⚠️ وقت بداية النشاط غير مسجل';
                 mainStatusText = `${u.lastReason || u.breakType}<small style="display:block; font-weight:normal; color:#cbd5e1;">${startLabel}</small>`;
             }
-            const statusColor = u.isOnBreak ? 'var(--danger)' : 'var(--success)';
+            const statusColor = u.isOnBreak ? 'var(--danger)' : (isActiveDesktopIdle(u) ? 'var(--warning)' : 'var(--success)');
+            const idleStatusMarkup = isActiveDesktopIdle(u)
+                ? `<small style="display:block; color:#fbbf24; font-weight:700;">😴 خمول منذ <span id="idle_elapsed_${u.username}">...</span></small>`
+                : '';
+            const lastIdleSleep = u.lastIdleSleep;
+            const lastIdleDuration = Number(lastIdleSleep && lastIdleSleep.durationSeconds);
+            const lastIdleSleepMarkup = Number.isFinite(lastIdleDuration) && lastIdleDuration > 0
+                ? `<small style="display:block; color:#94a3b8; font-weight:normal;">آخر خمول مسجل: ${formatDurationHMS(lastIdleDuration)} (${new Date(Number(lastIdleSleep.endedAt)).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })})</small>`
+                : '';
 
             // رصيد الصلاة
             const prayerCreditStatus = u.prayerLimit > 0
@@ -8447,7 +8484,7 @@ html, body {
                             </div>
                         </div>
                     </td>
-                    <td style="font-weight:bold; font-size:0.85rem; color:${statusColor}">${mainStatusText}</td>
+                    <td id="monitor_status_${u.username}" style="font-weight:bold; font-size:0.85rem; color:${statusColor}">${mainStatusText}${idleStatusMarkup}${lastIdleSleepMarkup}</td>
                     <td><span id="break_used_${u.username}" style="font-weight:bold;">${formatDurationHMS(lg)}</span></td>
                     <td><span id="rem_${u.username}" style="font-weight:bold; color:${rem>=0?'white':'#f43f5e'}">${rem>=0?formatDurationHMS(rem):'-'+formatDurationHMS(Math.abs(rem))}</span></td>
                     <td>
@@ -8469,6 +8506,7 @@ html, body {
             statusDisplay.innerHTML = `
                 <div style="display:flex; gap:15px; flex-wrap:wrap; justify-content:center; font-size:0.9rem;">
                     <span style="color:#10b981;">🟢 متواجد: ${onlineCount}</span>
+                    <span id="desktopIdleCounter" style="color:#fbbf24;">😴 خمول: ${sleepingCount}</span>
                     <span style="color:#6366f1;">🍔 بريك: (${actB}/${maxBreaksAllowed})</span>
                     <span style="color:#06b6d4;">🕌 صلاة الآن: (${actP}/${maxPrayersAllowed})</span>
                 </div>`;
@@ -8477,6 +8515,7 @@ html, body {
 
                                                 function updateMonitorValuesOnly() {
                                                     // بنلف على الموظفين ونحدث الخلايا اللي محتاجة تحديث بس من غير ما نمسح الجدول
+                                                    let sleepingCount = 0;
                                                     Object.values(allUsersData).forEach(u => {
                                                         if (!u || !u.username || MANAGERS.includes(u.username)) return;
 
@@ -8493,6 +8532,22 @@ html, body {
                                                         }
 
                                                         const rem = ((u.allowance || 45) * 60) - lg;
+
+                                                        const idleElapsedEl = document.getElementById(`idle_elapsed_${u.username}`);
+                                                        const isSleeping = isActiveDesktopIdle(u);
+                                                        if (idleElapsedEl) {
+                                                            idleElapsedEl.parentElement.style.display = isSleeping ? 'block' : 'none';
+                                                            if (isSleeping) {
+                                                                sleepingCount++;
+                                                                const idleSeconds = Math.max(0, Math.floor((getServerTime() - Number(u.idleStatus.startedAt)) / 1000));
+                                                                const idleTime = formatDurationHMS(idleSeconds);
+                                                                if (idleElapsedEl.innerText !== idleTime) idleElapsedEl.innerText = idleTime;
+                                                            }
+                                                        }
+                                                        const statusCell = document.getElementById(`monitor_status_${u.username}`);
+                                                        if (statusCell && !u.isOnBreak) {
+                                                            statusCell.style.color = isSleeping ? 'var(--warning)' : 'var(--success)';
+                                                        }
 
                                                         const usedEl = document.getElementById(`break_used_${u.username}`);
                                                         if (usedEl) {
@@ -8521,6 +8576,8 @@ html, body {
                                                         updateText(`follow_${u.username}`, lf);
                                                         updateText(`vip_${u.username}`, lv);
                                                     });
+                                                    const idleCounter = document.getElementById('desktopIdleCounter');
+                                                    if (idleCounter) idleCounter.textContent = `😴 خمول: ${sleepingCount}`;
                                                 }
 
                     function openMyBreakReport() {
@@ -8551,6 +8608,116 @@ function closeMyBreakReport() {
     if (modal) modal.classList.add('hidden');
 }
 
+function renderWorkSleepReport(employee, from, to, summaryId, bodyId) {
+    const summary = document.getElementById(summaryId);
+    const tbody = document.getElementById(bodyId);
+    if (!summary || !tbody) return;
+
+    if (from && to && from > to) {
+        summary.replaceChildren();
+        tbody.replaceChildren();
+        const row = tbody.insertRow();
+        const cell = row.insertCell();
+        cell.colSpan = 4;
+        cell.textContent = 'تاريخ البداية يجب أن يكون قبل تاريخ النهاية.';
+        return;
+    }
+
+    const idleHistory = employee && employee.idleHistory;
+    const records = idleHistory && typeof idleHistory === 'object'
+        ? (Array.isArray(idleHistory) ? idleHistory : Object.values(idleHistory))
+            .filter(record => record && typeof record === 'object')
+        : [];
+    const lastRecord = employee && employee.lastIdleSleep;
+    if (lastRecord && typeof lastRecord === 'object' &&
+        !records.some(record => Number(record.endedAt) === Number(lastRecord.endedAt))) {
+        records.push(lastRecord);
+    }
+
+    const reportRecords = records.filter(record => {
+        const promptedAt = Number(record.promptedAt) || Number(record.startedAt);
+        if (!Number.isFinite(promptedAt) || !Number.isFinite(Number(record.startedAt))) return false;
+        const promptedDate = new Date(promptedAt);
+        const isoDate = `${promptedDate.getFullYear()}-${String(promptedDate.getMonth() + 1).padStart(2, '0')}-${String(promptedDate.getDate()).padStart(2, '0')}`;
+        return (!from || isoDate >= from) && (!to || isoDate <= to);
+    });
+
+    const idleStatus = employee && employee.idleStatus;
+    const idleUpdatedAt = Number(idleStatus && idleStatus.updatedAt);
+    const currentTime = typeof getServerTime === 'function' ? getServerTime() : Date.now();
+    if (employee && !employee.isOnBreak && idleStatus && idleStatus.state === 'sleeping' &&
+        Number.isFinite(idleUpdatedAt) && currentTime - idleUpdatedAt <= 45000) {
+        const startedAt = Number(idleStatus.startedAt);
+        const promptedAt = Number(idleStatus.promptedAt) || startedAt;
+        if (Number.isFinite(startedAt) && startedAt > 0) {
+            const date = new Date(promptedAt);
+            const isoDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            if ((!from || isoDate >= from) && (!to || isoDate <= to)) {
+                reportRecords.push({
+                    promptedAt,
+                    startedAt,
+                    durationSeconds: Math.max(0, Math.floor((currentTime - startedAt) / 1000)),
+                    active: true
+                });
+            }
+        }
+    }
+
+    reportRecords.sort((left, right) => Number(right.startedAt) - Number(left.startedAt));
+    const totalSeconds = reportRecords.reduce((total, record) =>
+        total + Math.max(0, Number(record.durationSeconds) || 0), 0);
+
+    const createCard = (label, value) => {
+        const card = document.createElement('div');
+        card.style.cssText = 'min-width:145px;padding:10px 14px;border-radius:14px;background:rgba(0,0,0,.25);text-align:center;';
+        const heading = document.createElement('small');
+        heading.style.cssText = 'display:block;color:#94a3b8;';
+        heading.textContent = label;
+        const result = document.createElement('strong');
+        result.style.cssText = 'display:block;margin-top:4px;color:#fbbf24;font-size:1.1rem;';
+        result.textContent = value;
+        card.append(heading, result);
+        return card;
+    };
+
+    summary.replaceChildren(
+        createCard('عدد مرات النوم', String(reportRecords.length)),
+        createCard('إجمالي المدة', formatDurationHMS(totalSeconds))
+    );
+    tbody.replaceChildren();
+
+    if (!reportRecords.length) {
+        const row = tbody.insertRow();
+        const cell = row.insertCell();
+        cell.colSpan = 4;
+        cell.style.color = '#94a3b8';
+        cell.textContent = 'لا توجد نوبات مسجلة في الفترة المحددة.';
+        return;
+    }
+
+    const formatDateTime = timestamp => new Date(timestamp).toLocaleString('ar-EG', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+
+    reportRecords.forEach(record => {
+        const row = tbody.insertRow();
+        const promptedAt = Number(record.promptedAt) || Number(record.startedAt);
+        const endedAt = Number(record.endedAt);
+        [
+            formatDateTime(promptedAt),
+            formatDateTime(Number(record.startedAt)),
+            record.active || !Number.isFinite(endedAt) ? 'جاري الآن' : formatDateTime(endedAt),
+            formatDurationHMS(Math.max(0, Number(record.durationSeconds) || 0))
+        ].forEach(value => {
+            row.insertCell().textContent = value;
+        });
+    });
+}
+
 function renderMyBreakReport() {
     if (!currentUser || currentUser.role === 'admin' || MANAGERS.includes(currentUser.username)) return;
 
@@ -8561,6 +8728,8 @@ function renderMyBreakReport() {
     const from = document.getElementById('myBreakReportFrom')?.value || '';
     const to = document.getElementById('myBreakReportTo')?.value || '';
     if (!tbody || !summary || !dailyBody) return;
+
+    renderWorkSleepReport(employee, from, to, 'myWorkSleepSummary', 'myWorkSleepBody');
 
     if (!employee || employee.username !== currentUser.username) {
         tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px;">بيانات التقرير غير متاحة حاليًا.</td></tr>';
@@ -8700,15 +8869,20 @@ function renderMyBreakReport() {
 
                     function renderUserReport() {
     const un = document.getElementById('reportUserSelect').value; 
-    if(!un) { alert("يرجى اختيار موظف أولاً"); return; }
-
-    const u = allUsersData[un];
     const sB = document.getElementById('sessionsReportBody');
     const mS = document.getElementById('monthlySummary');
     
     const start = document.getElementById('filterStartDate').value;
     const end = document.getElementById('filterEndDate').value;
 
+    if(!un) {
+        renderWorkSleepReport(null, start, end, 'adminWorkSleepSummary', 'adminWorkSleepBody');
+        alert("يرجى اختيار موظف أولاً");
+        return;
+    }
+
+    const u = allUsersData[un];
+    renderWorkSleepReport(u, start, end, 'adminWorkSleepSummary', 'adminWorkSleepBody');
     sB.innerHTML = ''; 
     mS.classList.remove('hidden');
     let tOx=0, tPr=0, tFo=0, tVi=0; 
@@ -13145,6 +13319,13 @@ if (sohraBtn) {
                     updatePrayerSwapVisibility();
                     document.getElementById('loginSection').classList.add('hidden'); 
                     document.getElementById('employeeSection').classList.remove('hidden'); 
+                    const desktopIdleNotice = document.getElementById('desktopIdleNotice');
+                    if (desktopIdleNotice) {
+                        desktopIdleNotice.textContent = window.desktopIdle
+                            ? '💻 متابعة الخمول مفعّلة على مستوى الجهاز كله، وتتوقف أثناء البريك.'
+                            : '👀 المتابعة بعد 3 دقائق من عدم التفاعل مع الصفحة، وتتوقف أثناء البريك. في المتصفح تراقب هذه الصفحة فقط.';
+                        desktopIdleNotice.classList.remove('hidden');
+                    }
                     const csContactToggleCard = document.getElementById('csContactToggleCard');
                     if (csContactToggleCard) csContactToggleCard.classList.toggle('hidden', isCsCallAgent(currentUser));
                     document.getElementById('csFormThemeControls').classList.toggle('hidden', !currentUser.isCS);
@@ -14171,7 +14352,7 @@ const isSohra = document.getElementById('isSohraBreak').checked;
                 artist: statusAr,          // الحالة (هتتحول لـ أكسدة الآن!)
                 album: `موظف: ${currentUser.realName || currentUser.username}`,
                 artwork: [
-                    { src: 'https://z-cdn-media.chatglm.cn/files/7d4d1edb-d8aa-482e-840e-0492871f2bdf.jpg', sizes: '512x512', type: 'image/jpeg' }
+                    { src: 'assets/elshamaa-logo.png', sizes: '512x512', type: 'image/png' }
                 ]
             });
             navigator.mediaSession.playbackState = "playing";
@@ -14642,7 +14823,7 @@ const isSohra = document.getElementById('isSohraBreak').checked;
                     artist: `الحالة: ${status}`,       // ده هيظهر تحتها
                     album: 'نظام الشمعة الإداري',
                     artwork: [
-                        { src: 'https://z-cdn-media.chatglm.cn/files/7d4d1edb-d8aa-482e-840e-0492871f2bdf.jpg', sizes: '512x512', type: 'image/jpeg' }
+                        { src: 'assets/elshamaa-logo.png', sizes: '512x512', type: 'image/png' }
                     ]
                 });
 
@@ -14657,7 +14838,7 @@ const isSohra = document.getElementById('isSohraBreak').checked;
                 navigator.serviceWorker.ready.then(registration => {
                     registration.showNotification(title, {
                         body: body,
-                        icon: 'https://z-cdn-media.chatglm.cn/files/7d4d1edb-d8aa-482e-840e-0492871f2bdf.jpg',
+                        icon: 'assets/elshamaa-logo.png',
                         vibrate: [300, 100, 300],
                         tag: 'oxidation-alert',
                         renotify: true
@@ -14687,105 +14868,66 @@ const isSohra = document.getElementById('isSohraBreak').checked;
                 });
             }
         }
-        // استماع دائم لإشارة التحديث من الأدمن
-        firebase.database().ref('system_update').on('value', (snap) => {
-            const update = snap.val();
-            if (!update) return;
-
-            // جلب رقم آخر تحديث تم تنفيذه على هذا الجهاز
-            const lastUpdateProcessed = localStorage.getItem('last_processed_update') || 0;
-
-            // إذا كان الرقم القادم من السيرفر أكبر من المخزن في الجهاز، إذن هذا تحديث جديد
-            if (update.timestamp > lastUpdateProcessed) {
-                console.log("🚀 تم استلام أمر تحديث من الأدمن...");
-
-                // 1. تخزين الرقم الجديد فوراً لمنع التكرار
-                localStorage.setItem('last_processed_update', update.timestamp);
-
-                // 2. إظهار رسالة للموظف (اختياري لكن مفيد)
-                const loadingOverlay = document.getElementById('loading');
-                if(loadingOverlay) {
-                    loadingOverlay.style.display = 'flex';
-                    loadingOverlay.innerHTML = '<h2 style="color:white; text-align:center;">⏳ جاري تثبيت تحديث إداري جديد...<br>برجاء الانتظار ثواني</h2>';
-                }
-
-                // 3. تحديث الـ Service Worker (التطبيق المثبت)
-                if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.getRegistrations().then(registrations => {
-                        for (let registration of registrations) {
-                            registration.update(); // سحب ملف sw.js الجديد
-                        }
-                    });
-                }
-
-                // 4. إعادة تحميل الصفحة بعد ثانية مع كسر الكاش تماماً
-                setTimeout(() => {
-                    const currentUrl = new URL(window.location.href);
-                    currentUrl.searchParams.set('update_v', update.timestamp); // كسر كاش المتصفح
-                    window.location.replace(currentUrl.toString());
-                }, 1500);
-            }
-        });
-    async function forceUpdateAllClients() {
-        if(!confirm("⚠️ سيتم تحديث النظام عند الجميع ومسح الكاش القديم. استمرار؟")) return;
-        
-        // مسح الكاش من جهاز الأدمن أولاً (اختياري لكن مفيد)
-        if ('caches' in window) {
-            const cacheNames = await caches.keys();
-            await Promise.all(cacheNames.map(name => caches.delete(name)));
+    let isGlobalUpdateInProgress = false;
+    async function reloadForGlobalUpdate(timestamp) {
+        const loadingOverlay = document.getElementById('loading');
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'flex';
+            loadingOverlay.innerHTML = '<h2 style="color:white; text-align:center;">⏳ جاري تحميل آخر تحديث منشور...<br>برجاء الانتظار</h2>';
         }
+
+        try {
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                await Promise.all(registrations.map(registration => registration.unregister()));
+            }
+            if ('caches' in window) {
+                const cacheNames = await caches.keys();
+                await Promise.all(cacheNames.map(name => caches.delete(name)));
+            }
+        } catch (error) {
+            console.error('تعذر تنظيف ذاكرة التحديث بالكامل:', error);
+        }
+
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('update_v', String(timestamp));
+        window.location.replace(currentUrl.toString());
+    }
+
+    db.ref('system_update').on('value', (snap) => {
+        const update = snap.val();
+        const updateTimestamp = Number(update && update.timestamp);
+        if (!Number.isFinite(updateTimestamp) || updateTimestamp <= 0) return;
+
+        const lastUpdateProcessed = Number(localStorage.getItem('last_processed_update')) || 0;
+        if (updateTimestamp <= lastUpdateProcessed || isGlobalUpdateInProgress) return;
+
+        isGlobalUpdateInProgress = true;
+        localStorage.setItem('last_processed_update', String(updateTimestamp));
+        reloadForGlobalUpdate(updateTimestamp);
+    }, error => {
+        console.error('تعذر استقبال أمر تحديث الأجهزة:', error);
+    });
+
+    async function forceUpdateAllClients() {
+        if (!currentUser || currentUser.role !== 'admin') {
+            alert('هذا الإجراء متاح للمدير فقط.');
+            return;
+        }
+        if (!confirm('تأكد أنك رفعت index.html على GitHub Pages أولاً. سيتم الآن إعادة تحميل الصفحة المنشورة على أجهزة الموظفين المتصلة. استمرار؟')) return;
 
         const updateTime = Date.now();
-        db.ref('system_update').set({
-            timestamp: updateTime,
-            admin: currentUser.realName || currentUser.username
-        });
-    }
-        // كود استقبال التحديث الإجباري من الأدمن (يوضع قبل إغلاق وسم <script>)
-    db.ref('system_update').on('value', (snap) => {
-        const data = snap.val();
-        if (!data) return;
-
-        const lastUpdate = localStorage.getItem('last_processed_update') || 0;
-
-        if (data.timestamp > lastUpdate) {
-            console.log("🚀 جاري تثبيت تحديث جديد وتنظيف الكاش...");
-            localStorage.setItem('last_processed_update', data.timestamp);
-
-            // 1. مسح الكاش البرمجي (Cache Storage)
-            if ('caches' in window) {
-                caches.keys().then(names => {
-                    for (let name of names) caches.delete(name);
-                });
-            }
-
-            // 2. تحديث الـ Service Worker
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.getRegistrations().then(registrations => {
-                    for (let registration of registrations) {
-                        registration.unregister(); // حذف التسجيل القديم تماماً
-                    }
-                });
-            }
-
-            // 3. إظهار رسالة للمستخدم
-            const loadingOverlay = document.getElementById('loading');
-            if(loadingOverlay) {
-                loadingOverlay.style.display = 'flex';
-                loadingOverlay.innerHTML = `
-                    <div style="text-align:center; color:white;">
-                        <h2 style="font-family:Cairo;">جاري تثبيت تحديث إداري نهائي...</h2>
-                        <p>يتم الآن تنظيف ملفات النظام القديمة</p>
-                    </div>`;
-            }
-
-            // 4. إعادة تحميل الصفحة "إجبارياً" بكسر الكاش
-            setTimeout(() => {
-                // إضافة Query String عشوائي بيجبر المتصفح يجيب الصفحة من السيرفر مش الموبايل
-                window.location.href = window.location.origin + window.location.pathname + "?v=" + data.timestamp;
-            }, 2000);
+        try {
+            await db.ref('system_update').set({
+                timestamp: updateTime,
+                admin: currentUser.realName || currentUser.username
+            });
+            alert('✅ تم إرسال أمر التحديث للأجهزة المتصلة. الأجهزة غير المتصلة ستحدّث عند اتصالها وفتح النظام.');
+        } catch (error) {
+            console.error('تعذر إرسال أمر تحديث الأجهزة:', error);
+            alert('تعذر إرسال أمر التحديث. تحقق من اتصال الإنترنت وصلاحية قاعدة البيانات ثم حاول مرة أخرى.');
         }
-    });
+    }
     // دالة لتنفيذ بدء البريك بناءً على الاختيار التفصيلي
     function confirmDetailedBreak(detailedReason) {
         // 1. إخفاء النافذة
@@ -18156,6 +18298,290 @@ function shareFilmGameLink() {
 </button>
     </div>
                 <!-- تأكد إن ده هو آخر سطر في الملف -->
+        
+    </div>
+    </div>
+
+    <div id="desktopIdleModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="desktopIdleTitle" style="position:fixed; inset:0; z-index:200000; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(2,6,23,.94); backdrop-filter:blur(12px);">
+        <div style="width:min(100%,480px); padding:30px; border:2px solid #fbbf24; border-radius:28px; background:#0f172a; text-align:center; box-shadow:0 20px 70px rgba(0,0,0,.6);">
+            <div id="desktopIdleIcon" style="font-size:3rem;">😴</div>
+            <h2 id="desktopIdleTitle" style="margin:8px 0; color:#fbbf24;">إنت موجود؟</h2>
+            <p id="desktopIdleMessage" style="line-height:1.8; color:#e2e8f0;">مافيش تفاعل من الجهاز بقاله 10 دقايق. اضغط «أنا موجود» لو أنت صاحي.</p>
+            <p id="desktopIdleCountdown" aria-live="polite" style="min-height:24px; color:#94a3b8;"></p>
+            <button id="desktopIdleRespondButton" onclick="acknowledgeDesktopIdle()" class="btn btn-success" style="width:100%; margin-top:8px; font-size:1rem;">✅ أنا موجود</button>
+            <p id="desktopIdleError" role="alert" style="color:#fca5a5; font-size:.85rem;"></p>
+        </div>
+    </div>
+
+    <script>
+        window.__desktopIdleMonitorInstalled = true;
+        let activeDesktopSleep = null;
+        let desktopIdleCountdownTimer = null;
+        let browserIdleInterval = null;
+        let browserIdlePhase = 'idle';
+        let browserIdlePromptedAt = 0;
+        let browserIdleStartedAt = 0;
+        let browserIdleLastActivityAt = Date.now();
+        let browserIdleContext = { username: null, enabled: false };
+        const DESKTOP_IDLE_THRESHOLD_MS = 3 * 60 * 1000;
+        const DESKTOP_IDLE_RESPONSE_WINDOW_MS = 60 * 1000;
+
+        function isActiveDesktopIdle(user) {
+            if (!user || user.isOnBreak || !user.idleStatus || user.idleStatus.state !== 'sleeping') return false;
+            const updatedAt = Number(user.idleStatus.updatedAt);
+            return Number.isFinite(updatedAt) && getServerTime() - updatedAt <= 45000;
+        }
+
+        function syncDesktopIdleContext() {
+            const isAdmin = !currentUser || currentUser.role === 'admin';
+            const isOnBreak = Boolean(currentUser && currentUser.isOnBreak);
+            const enabled = Boolean(currentUser && !isAdmin && !isOnBreak);
+            const username = enabled ? currentUser.username : null;
+            if (window.desktopIdle) {
+                window.desktopIdle.setContext({
+                    username: username || '',
+                    enabled,
+                    isAdmin,
+                    isOnBreak,
+                    idleThresholdMs: DESKTOP_IDLE_THRESHOLD_MS,
+                    responseWindowMs: DESKTOP_IDLE_RESPONSE_WINDOW_MS
+                });
+                return;
+            }
+
+            const changed = browserIdleContext.username !== username ||
+                browserIdleContext.enabled !== enabled;
+            if (changed) {
+                stopBrowserIdle('context-changed');
+                browserIdleContext = { username, enabled };
+                browserIdleLastActivityAt = Date.now();
+            }
+        }
+
+        function setDesktopIdleDialog(title, message, countdown, sleeping) {
+            const modal = document.getElementById('desktopIdleModal');
+            if (!modal) return;
+            document.getElementById('desktopIdleTitle').textContent = title;
+            document.getElementById('desktopIdleMessage').textContent = message;
+            document.getElementById('desktopIdleCountdown').textContent = countdown || '';
+            document.getElementById('desktopIdleIcon').textContent = sleeping ? '😴' : '👋';
+            document.getElementById('desktopIdleRespondButton').textContent = sleeping
+                ? '✅ رجعت للشغل'
+                : '✅ أيوه صاحي 😂';
+            document.getElementById('desktopIdleError').textContent = '';
+            modal.classList.remove('hidden');
+        }
+
+        function hideDesktopIdleDialog() {
+            const modal = document.getElementById('desktopIdleModal');
+            if (modal) modal.classList.add('hidden');
+            if (desktopIdleCountdownTimer) clearInterval(desktopIdleCountdownTimer);
+            desktopIdleCountdownTimer = null;
+        }
+
+        function acknowledgeDesktopIdle() {
+            if (window.desktopIdle) {
+                hideDesktopIdleDialog();
+                window.desktopIdle.respond();
+            } else {
+                finishBrowserIdle('employee-response');
+            }
+        }
+
+        function showDesktopIdleDatabaseError(action, error) {
+            console.error(`تعذر ${action} في Firebase:`, error);
+            const errorEl = document.getElementById('desktopIdleError');
+            if (errorEl) errorEl.textContent = 'تعذر حفظ حالة الخمول؛ تحقق من اتصال الإنترنت.';
+        }
+
+        function desktopIdleServerTime(localTimestamp) {
+            return Number(localTimestamp) + (getServerTime() - Date.now());
+        }
+
+        function saveDesktopIdleStart(event) {
+            if (!currentUser || currentUser.role === 'admin' ||
+                currentUser.username !== event.username || currentUser.isOnBreak) return;
+
+            const startedAt = desktopIdleServerTime(event.startedAt);
+            const promptedAt = desktopIdleServerTime(event.promptedAt);
+            activeDesktopSleep = { username: event.username, startedAt, promptedAt, lastHeartbeatAt: Date.now() };
+            db.ref(`users/${event.username}/idleStatus`).set({
+                state: 'sleeping',
+                promptedAt,
+                startedAt,
+                updatedAt: getServerTime(),
+                device: event.device || 'desktop'
+            }).catch(error => showDesktopIdleDatabaseError('تسجيل الخمول', error));
+
+            setDesktopIdleDialog(
+                'تم تسجيل عدم التفاعل',
+                'لم يصل رد خلال دقيقة. مدة الخمول تُحتسب الآن، وستتوقف عند عودتك لاستخدام الجهاز.',
+                'يمكنك الضغط هنا أو استخدام الجهاز للعودة.',
+                true
+            );
+        }
+
+        function saveDesktopIdleEnd(event) {
+            hideDesktopIdleDialog();
+            const sleep = activeDesktopSleep;
+            activeDesktopSleep = null;
+            if (!db || !event.username) return;
+
+            const userRef = db.ref(`users/${event.username}`);
+            const updates = { idleStatus: null };
+            if (sleep && sleep.username === event.username && Number.isFinite(sleep.startedAt)) {
+                const endedAt = desktopIdleServerTime(event.endedAt);
+                const durationSeconds = Math.max(0, Math.floor((endedAt - sleep.startedAt) / 1000));
+                if (durationSeconds > 0) {
+                    const historyKey = userRef.child('idleHistory').push().key;
+                    const historyRecord = {
+                        promptedAt: sleep.promptedAt,
+                        startedAt: sleep.startedAt,
+                        endedAt,
+                        durationSeconds,
+                        endReason: event.reason || 'unknown',
+                        device: event.device || 'desktop'
+                    };
+                    updates.lastIdleSleep = historyRecord;
+                    updates[`idleHistory/${historyKey}`] = historyRecord;
+                }
+            }
+            userRef.update(updates).catch(error => showDesktopIdleDatabaseError('إنهاء تسجيل الخمول', error));
+        }
+
+        function finishBrowserIdle(reason) {
+            if (browserIdlePhase === 'sleeping') {
+                saveDesktopIdleEnd({
+                    username: browserIdleContext.username,
+                    reason,
+                    promptedAt: browserIdlePromptedAt,
+                    startedAt: browserIdleStartedAt,
+                    endedAt: Date.now()
+                });
+            } else {
+                hideDesktopIdleDialog();
+            }
+            browserIdlePhase = 'idle';
+            browserIdlePromptedAt = 0;
+            browserIdleStartedAt = 0;
+            browserIdleLastActivityAt = Date.now();
+        }
+
+        function stopBrowserIdle(reason) {
+            if (browserIdlePhase === 'sleeping') {
+                finishBrowserIdle(reason);
+            } else {
+                hideDesktopIdleDialog();
+                browserIdlePhase = 'idle';
+                browserIdlePromptedAt = 0;
+                browserIdleStartedAt = 0;
+            }
+        }
+
+        function handleBrowserActivity() {
+            if (window.desktopIdle || !browserIdleContext.enabled ||
+                document.visibilityState !== 'visible') return;
+            if (browserIdlePhase === 'prompt' || browserIdlePhase === 'sleeping') {
+                finishBrowserIdle('activity');
+            } else {
+                browserIdleLastActivityAt = Date.now();
+            }
+        }
+
+        function monitorBrowserIdle() {
+            if (window.desktopIdle || !browserIdleContext.enabled ||
+                document.visibilityState !== 'visible') return;
+
+            const now = Date.now();
+            if (browserIdlePhase === 'idle' &&
+                now - browserIdleLastActivityAt >= DESKTOP_IDLE_THRESHOLD_MS) {
+                browserIdlePhase = 'prompt';
+                browserIdlePromptedAt = now;
+                setDesktopIdleDialog(
+                    'الماوس نام ولا إنت؟ 😴',
+                    'بقالك 3 دقايق من غير تفاعل مع الصفحة! حرّك الماوس أو الكيبورد، أو دوس «أيوه صاحي» خلال دقيقة. لو مفيش رد هنبدأ نحسب وقت الخمول.',
+                    '',
+                    false
+                );
+            }
+
+            if (browserIdlePhase === 'prompt') {
+                const deadline = browserIdlePromptedAt + DESKTOP_IDLE_RESPONSE_WINDOW_MS;
+                const remaining = Math.max(0, Math.ceil((deadline - now) / 1000));
+                const countdown = document.getElementById('desktopIdleCountdown');
+                if (countdown) countdown.textContent = `الرد خلال ${formatDurationHMS(remaining)}`;
+                if (now >= deadline) {
+                    browserIdlePhase = 'sleeping';
+                    browserIdleStartedAt = deadline;
+                    saveDesktopIdleStart({
+                        username: browserIdleContext.username,
+                        promptedAt: browserIdlePromptedAt,
+                        startedAt: browserIdleStartedAt,
+                        device: 'browser'
+                    });
+                }
+            } else if (browserIdlePhase === 'sleeping' &&
+                now - (activeDesktopSleep ? activeDesktopSleep.lastHeartbeatAt : 0) >= 15000) {
+                if (activeDesktopSleep) {
+                    activeDesktopSleep.lastHeartbeatAt = now;
+                    db.ref(`users/${browserIdleContext.username}/idleStatus`).update({
+                        updatedAt: desktopIdleServerTime(now)
+                    }).catch(error => showDesktopIdleDatabaseError('تحديث متابعة الخمول', error));
+                }
+            }
+        }
+
+        function initializeDesktopIdleMonitor() {
+            if (!window.desktopIdle) {
+                ['pointermove', 'keydown', 'mousedown', 'wheel', 'touchstart', 'click'].forEach(eventName => {
+                    document.addEventListener(eventName, handleBrowserActivity, { passive: true });
+                });
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'hidden') {
+                        stopBrowserIdle('page-hidden');
+                    } else {
+                        browserIdleLastActivityAt = Date.now();
+                    }
+                });
+                browserIdleInterval = setInterval(monitorBrowserIdle, 1000);
+                syncDesktopIdleContext();
+                return;
+            }
+
+            window.desktopIdle.onPrompt(event => {
+                if (!currentUser || currentUser.role === 'admin' ||
+                    currentUser.username !== event.username || currentUser.isOnBreak) return;
+
+                const deadline = Number(event.promptedAt) + Number(event.responseWindowMs || 60000);
+                setDesktopIdleDialog(
+                    'إنت موجود؟',
+                    'بقالك 3 دقايق من غير حركة! حرّك الماوس أو الكيبورد، أو دوس «أيوه صاحي» خلال دقيقة. لو مفيش رد هنبدأ نحسب وقت الخمول.',
+                    '',
+                    false
+                );
+                if (desktopIdleCountdownTimer) clearInterval(desktopIdleCountdownTimer);
+                const updateCountdown = () => {
+                    const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+                    const countdown = document.getElementById('desktopIdleCountdown');
+                    if (countdown) countdown.textContent = `الرد خلال ${formatDurationHMS(remaining)}`;
+                };
+                updateCountdown();
+                desktopIdleCountdownTimer = setInterval(updateCountdown, 1000);
+            });
+
+            window.desktopIdle.onSleepStart(saveDesktopIdleStart);
+            window.desktopIdle.onSleepHeartbeat(event => {
+                if (!activeDesktopSleep || activeDesktopSleep.username !== event.username) return;
+                db.ref(`users/${event.username}/idleStatus`).update({
+                    updatedAt: desktopIdleServerTime(event.updatedAt)
+                }).catch(error => showDesktopIdleDatabaseError('تحديث متابعة الخمول', error));
+            });
+            window.desktopIdle.onSleepEnd(saveDesktopIdleEnd);
+            syncDesktopIdleContext();
+        }
+
+        initializeDesktopIdleMonitor();
+    </script>
         
                     </body>
                     </html>
