@@ -18302,11 +18302,11 @@ function shareFilmGameLink() {
     </div>
     </div>
 
-    <div id="desktopIdleModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="desktopIdleTitle" style="position:fixed; inset:0; z-index:200000; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(2,6,23,.94); backdrop-filter:blur(12px);">
-        <div style="width:min(100%,480px); padding:30px; border:2px solid #fbbf24; border-radius:28px; background:#0f172a; text-align:center; box-shadow:0 20px 70px rgba(0,0,0,.6);">
+    <div id="desktopIdleModal" class="hidden" role="dialog" aria-modal="false" aria-labelledby="desktopIdleTitle" style="position:fixed; inset:0; z-index:200000; display:flex; align-items:flex-end; justify-content:flex-start; padding:20px; pointer-events:none; background:transparent; backdrop-filter:none;">
+        <div style="width:min(calc(100vw - 40px),420px); box-sizing:border-box; padding:24px; border:2px solid #fbbf24; border-radius:28px; background:#0f172a; text-align:center; box-shadow:0 20px 70px rgba(0,0,0,.6); pointer-events:auto;">
             <div id="desktopIdleIcon" style="font-size:3rem;">😴</div>
             <h2 id="desktopIdleTitle" style="margin:8px 0; color:#fbbf24;">إنت موجود؟</h2>
-            <p id="desktopIdleMessage" style="line-height:1.8;color:#e2e8f0;">إنت صاحي ولا الماوس دخل إجازة؟ 😴 حرّكه أو دوس «أيوه صاحي» قبل ما نبدأ نحسبها نومة!</p>
+            <p id="desktopIdleMessage" style="line-height:1.8;color:#e2e8f0;">إنت صاحي ولا الماوس دخل إجازة؟ 😴 بقالك 3 دقايق من غير حركة. دوس «أيوه صاحي» أو كمل شغلك عادي.</p>
             <p id="desktopIdleCountdown" aria-live="polite" style="min-height:24px; color:#94a3b8;"></p>
             <button id="desktopIdleRespondButton" onclick="acknowledgeDesktopIdle()" class="btn btn-success" style="width:100%; margin-top:8px; font-size:1rem;">✅ أيوه صاحي 😂</button>
             <p id="desktopIdleError" role="alert" style="color:#fca5a5; font-size:.85rem;"></p>
