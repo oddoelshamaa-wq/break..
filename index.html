@@ -9803,6 +9803,22 @@ if (sohraBtn) {
                                                         alert('الحساب المحدد غير مفعّل كموظف خدمة عملاء.');
                                                         return;
                                                     }
+                                                    if (isSelf && makeAvailable) {
+                                                        try {
+                                                            const attendanceSnap = await db.ref(
+                                                                `users/${username}/attendance/${getServerDateKey()}`
+                                                            ).once('value');
+                                                            const attendance = attendanceSnap.val();
+                                                            if (!attendance || !attendance.clockIn || attendance.clockOut) {
+                                                                alert('سجّل حضورك أولاً قبل تفعيل استقبال المكالمات.');
+                                                                return;
+                                                            }
+                                                        } catch (error) {
+                                                            console.error('تعذر التحقق من حضور موظف خدمة العملاء:', error);
+                                                            alert(`تعذر التحقق من بصمة الحضور: ${error.message}`);
+                                                            return;
+                                                        }
+                                                    }
 
                                                     const button = isSelf
                                                         ? document.getElementById('csSelfAvailabilityButton')
@@ -9911,7 +9927,7 @@ if (sohraBtn) {
                         ...data, 
                         username: un, 
                         role: 'employee', 
-                        isCSAvailable: true,
+                        isCSAvailable: false,
                         usedSeconds: 0, 
                         prayerSeconds: 0, 
                         meetingSeconds: 0, 
@@ -13072,9 +13088,35 @@ if (sohraBtn) {
                 function updateAttendanceUI() {
                     if (!currentUser) return;
                     const todayKey = getServerDateKey(); 
+                    let lastAttendanceAvailability = null;
                     
                     db.ref(`users/${currentUser.username}/attendance/${todayKey}`).on('value', (snap) => {
                         const data = snap.val();
+                        if (isCsCallAgent(currentUser)) {
+                            const isAvailable = Boolean(data && data.clockIn && !data.clockOut);
+                            if (lastAttendanceAvailability !== isAvailable) {
+                                lastAttendanceAvailability = isAvailable;
+                                const agent = allUsersData && allUsersData[currentUser.username];
+                                if (currentUser.isCSAvailable !== isAvailable ||
+                                    (agent && agent.isCSAvailable !== isAvailable)) {
+                                    db.ref(`users/${currentUser.username}/isCSAvailable`).set(isAvailable)
+                                        .then(() => {
+                                            currentUser.isCSAvailable = isAvailable;
+                                            if (agent) agent.isCSAvailable = isAvailable;
+                                            renderCsSelfAvailabilityControl();
+                                            renderCsApprovalRequests();
+                                        })
+                                        .catch((error) => {
+                                            lastAttendanceAvailability = null;
+                                            console.error('فشل ربط استقبال المكالمات ببصمة الحضور:', error);
+                                            alert(`تعذر تحديث استقبال المكالمات حسب الحضور: ${error.message}`);
+                                        });
+                                } else {
+                                    currentUser.isCSAvailable = isAvailable;
+                                    if (agent) agent.isCSAvailable = isAvailable;
+                                }
+                            }
+                        }
                         const btn = document.getElementById('attendanceBtn');
                         const ring = document.getElementById('fingerprintRing');
                         const txt = document.getElementById('attendanceActionText');
