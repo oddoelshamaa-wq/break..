@@ -9847,6 +9847,10 @@ if (sohraBtn) {
                                                         alert('الحساب المحدد غير مفعّل كموظف خدمة عملاء.');
                                                         return;
                                                     }
+                                                    if (makeAvailable && agent.isOnBreak) {
+                                                        alert('لا يمكن تفعيل استقبال المكالمات أثناء البريك؛ فعّله بعد العودة.');
+                                                        return;
+                                                    }
                                                     if (isSelf && makeAvailable) {
                                                         try {
                                                             const attendanceSnap = await db.ref(
@@ -13137,7 +13141,8 @@ if (sohraBtn) {
                     db.ref(`users/${currentUser.username}/attendance/${todayKey}`).on('value', (snap) => {
                         const data = snap.val();
                         if (isCsCallAgent(currentUser)) {
-                            const isAvailable = Boolean(data && data.clockIn && !data.clockOut);
+                            const isCheckedIn = Boolean(data && data.clockIn && !data.clockOut);
+                            const isAvailable = isCheckedIn && !currentUser.isOnBreak;
                             if (lastAttendanceAvailability !== isAvailable) {
                                 lastAttendanceAvailability = isAvailable;
                                 const agent = allUsersData && allUsersData[currentUser.username];
@@ -15059,6 +15064,7 @@ const isSohra = document.getElementById('isSohraBreak').checked;
             user.breakType = type;
             user.lastStartTime = getServerTime();
             user.lastReason = reason || type;
+            if (isCsCallAgent(user)) user.isCSAvailable = false;
             return user;
         }, (error, committed, snapshot) => {
             isActivityWritePending = false;
@@ -15171,6 +15177,10 @@ const isSohra = document.getElementById('isSohraBreak').checked;
                 );
             }
 
+            if (isCsCallAgent(user)) {
+                const attendance = user.attendance && user.attendance[getServerDateKey()];
+                user.isCSAvailable = Boolean(attendance && attendance.clockIn && !attendance.clockOut);
+            }
             user.isOnBreak = false;
             user.lastStartTime = null;
             user.lastEndedTime = completedAt;
