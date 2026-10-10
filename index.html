@@ -3771,7 +3771,7 @@ html, body {
                             </div>
                             <button onclick="saveWeeklySchedule()" class="btn btn-success" style="width: 100%; margin-top: 15px;">💾 حفظ جدول هذا اليوم</button>
                         </div>
-                        <button onclick="checkAndApplyTodaySchedule()" class="btn btn-vip" style="width: 100%; margin-top: 10px; background: linear-gradient(45deg, #fbbf24, #d97706); color: #000;">
+                        <button onclick="checkAndApplyTodaySchedule(true)" class="btn btn-vip" style="width: 100%; margin-top: 10px; background: linear-gradient(45deg, #fbbf24, #d97706); color: #000;">
         🔄 تطبيق جدول اليوم على الطابور الآن
     </button>
                     </div>
@@ -4482,13 +4482,9 @@ html, body {
                 <p style="color: #f1c40f; margin-bottom: 15px; font-weight: bold;">قدامك 10 دقائق تطلع فيها صلاة أو تطلب تأجيل:</p>
                 <div id="turnTimerDisplay" style="font-size: 3rem; font-family: monospace; font-weight: 900; color: white; background: rgba(0,0,0,0.3); border-radius: 15px; padding: 10px; margin-bottom: 20px; letter-spacing: 5px;">10:00</div>
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div style="display: grid; grid-template-columns: 1fr; gap: 10px;">
                     <button onclick="requestWCDelay()" class="btn" style="background: #2c3e50; color: white; padding: 12px; border-radius: 12px; font-weight: bold; border: 1px solid #fff; font-size: 0.8rem;">
                         🚾 الحمام مشغول
-                    </button>
-                    <!-- هذا هو زرار التبديل الذي طلبته -->
-                    <button onclick="openPrayerSwapModal()" class="btn" style="background: #2980b9; color: white; padding: 12px; border-radius: 12px; font-weight: bold; border: 1px solid #fff; font-size: 0.8rem;">
-                        🔄 تبديل الدور مع زميل
                     </button>
                 </div>
             </div>
@@ -4515,7 +4511,7 @@ html, body {
     </div>
             <div id="prayerSwapArea" class="hidden" style="margin-top:10px;">
                 <button onclick="openPrayerSwapModal()" class="btn btn-dark btn-sm" style="width:100%; border:1px dashed var(--accent);">
-                    🔄 تبديل دوري مع زميل
+                    🔄 طلب تبديل دوري مع زميل (في أي وقت)
                 </button>
             </div>
     <div class="activity-control-card" style="border:1px solid var(--warning); padding:8px; border-radius:15px;">
@@ -5078,6 +5074,8 @@ html, body {
                     let tempWeeklyOrder = [];
                                                 let allGroupsData = {}; // متغير لتخزين بيانات المجموعات
                                                 let currentQueue = []; // متغير لتخزين الطابور الحالي
+                                                let prayerQueueScheduleTriggerPending = false;
+                                                let lastPrayerQueueScheduleTriggerHandled = "";
                                                 // متغير لحفظ "شكل" الجدول الأخير عشان منرسموش لو مفيش تغيير هيكلي
                                                 let lastTableStructure = "";
                                                 const daysAr = ["السبت", "الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس"];
@@ -8075,8 +8073,6 @@ html, body {
         }
 
                                                 function showAdmin() {
-                                                        checkAndApplyTodaySchedule(); 
-
                                                     listenForGameStart();
                                                     document.getElementById('loginSection').classList.add('hidden');
                                                     document.getElementById('adminSection').classList.remove('hidden');
@@ -8283,6 +8279,7 @@ html, body {
 
                                 // 3. 🚀 الفحص التلقائي لتوزيع رصيد الصلاة (قبل الظهر بـ 10 دقائق)
                                 checkAutoPrayerDistribution();
+                                checkAutoPrayerQueueSchedule();
 
                                 // 4. إدارة عداد الـ 10 دقائق الخاص بطابور الصلاة (للمشرف)
                                 const queueTimerEl = document.getElementById('adminQueueTimer');
@@ -11680,8 +11677,6 @@ if (sohraBtn) {
         
         db.ref('settings/weeklySchedule/' + currentSelectedDay).set(tempWeeklyOrder).then(() => {
             alert("تم حفظ جدول يوم " + daysAr[currentSelectedDay] + " في السيرفر ✅");
-            // بعد الحفظ، نسحب الأسماء للطابور فوراً
-            checkAndApplyTodaySchedule();
         });
     }
 
@@ -11724,7 +11719,7 @@ if (sohraBtn) {
                     }
 
                     // 3. دالة تطبيق جدول اليوم تلقائياً على "طابور الصلاة"
-            function checkAndApplyTodaySchedule(isManual = false) {
+            function checkAndApplyTodaySchedule(isManual = true) {
         // تحديد اليوم: إما المختار حالياً أو يوم اليوم الفعلي
         let dayToApply = (currentSelectedDay !== null) ? currentSelectedDay : getCustomDayIndex();
 
@@ -11757,6 +11752,75 @@ if (sohraBtn) {
             });
         });
     }
+
+            function checkAutoPrayerQueueSchedule() {
+                if (!prayerTimesData || !currentUser || currentUser.role !== 'admin') return;
+
+                const dayIndex = getCustomDayIndex();
+                if (dayIndex < 0) return;
+
+                const now = new Date(getServerTime());
+                const dateKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                const prayerNames = [
+                    { key: 'Fajr', label: 'الفجر' },
+                    { key: 'Dhuhr', label: 'الظهر' },
+                    { key: 'Asr', label: 'العصر' },
+                    { key: 'Maghrib', label: 'المغرب' },
+                    { key: 'Isha', label: 'العشاء' }
+                ];
+
+                for (const prayer of prayerNames) {
+                    const timeMatch = String(prayerTimesData[prayer.key] || '').match(/(\d{1,2}):(\d{2})/);
+                    if (!timeMatch) continue;
+
+                    const prayerDate = new Date(now);
+                    prayerDate.setHours(Number(timeMatch[1]), Number(timeMatch[2]), 0, 0);
+                    const elapsedSinceAdhan = now.getTime() - prayerDate.getTime();
+
+                    if (elapsedSinceAdhan < 0 || elapsedSinceAdhan > 10 * 60 * 1000) continue;
+
+                    const triggerKey = `${dateKey}_${prayer.key}`;
+                    if (triggerKey === lastPrayerQueueScheduleTriggerHandled || prayerQueueScheduleTriggerPending) break;
+
+                    prayerQueueScheduleTriggerPending = true;
+                    db.ref(`settings/weeklySchedule/${dayIndex}`).once('value').then((scheduleSnap) => {
+                        const todayOrder = scheduleSnap.val();
+                        if (!Array.isArray(todayOrder) || todayOrder.length === 0) {
+                            lastPrayerQueueScheduleTriggerHandled = triggerKey;
+                            return;
+                        }
+
+                        return db.ref('settings/lastPrayerQueueScheduleTrigger').transaction((lastTrigger) => {
+                            if (lastTrigger === triggerKey) return;
+                            return triggerKey;
+                        }).then((result) => {
+                            lastPrayerQueueScheduleTriggerHandled = triggerKey;
+                            if (!result.committed) return;
+
+                            const updates = {};
+                            updates['settings/prayerQueue'] = todayOrder;
+                            updates['settings/turnTimer/startTime'] = getServerTime();
+                            updates['settings/turnTimer/activeUser'] = todayOrder[0];
+                            updates['settings/turnTimer/pausedElapsed'] = 0;
+
+                            return db.ref().update(updates).then(() => db.ref('broadcasts').push({
+                                message: `🕌 تم تنزيل جدول يوم ${daysAr[dayIndex]} تلقائيًا عند أذان ${prayer.label}.`,
+                                timestamp: getServerTime(),
+                                sender: 'نظام الصلاة 🕌',
+                                silent: true,
+                                target: 'all'
+                            }));
+                        });
+                    }).catch((error) => {
+                        console.error('تعذر تنزيل جدول الصلاة تلقائيًا:', error);
+                    }).finally(() => {
+                        prayerQueueScheduleTriggerPending = false;
+                    });
+
+                    break;
+                }
+            }
+
                     // استدعاء الدوال عند تحميل الصفحة
                     if(currentUser) {
                         if(currentUser.role === 'admin') {
@@ -12745,9 +12809,21 @@ if (sohraBtn) {
                             });
                         }
                     });
+
                 }
                 currentQueue = newQueue;
+                updatePrayerSwapVisibility();
             });
+
+            function updatePrayerSwapVisibility() {
+                const swapArea = document.getElementById('prayerSwapArea');
+                if (swapArea) {
+                    const canRequestSwap = currentUser &&
+                        currentUser.role !== 'admin' &&
+                        currentQueue.includes(currentUser.username);
+                    swapArea.classList.toggle('hidden', !canRequestSwap);
+                }
+            }
 
                     // 3. دالة بناء الجدول (الخوارزمية)
                     function renderRotationTable() {
@@ -13066,6 +13142,7 @@ if (sohraBtn) {
                 function showEmployee() { 
                     listenForGameStart();
                     initChatNotifications();
+                    updatePrayerSwapVisibility();
                     document.getElementById('loginSection').classList.add('hidden'); 
                     document.getElementById('employeeSection').classList.remove('hidden'); 
                     const csContactToggleCard = document.getElementById('csContactToggleCard');
@@ -14020,36 +14097,54 @@ const isSohra = document.getElementById('isSohraBreak').checked;
                 });
             }
             function autoSkipUser() {
-                // منع التعليق من خلال قفل الدالة إذا كانت تعمل بالفعل
-                if (!currentQueue || currentQueue.length <= 1 || window.isSkipping) return;
-                
-                window.isSkipping = true; 
+                if (!currentQueue || currentQueue.length <= 1 || window.isSkipping || !isPrayerWindowOpen) return;
 
-                let newQueue = [...currentQueue];
-                const movedUser = newQueue.shift(); // الشخص اللي وقته خلص
-                newQueue.push(movedUser);           // يرجع لآخر الطابور
-                
-                const nextUser = newQueue[0];      // الشخص الجديد
+                const firstUser = currentQueue[0];
+                const firstUserData = allUsersData[firstUser];
+                if (firstUserData && firstUserData.isOnBreak && firstUserData.breakType === 'صلاة') return;
 
-                const updates = {};
-                updates['settings/prayerQueue'] = newQueue;
-                updates['settings/turnTimer/startTime'] = getServerTime();
-                updates['settings/turnTimer/activeUser'] = nextUser;
-                updates['settings/turnTimer/pausedElapsed'] = 0;
+                window.isSkipping = true;
+                let movedUser = null;
+                let nextUser = null;
 
-                db.ref().update(updates).then(() => {
-                    // إرسال التنبيه "بدون صوت" من خلال خاصية silent: true
-                    db.ref('broadcasts').push({
+                db.ref('settings').transaction((settings) => {
+                    if (!settings || settings.prayerOpen !== true) return;
+
+                    const queue = settings.prayerQueue;
+                    const timer = settings.turnTimer || {};
+                    if (!Array.isArray(queue) || queue.length <= 1) return;
+                    if (queue[0] !== firstUser || timer.activeUser !== firstUser) return;
+                    if (!timer.startTime || getServerTime() - timer.startTime < 600000) return;
+
+                    const userData = allUsersData[firstUser];
+                    if (userData && userData.isOnBreak && userData.breakType === 'صلاة') return;
+
+                    const updatedQueue = queue.slice(1).concat(queue[0]);
+                    movedUser = queue[0];
+                    nextUser = updatedQueue[0];
+                    settings.prayerQueue = updatedQueue;
+                    settings.turnTimer = {
+                        ...timer,
+                        startTime: getServerTime(),
+                        activeUser: nextUser,
+                        pausedElapsed: 0
+                    };
+                    return settings;
+                }).then((result) => {
+                    if (!result.committed || !movedUser || !nextUser) return;
+
+                    return db.ref('broadcasts').push({
                         message: `⏰ انتهى وقت (${getRealName(movedUser)}) وتم نقله لآخر الطابور. الدور الآن على (${getRealName(nextUser)})`,
                         timestamp: getServerTime(),
                         sender: "نظام الصلاة 🕌",
-                        silent: true, // سحر الصمت هنا
+                        silent: true,
                         target: "all"
                     });
-                    
-                    // فتح القفل بعد 3 ثواني لضمان استقرار السيرفر
-                    setTimeout(() => { window.isSkipping = false; }, 3000);
-                }).catch(() => { window.isSkipping = false; });
+                }).catch((error) => {
+                    console.error('تعذر تحديث ترتيب طابور الصلاة:', error);
+                }).finally(() => {
+                    window.isSkipping = false;
+                });
             }
             // دالة لتحديث شاشة القفل (تظهر العداد كأنه أغنية شغالة)
     // دالة لتحديث شاشة القفل والإشعارات بشكل حي (ثانية بثانية)
@@ -14419,6 +14514,10 @@ const isSohra = document.getElementById('isSohraBreak').checked;
             // فتح نافذة التبديل وملء الأسماء الموجودة في الطابور فقط
             // فتح نافذة اختيار الزميل للتبديل معه
             function openPrayerSwapModal() {
+                if (!currentUser || !currentQueue.includes(currentUser.username)) {
+                    return alert("لازم تكون موجودًا في طابور الصلاة عشان تطلب تبديل دورك.");
+                }
+
                 const select = document.getElementById('prayerColleagueSelect');
                 if(!select) return alert("خطأ: لم يتم العثور على قائمة الاختيار");
 
@@ -14430,6 +14529,11 @@ const isSohra = document.getElementById('isSohraBreak').checked;
                         select.innerHTML += `<option value="${un}">${index + 1}. ${getRealName(un)}</option>`;
                     }
                 });
+
+                if (select.options.length === 1) {
+                    return alert("لا يوجد زميل آخر في طابور الصلاة للتبديل معه.");
+                }
+
                 document.getElementById('prayerSwapModal').classList.remove('hidden');
             }
 
