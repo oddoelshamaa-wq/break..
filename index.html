@@ -3758,7 +3758,8 @@ html, body {
 
                                                     <div id="tab-monitor">
                                                         <div id="weeklyPrayerSection" style="background: rgba(6, 182, 212, 0.1); border: 1px solid var(--accent); padding: 15px; border-radius: 20px; margin-bottom: 20px; margin-top: 20px;">
-                        <h4 style="margin:0 0 10px 0; color:var(--accent);">📅 إعداد الجدول الأسبوعي للصلاة</h4>
+                        <h4 style="margin:0 0 10px 0; color:var(--accent);">📅 إعداد جدول صلاة الظهر الأسبوعي</h4>
+                        <p style="margin:0 0 12px;color:#94a3b8;font-size:.9rem;">يتم تنزيل جدول اليوم تلقائيًا بعد أذان الظهر فقط، ولا يتغير عند باقي الصلوات.</p>
                         
                         <div style="display: flex; gap: 10px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 10px;">
                             <button onclick="selectWeeklyDay(0)" class="btn btn-dark btn-sm day-btn" id="day-0">السبت</button>
@@ -7866,6 +7867,33 @@ html, body {
                                                 db.ref('users').on('value', (snap) => {
                                                 
                                                     const newData = snap.val() || {};
+                                                    if (currentUser && currentUser.role === 'admin' && isLoaded) {
+                                                        Object.keys(newData).forEach(un => {
+                                                            const oldUser = allUsersData[un];
+                                                            const newUser = newData[un];
+                                                            const oldWebsiteSessions = oldUser && oldUser.websiteSessions || {};
+                                                            const newWebsiteSessions = newUser && newUser.websiteSessions || {};
+                                                            Object.keys(newWebsiteSessions).forEach(sessionId => {
+                                                                const oldSession = oldWebsiteSessions[sessionId];
+                                                                const newSession = newWebsiteSessions[sessionId];
+                                                                if (oldSession && oldSession.state === 'open' &&
+                                                                    newSession && newSession.state === 'closed' &&
+                                                                    newSession.surface === 'website') {
+                                                                    showWebsiteCloseNotice(un, newSession);
+                                                                }
+                                                            });
+                                                            if (oldUser && oldUser.desktopAppStatus &&
+                                                                oldUser.desktopAppStatus.state === 'running' &&
+                                                                newUser && newUser.desktopAppStatus &&
+                                                                newUser.desktopAppStatus.state === 'closed') {
+                                                                const notice = document.createElement('div');
+                                                                notice.textContent = `📴 تم إغلاق تطبيق سطح المكتب للموظف: ${newUser.realName || un}`;
+                                                                notice.style.cssText = 'position:fixed;right:20px;bottom:20px;z-index:99999;max-width:min(420px,calc(100vw - 40px));padding:14px 18px;border:1px solid #fbbf24;border-radius:14px;background:#0f172a;color:#fde68a;box-shadow:0 10px 30px rgba(0,0,0,.35);font-weight:700';
+                                                                document.body.appendChild(notice);
+                                                                setTimeout(() => notice.remove(), 10000);
+                                                            }
+                                                        });
+                                                    }
                                                     if (currentUser && currentUser.role === 'admin' && isLoaded && soundActive) {
                                                         let pending = false;
                                                         Object.keys(newData).forEach(un => {
@@ -7897,7 +7925,10 @@ html, body {
                             syncDesktopIdleContext();
                             if (currentUser.role === 'admin') {
                                 // حساب "شكل" الجدول الحالي (عدد الموظفين + أسماؤهم + حالاتهم)
-                                const currentTableStructure = Object.values(allUsersData).filter(u => u && u.username && !MANAGERS.includes(u.username)).map(u => `${u.username}-${u.isOnBreak}-${u.breakType}-${u.state}-${isActiveDesktopIdle(u)}-${u.lastIdleSleep && u.lastIdleSleep.endedAt}`).join('|');
+                                const currentTableStructure = Object.values(allUsersData).filter(u => u && u.username && !MANAGERS.includes(u.username)).map(u => {
+                                    const websiteSession = getLatestWebsiteSession(u);
+                                    return `${u.username}-${u.isOnBreak}-${u.breakType}-${u.state}-${u.desktopAppStatus && u.desktopAppStatus.state}-${websiteSession && websiteSession.state}-${websiteSession && websiteSession.openedAt}-${websiteSession && websiteSession.closedAt}-${isActiveDesktopIdle(u)}-${u.lastIdleSleep && u.lastIdleSleep.endedAt}`;
+                                }).join('|');
 
                                 // لو الشكل اتغير (موظف جديد أو غادر أو غير حالته)، نرسم الجدول من جديد
                                 if (currentTableStructure !== lastTableStructure) {
@@ -8059,14 +8090,73 @@ html, body {
             }
         }
 
+        function getLatestWebsiteSession(user) {
+            const sessions = user && user.websiteSessions;
+            if (!sessions || typeof sessions !== 'object') return null;
+            return Object.values(sessions)
+                .filter(session => session && session.surface === 'website')
+                .sort((left, right) =>
+                    Number(right.state === 'open') - Number(left.state === 'open') ||
+                    Number(right.openedAt || 0) - Number(left.openedAt || 0)
+                )[0] || null;
+        }
+
+        function formatWebsiteSessionTime(timestamp) {
+            const value = Number(timestamp);
+            return Number.isFinite(value) && value > 0
+                ? new Date(value).toLocaleString('ar-EG', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })
+                : 'غير مسجل';
+        }
+
+        function showWebsiteCloseNotice(username, session) {
+            const notice = document.createElement('div');
+            notice.style.cssText = 'position:fixed;right:20px;bottom:20px;z-index:99999;max-width:min(420px,calc(100vw - 40px));padding:14px 18px;border:1px solid #38bdf8;border-radius:14px;background:#0f172a;color:#bae6fd;box-shadow:0 10px 30px rgba(0,0,0,.35);font-weight:700';
+            const message = document.createElement('div');
+            message.textContent = `🌐 أغلق ${getRealName(username)} الموقع الساعة ${formatWebsiteSessionTime(session.closedAt)}.`;
+            const acknowledgeButton = document.createElement('button');
+            acknowledgeButton.type = 'button';
+            acknowledgeButton.textContent = '✅ تمام';
+            acknowledgeButton.style.cssText = 'display:block;margin:12px auto 0;padding:8px 24px;border:0;border-radius:10px;background:#0ea5e9;color:#fff;font-weight:700;cursor:pointer';
+            acknowledgeButton.addEventListener('click', () => notice.remove());
+            notice.append(message, acknowledgeButton);
+            document.body.appendChild(notice);
+        }
+
                                             function setupPresence(un) {
             const s = db.ref("users/" + un + "/state");
             const dRef = db.ref("users/" + un + "/device");
+            const websiteSessionRef = !window.desktopIdle
+                ? db.ref(`users/${un}/websiteSessions`).push()
+                : null;
             
             db.ref(".info/connected").on("value", snap => {
                 if (snap.val()) {
                     // لو قفل البرنامج وهو في بريك، نحدث حالته إنه "هروب" أو "Offline" مع استمرار العداد
                     s.onDisconnect().set("offline_during_break"); 
+
+                    if (window.desktopIdle) {
+                        const desktopAppStatus = db.ref(`users/${un}/desktopAppStatus`);
+                        desktopAppStatus.onDisconnect().set({
+                            state: 'closed',
+                            updatedAt: firebase.database.ServerValue.TIMESTAMP
+                        }).then(() => desktopAppStatus.set({
+                            state: 'running',
+                            updatedAt: getServerTime()
+                        })).catch(error => console.error('تعذر تحديث متابعة تطبيق سطح المكتب:', error));
+                    } else if (websiteSessionRef) {
+                        const openedAt = getServerTime();
+                        websiteSessionRef.onDisconnect().set({
+                            state: 'closed',
+                            surface: 'website',
+                            openedAt,
+                            closedAt: firebase.database.ServerValue.TIMESTAMP
+                        }).then(() => websiteSessionRef.set({
+                            state: 'open',
+                            surface: 'website',
+                            openedAt,
+                            closedAt: null
+                        })).catch(error => console.error('تعذر تفعيل متابعة جلسة الموقع:', error));
+                    }
                     
                     s.set("online");
                     dRef.set(getDeviceType());
@@ -8413,6 +8503,15 @@ html, body {
             // تنسيق حالة الاتصال والجهاز
             const deviceIcon = u.device === 'mobile' ? '📱' : (u.device === 'tablet' ? '📲' : '💻');
             const onlineDot = isOnline ? `<span style="color:#10b981;">● متصل</span>` : `<span style="color:#888;">○ أوفلاين</span>`;
+            const desktopAppStatusMarkup = u.desktopAppStatus && u.desktopAppStatus.state === 'closed'
+                ? `<small style="display:block;color:#fca5a5;">📴 تطبيق سطح المكتب مغلق</small>`
+                : '';
+            const latestWebsiteSession = getLatestWebsiteSession(u);
+            const websiteSessionMarkup = latestWebsiteSession
+                ? latestWebsiteSession.state === 'open'
+                    ? `<small style="display:block;color:#7dd3fc;">🌐 الموقع مفتوح منذ ${formatWebsiteSessionTime(latestWebsiteSession.openedAt)}</small>`
+                    : `<small style="display:block;color:#94a3b8;">🌐 آخر إغلاق للموقع: ${formatWebsiteSessionTime(latestWebsiteSession.closedAt)}</small>`
+                : '';
 
             // نص الحالة التفصيلي
             let mainStatusText = 'متاح للعمل ✅';
@@ -8477,6 +8576,8 @@ html, body {
                             <div style="flex:1;">
                                 <div style="font-weight:bold; font-size:0.85rem;">${u.realName || u.username} ${u.isVIP ? '⭐' : ''}</div>
                                 <small style="font-size:0.7rem;">${onlineDot} | ${deviceIcon}</small>
+                                ${desktopAppStatusMarkup}
+                                ${websiteSessionMarkup}
                             </div>
                         </div>
                     </td>
@@ -11931,64 +12032,51 @@ if (sohraBtn) {
 
                 const now = new Date(getServerTime());
                 const dateKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-                const prayerNames = [
-                    { key: 'Fajr', label: 'الفجر' },
-                    { key: 'Dhuhr', label: 'الظهر' },
-                    { key: 'Asr', label: 'العصر' },
-                    { key: 'Maghrib', label: 'المغرب' },
-                    { key: 'Isha', label: 'العشاء' }
-                ];
+                const dhuhrTimeMatch = String(prayerTimesData.Dhuhr || '').match(/(\d{1,2}):(\d{2})/);
+                if (!dhuhrTimeMatch) return;
 
-                for (const prayer of prayerNames) {
-                    const timeMatch = String(prayerTimesData[prayer.key] || '').match(/(\d{1,2}):(\d{2})/);
-                    if (!timeMatch) continue;
+                const dhuhrDate = new Date(now);
+                dhuhrDate.setHours(Number(dhuhrTimeMatch[1]), Number(dhuhrTimeMatch[2]), 0, 0);
+                const elapsedSinceDhuhr = now.getTime() - dhuhrDate.getTime();
+                if (elapsedSinceDhuhr < 0 || elapsedSinceDhuhr > 10 * 60 * 1000) return;
 
-                    const prayerDate = new Date(now);
-                    prayerDate.setHours(Number(timeMatch[1]), Number(timeMatch[2]), 0, 0);
-                    const elapsedSinceAdhan = now.getTime() - prayerDate.getTime();
+                const triggerKey = `${dateKey}_Dhuhr`;
+                if (triggerKey === lastPrayerQueueScheduleTriggerHandled || prayerQueueScheduleTriggerPending) return;
 
-                    if (elapsedSinceAdhan < 0 || elapsedSinceAdhan > 10 * 60 * 1000) continue;
+                prayerQueueScheduleTriggerPending = true;
+                db.ref(`settings/weeklySchedule/${dayIndex}`).once('value').then((scheduleSnap) => {
+                    const todayOrder = scheduleSnap.val();
+                    if (!Array.isArray(todayOrder) || todayOrder.length === 0) {
+                        lastPrayerQueueScheduleTriggerHandled = triggerKey;
+                        return;
+                    }
 
-                    const triggerKey = `${dateKey}_${prayer.key}`;
-                    if (triggerKey === lastPrayerQueueScheduleTriggerHandled || prayerQueueScheduleTriggerPending) break;
+                    return db.ref('settings/lastPrayerQueueScheduleTrigger').transaction((lastTrigger) => {
+                        if (lastTrigger === triggerKey) return;
+                        return triggerKey;
+                    }).then((result) => {
+                        lastPrayerQueueScheduleTriggerHandled = triggerKey;
+                        if (!result.committed) return;
 
-                    prayerQueueScheduleTriggerPending = true;
-                    db.ref(`settings/weeklySchedule/${dayIndex}`).once('value').then((scheduleSnap) => {
-                        const todayOrder = scheduleSnap.val();
-                        if (!Array.isArray(todayOrder) || todayOrder.length === 0) {
-                            lastPrayerQueueScheduleTriggerHandled = triggerKey;
-                            return;
-                        }
+                        const updates = {};
+                        updates['settings/prayerQueue'] = todayOrder;
+                        updates['settings/turnTimer/startTime'] = getServerTime();
+                        updates['settings/turnTimer/activeUser'] = todayOrder[0];
+                        updates['settings/turnTimer/pausedElapsed'] = 0;
 
-                        return db.ref('settings/lastPrayerQueueScheduleTrigger').transaction((lastTrigger) => {
-                            if (lastTrigger === triggerKey) return;
-                            return triggerKey;
-                        }).then((result) => {
-                            lastPrayerQueueScheduleTriggerHandled = triggerKey;
-                            if (!result.committed) return;
-
-                            const updates = {};
-                            updates['settings/prayerQueue'] = todayOrder;
-                            updates['settings/turnTimer/startTime'] = getServerTime();
-                            updates['settings/turnTimer/activeUser'] = todayOrder[0];
-                            updates['settings/turnTimer/pausedElapsed'] = 0;
-
-                            return db.ref().update(updates).then(() => db.ref('broadcasts').push({
-                                message: `🕌 تم تنزيل جدول يوم ${daysAr[dayIndex]} تلقائيًا عند أذان ${prayer.label}.`,
-                                timestamp: getServerTime(),
-                                sender: 'نظام الصلاة 🕌',
-                                silent: true,
-                                target: 'all'
-                            }));
-                        });
-                    }).catch((error) => {
-                        console.error('تعذر تنزيل جدول الصلاة تلقائيًا:', error);
-                    }).finally(() => {
-                        prayerQueueScheduleTriggerPending = false;
+                        return db.ref().update(updates).then(() => db.ref('broadcasts').push({
+                            message: `🕌 تم تنزيل جدول يوم ${daysAr[dayIndex]} تلقائيًا بعد أذان الظهر.`,
+                            timestamp: getServerTime(),
+                            sender: 'نظام الصلاة 🕌',
+                            silent: true,
+                            target: 'all'
+                        }));
                     });
-
-                    break;
-                }
+                }).catch((error) => {
+                    console.error('تعذر تنزيل جدول صلاة الظهر تلقائيًا:', error);
+                }).finally(() => {
+                    prayerQueueScheduleTriggerPending = false;
+                });
             }
 
                     // استدعاء الدوال عند تحميل الصفحة
@@ -18357,16 +18445,28 @@ function shareFilmGameLink() {
         function setDesktopIdleDialog(title, message, countdown, sleeping) {
             const modal = document.getElementById('desktopIdleModal');
             if (!modal) return;
+            const card = modal.firstElementChild;
             document.getElementById('desktopIdleTitle').textContent = title;
             document.getElementById('desktopIdleMessage').textContent = message;
             document.getElementById('desktopIdleCountdown').textContent = countdown || '';
-            document.getElementById('desktopIdleIcon').textContent = sleeping ? '😴' : '👋';
+            const icon = document.getElementById('desktopIdleIcon');
+            icon.textContent = sleeping ? '🛌💤' : '👋';
+            icon.style.fontSize = sleeping ? '7rem' : '3rem';
             document.getElementById('desktopIdleRespondButton').textContent = sleeping
                 ? '✅ رجعت للشغل'
                 : '✅ أيوه صاحي 😂';
             document.getElementById('desktopIdleError').textContent = '';
+            if (sleeping) {
+                modal.style.cssText = 'position:fixed;inset:0;z-index:200000;display:flex;align-items:center;justify-content:center;padding:24px;pointer-events:none;background:rgba(2,6,23,.97);';
+                if (card) card.style.cssText = 'width:min(90vw,720px);box-sizing:border-box;padding:48px 32px;border:2px solid #fbbf24;border-radius:32px;background:#0f172a;color:#e2e8f0;text-align:center;box-shadow:0 20px 70px rgba(0,0,0,.6);';
+                document.getElementById('desktopIdleTitle').textContent = '😴 دخلت في وضع النوم';
+                document.getElementById('desktopIdleMessage').textContent = 'لم يصل رد خلال دقيقة. رجوعك لاستخدام الجهاز ينهي تسجيل الخمول.';
+            } else {
+                modal.style.cssText = 'position:fixed;inset:0;z-index:200000;display:flex;align-items:flex-end;justify-content:flex-start;padding:20px;pointer-events:none;background:transparent;';
+                if (card) card.style.cssText = 'width:min(calc(100vw - 40px),420px);box-sizing:border-box;padding:24px;border:2px solid #fbbf24;border-radius:28px;background:#0f172a;color:#e2e8f0;text-align:center;box-shadow:0 20px 70px rgba(0,0,0,.6);pointer-events:auto;';
+            }
             modal.classList.remove('hidden');
-            document.getElementById('desktopIdleRespondButton').focus();
+            if (!sleeping) document.getElementById('desktopIdleRespondButton').focus();
         }
 
         function hideDesktopIdleDialog() {
