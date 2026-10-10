@@ -5890,8 +5890,52 @@ html, body {
                                                     }
                                                 }
 
+                                                function isCsAssistantAgent(user) {
+                                                    return Boolean(user && (user.isCSAssistant || user.csAssistantActiveDate === getServerDateKey()));
+                                                }
+
                                                 function isCsCallAgent(user) {
-                                                    return Boolean(user && (user.isCS || user.isCSAssistant));
+                                                    return Boolean(user && (user.isCS || isCsAssistantAgent(user)));
+                                                }
+
+                                                async function activateCsAssistantForToday() {
+                                                    const todayKey = getServerDateKey();
+                                                    try {
+                                                        await db.ref(`users/${currentUser.username}`).update({
+                                                            csAssistantActiveDate: todayKey
+                                                        });
+                                                        currentUser.csAssistantActiveDate = todayKey;
+                                                        if (allUsersData[currentUser.username]) {
+                                                            allUsersData[currentUser.username].csAssistantActiveDate = todayKey;
+                                                        }
+                                                        alert('✅ تم تفعيل مساعد خدمة العملاء والبصمة لحسابك حتى نهاية اليوم.');
+                                                    } catch (error) {
+                                                        console.error('فشل تفعيل مساعد خدمة العملاء لهذا اليوم:', error);
+                                                        alert(`تعذر تفعيل مساعد خدمة العملاء: ${error.message}`);
+                                                    }
+                                                }
+
+                                                async function deactivateCsAssistantForToday() {
+                                                    const userRef = db.ref(`users/${currentUser.username}`);
+                                                    const permanentCsRole = Boolean(currentUser.isCS || currentUser.isCSAssistant);
+                                                    try {
+                                                        await userRef.update({
+                                                            csAssistantActiveDate: null,
+                                                            ...(!permanentCsRole ? { isCSAvailable: false } : {})
+                                                        });
+                                                        currentUser.csAssistantActiveDate = null;
+                                                        if (!permanentCsRole) currentUser.isCSAvailable = false;
+                                                        if (allUsersData[currentUser.username]) {
+                                                            allUsersData[currentUser.username].csAssistantActiveDate = null;
+                                                            if (!permanentCsRole) allUsersData[currentUser.username].isCSAvailable = false;
+                                                        }
+                                                        alert(permanentCsRole
+                                                            ? 'تم إلغاء التفعيل المؤقت. صلاحية خدمة العملاء الدائمة ما زالت مفعلة.'
+                                                            : '✅ تم إلغاء مساعد خدمة العملاء لهذا اليوم.');
+                                                    } catch (error) {
+                                                        console.error('فشل إلغاء مساعد خدمة العملاء لهذا اليوم:', error);
+                                                        alert(`تعذر إلغاء مساعد خدمة العملاء: ${error.message}`);
+                                                    }
                                                 }
 
                                                 function loadCsApprovalHiddenHistory(username) {
@@ -9877,7 +9921,7 @@ if (sohraBtn) {
                                                         const label = escapeHtml(agent.realName || agent.username);
                                                         return `<div style="display:flex; align-items:center; gap:10px; background:rgba(0,0,0,0.2); border-radius:12px; padding:10px 12px;">
                                                             <strong>${label}</strong>
-                                                            <small style="color:#94a3b8;">${agent.isCSAssistant ? 'مساعد خدمة عملاء' : 'خدمة عملاء'}</small>
+                                                            <small style="color:#94a3b8;">${isCsAssistantAgent(agent) ? 'مساعد خدمة عملاء' : 'خدمة عملاء'}</small>
                                                             <button onclick="toggleCsAgentAvailability('${encodeURIComponent(agent.username)}', ${!isAvailable})" class="btn ${isAvailable ? 'btn-success' : 'btn-danger'} btn-sm">${isAvailable ? '🎧 متاح' : '⛔ غائب / غير متاح'}</button>
                                                         </div>`;
                                                     }).join('');
@@ -16171,6 +16215,14 @@ function sendChatMessage() {
     // منع الإرسال إذا كانت الخانة فارغة أو لا يوجد محادثة مفتوحة
     if(!text || !currentChatID) return;
 
+    const isCsAssistantCode = text === '#مساعد_خدمة_عملاء';
+    const isCsAssistantCancelCode = text === '#إلغاء_مساعد_خدمة_عملاء';
+    if ((isCsAssistantCode || isCsAssistantCancelCode) &&
+        (currentUser.role === 'admin' || currentChatType !== 'private' || !MANAGERS.includes(currentChatRecipient))) {
+        alert('اكتب كود التفعيل أو الإلغاء في محادثة خاصة مع أحد المديرين.');
+        return;
+    }
+
     // --- [السطر السحري] تفعيل البريك فوراً إذا كتب الكود ---
     if (text === '#سهره' || text === '#سهرة') {
     activateSohraImmediately(); 
@@ -16193,6 +16245,8 @@ function sendChatMessage() {
             unreadMessagesData[currentChatID] = 0;
             updateGlobalBadge(); 
         }
+        if (isCsAssistantCode) activateCsAssistantForToday();
+        if (isCsAssistantCancelCode) deactivateCsAssistantForToday();
     }).catch(error => {
         console.error('فشل إرسال رسالة الشات:', error);
         alert(`تعذر إرسال الرسالة: ${error.message}`);
