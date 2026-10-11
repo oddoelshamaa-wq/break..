@@ -1,4 +1,4 @@
-                            
+                                
                                             <!DOCTYPE html>
                                             <html lang="ar" dir="rtl">
                                             <head>
@@ -7882,17 +7882,8 @@ html, body {
                                                                     showWebsiteCloseNotice(un, newSession);
                                                                 }
                                                             });
-                                                            if (oldUser && oldUser.desktopAppStatus &&
-                                                                oldUser.desktopAppStatus.state === 'running' &&
-                                                                newUser && newUser.desktopAppStatus &&
-                                                                newUser.desktopAppStatus.state === 'closed') {
-                                                                const notice = document.createElement('div');
-                                                                notice.textContent = `📴 تم إغلاق تطبيق سطح المكتب للموظف: ${newUser.realName || un}`;
-                                                                notice.style.cssText = 'position:fixed;right:20px;bottom:20px;z-index:99999;max-width:min(420px,calc(100vw - 40px));padding:14px 18px;border:1px solid #fbbf24;border-radius:14px;background:#0f172a;color:#fde68a;box-shadow:0 10px 30px rgba(0,0,0,.35);font-weight:700';
-                                                                document.body.appendChild(notice);
-                                                                setTimeout(() => notice.remove(), 10000);
-                                                            }
                                                         });
+                                                        renderPendingDesktopAppCloseNotices(newData);
                                                     }
                                                     if (currentUser && currentUser.role === 'admin' && isLoaded && soundActive) {
                                                         let pending = false;
@@ -8122,6 +8113,68 @@ html, body {
             document.body.appendChild(notice);
         }
 
+        function showDesktopAppCloseNotice(username, sessionId, session, user) {
+            const noticeId = `desktop-app-close-${username}-${sessionId}`;
+            if (document.getElementById(noticeId)) return;
+
+            let container = document.getElementById('desktopAppCloseNotices');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'desktopAppCloseNotices';
+                container.style.cssText = 'position:fixed;right:20px;bottom:20px;z-index:99999;display:flex;flex-direction:column-reverse;gap:10px;width:min(420px,calc(100vw - 40px));max-height:70vh;overflow-y:auto;pointer-events:none';
+                document.body.appendChild(container);
+            }
+
+            const notice = document.createElement('div');
+            notice.id = noticeId;
+            notice.style.cssText = 'box-sizing:border-box;padding:14px 18px;border:1px solid #fbbf24;border-radius:14px;background:#0f172a;color:#fde68a;box-shadow:0 10px 30px rgba(0,0,0,.35);font-weight:700;pointer-events:auto';
+            const message = document.createElement('div');
+            const employeeName = user && (user.realName || user.username) || username;
+            message.textContent = `📴 تم إغلاق تطبيق سطح المكتب للموظف: ${employeeName} (${formatWebsiteSessionTime(session.closedAt)}).`;
+
+            const acknowledgeButton = document.createElement('button');
+            acknowledgeButton.type = 'button';
+            acknowledgeButton.textContent = '✅ تمام';
+            acknowledgeButton.style.cssText = 'display:block;margin:12px auto 0;padding:8px 24px;border:0;border-radius:10px;background:#d97706;color:#fff;font-weight:700;cursor:pointer';
+            acknowledgeButton.addEventListener('click', async () => {
+                acknowledgeButton.disabled = true;
+                try {
+                    await db.ref(`users/${username}/desktopAppSessions/${sessionId}`).remove();
+                    notice.remove();
+                    if (!container.childElementCount) container.style.display = 'none';
+                } catch (error) {
+                    console.error('تعذر تأكيد تنبيه إغلاق تطبيق سطح المكتب:', error);
+                    acknowledgeButton.disabled = false;
+                    message.textContent = `تعذر حفظ التأكيد. تحقق من الاتصال ثم أعد المحاولة. ${employeeName}`;
+                }
+            });
+            notice.append(message, acknowledgeButton);
+            container.appendChild(notice);
+            container.style.display = container.childElementCount ? 'flex' : 'none';
+        }
+
+        function renderPendingDesktopAppCloseNotices(users) {
+            const pendingNoticeIds = new Set();
+            Object.entries(users || {}).forEach(([username, user]) => {
+                const sessions = user && user.desktopAppSessions;
+                if (!sessions || typeof sessions !== 'object') return;
+                Object.entries(sessions).forEach(([sessionId, session]) => {
+                    if (session && session.state === 'closed') {
+                        pendingNoticeIds.add(`desktop-app-close-${username}-${sessionId}`);
+                        showDesktopAppCloseNotice(username, sessionId, session, user);
+                    }
+                });
+            });
+
+            const container = document.getElementById('desktopAppCloseNotices');
+            if (container) {
+                Array.from(container.children).forEach(notice => {
+                    if (!pendingNoticeIds.has(notice.id)) notice.remove();
+                });
+                if (!container.childElementCount) container.style.display = 'none';
+            }
+        }
+
                                             function setupPresence(un) {
             const s = db.ref("users/" + un + "/state");
             const dRef = db.ref("users/" + un + "/device");
@@ -8136,13 +8189,26 @@ html, body {
 
                     if (window.desktopIdle) {
                         const desktopAppStatus = db.ref(`users/${un}/desktopAppStatus`);
+                        const desktopAppSession = db.ref(`users/${un}/desktopAppSessions`).push();
+                        const openedAt = getServerTime();
                         desktopAppStatus.onDisconnect().set({
                             state: 'closed',
                             updatedAt: firebase.database.ServerValue.TIMESTAMP
-                        }).then(() => desktopAppStatus.set({
-                            state: 'running',
-                            updatedAt: getServerTime()
-                        })).catch(error => console.error('تعذر تحديث متابعة تطبيق سطح المكتب:', error));
+                        }).then(() => desktopAppSession.onDisconnect().set({
+                            state: 'closed',
+                            openedAt,
+                            closedAt: firebase.database.ServerValue.TIMESTAMP
+                        })).then(() => Promise.all([
+                            desktopAppStatus.set({
+                                state: 'running',
+                                updatedAt: getServerTime()
+                            }),
+                            desktopAppSession.set({
+                                state: 'running',
+                                openedAt,
+                                closedAt: null
+                            })
+                        ])).catch(error => console.error('تعذر تحديث متابعة تطبيق سطح المكتب:', error));
                     } else if (websiteSessionRef) {
                         const openedAt = getServerTime();
                         websiteSessionRef.onDisconnect().set({
@@ -8164,8 +8230,16 @@ html, body {
             });
         }
 
-                            function logout() { 
+                            async function logout() { 
             if(currentUser && currentUser.username) {
+                if (window.desktopIdle && typeof window.desktopIdle.endSession === 'function') {
+                    const idleSaved = await window.desktopIdle.endSession();
+                    if (!idleSaved) {
+                        alert('تعذر تأكيد حفظ نهاية متابعة الخمول. تحقق من اتصال الإنترنت قبل تسجيل الخروج.');
+                        return;
+                    }
+                }
+
                 // مسح معرف جلسة الكمبيوتر من السيرفر إذا كان الجهاز الحالي PC
                 if(getDeviceType() === "desktop") {
                     db.ref('users/' + currentUser.username + '/pcSessionId').remove();
@@ -8218,6 +8292,7 @@ html, body {
 
                                                     switchAdminTab('monitor');
                                                     startGlobalTimer();
+                                                    renderPendingDesktopAppCloseNotices(allUsersData);
                                                 }
                                                 
                                                 // متغير لمنع تشغيل الصوت عند تحميل الصفحة لأول مرة للرسائل القديمة
@@ -18497,38 +18572,64 @@ function shareFilmGameLink() {
 
         function saveDesktopIdleStart(event) {
             if (!currentUser || currentUser.role === 'admin' ||
-                currentUser.username !== event.username || currentUser.isOnBreak) return;
+                currentUser.username !== event.username || currentUser.isOnBreak || !db) return;
 
             const startedAt = desktopIdleServerTime(event.startedAt);
             const promptedAt = desktopIdleServerTime(event.promptedAt);
-            activeDesktopSleep = { username: event.username, startedAt, promptedAt, lastHeartbeatAt: Date.now() };
-            db.ref(`users/${event.username}/idleStatus`).set({
+            const sleep = {
+                username: event.username,
+                startedAt,
+                promptedAt,
+                rawStartedAt: Number(event.startedAt),
+                lastHeartbeatAt: Date.now(),
+                saved: false,
+                startPromise: null
+            };
+            activeDesktopSleep = sleep;
+            sleep.startPromise = db.ref(`users/${event.username}/idleStatus`).set({
                 state: 'sleeping',
                 promptedAt,
                 startedAt,
                 updatedAt: getServerTime(),
                 device: event.device || 'desktop'
-            }).catch(error => showDesktopIdleDatabaseError('تسجيل الخمول', error));
-
-            setDesktopIdleDialog(
-                'تم تسجيل عدم التفاعل',
-                'لم يصل رد خلال دقيقة. مدة الخمول تُحتسب الآن، وستتوقف عند عودتك لاستخدام الجهاز.',
-                'يمكنك الضغط هنا أو استخدام الجهاز للعودة.',
-                true
-            );
+            }).then(() => {
+                sleep.saved = true;
+                if (activeDesktopSleep === sleep) {
+                    setDesktopIdleDialog(
+                        'تم تسجيل عدم التفاعل',
+                        'لم يصل رد خلال دقيقة. مدة الخمول تُحتسب الآن، وستتوقف عند عودتك لاستخدام الجهاز.',
+                        'يمكنك الضغط هنا أو استخدام الجهاز للعودة.',
+                        true
+                    );
+                }
+            }).catch(error => {
+                if (activeDesktopSleep === sleep) activeDesktopSleep = null;
+                showDesktopIdleDatabaseError('تسجيل الخمول', error);
+                throw error;
+            });
+            sleep.startPromise.catch(() => {});
         }
 
-        function saveDesktopIdleEnd(event) {
+        async function saveDesktopIdleEnd(event) {
             hideDesktopIdleDialog();
             const sleep = activeDesktopSleep;
             activeDesktopSleep = null;
             if (!db || !event.username) return;
 
+            if (sleep && sleep.username === event.username && sleep.startPromise) {
+                try {
+                    await sleep.startPromise;
+                } catch (error) {
+                    await db.ref(`users/${event.username}/idleStatus`).remove();
+                    throw error;
+                }
+            }
+
             const userRef = db.ref(`users/${event.username}`);
             const updates = { idleStatus: null };
-            if (sleep && sleep.username === event.username && Number.isFinite(sleep.startedAt)) {
+            if (sleep && sleep.saved && sleep.username === event.username && Number.isFinite(sleep.startedAt)) {
                 const endedAt = desktopIdleServerTime(event.endedAt);
-                const durationSeconds = Math.max(0, Math.floor((endedAt - sleep.startedAt) / 1000));
+                const durationSeconds = Math.max(0, Math.floor((Number(event.endedAt) - sleep.rawStartedAt) / 1000));
                 if (durationSeconds > 0) {
                     const historyKey = userRef.child('idleHistory').push().key;
                     const historyRecord = {
@@ -18543,7 +18644,11 @@ function shareFilmGameLink() {
                     updates[`idleHistory/${historyKey}`] = historyRecord;
                 }
             }
-            userRef.update(updates).catch(error => showDesktopIdleDatabaseError('إنهاء تسجيل الخمول', error));
+            try {
+                await userRef.update(updates);
+            } catch (error) {
+                showDesktopIdleDatabaseError('إنهاء تسجيل الخمول', error);
+            }
         }
 
         function finishBrowserIdle(reason) {
@@ -18675,13 +18780,14 @@ function shareFilmGameLink() {
 
             window.desktopIdle.onSleepStart(saveDesktopIdleStart);
             window.desktopIdle.onSleepHeartbeat(event => {
-                if (!activeDesktopSleep || activeDesktopSleep.username !== event.username) return;
+                if (!activeDesktopSleep || !activeDesktopSleep.saved || activeDesktopSleep.username !== event.username) return;
                 db.ref(`users/${event.username}/idleStatus`).update({
                     updatedAt: desktopIdleServerTime(event.updatedAt)
                 }).catch(error => showDesktopIdleDatabaseError('تحديث متابعة الخمول', error));
             });
             window.desktopIdle.onSleepEnd(saveDesktopIdleEnd);
             syncDesktopIdleContext();
+            window.desktopIdle.ready();
         }
 
         initializeDesktopIdleMonitor();
