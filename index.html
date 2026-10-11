@@ -6976,7 +6976,7 @@ html, body {
                                                 });
 
                                                 window.addEventListener('beforeunload', (event) => {
-                                                    if (!isActivityWritePending) return;
+                                                    if (!isActivityWritePending || window.__desktopQuitApproved) return;
                                                     event.preventDefault();
                                                     event.returnValue = '';
                                                 });
@@ -8230,8 +8230,14 @@ html, body {
             });
         }
 
-                            async function logout() { 
-            if(currentUser && currentUser.username) {
+                            async function logout() {
+            if (!confirm('هل أنت متأكد أنك تريد تسجيل الخروج؟')) return;
+                                if (isActivityWritePending) {
+                                    alert('هناك عملية حفظ جارية. انتظر اكتمالها ثم حاول تسجيل الخروج مرة أخرى.');
+                                    return;
+                                }
+
+                                try {
                 if (window.desktopIdle && typeof window.desktopIdle.endSession === 'function') {
                     const idleSaved = await window.desktopIdle.endSession();
                     if (!idleSaved) {
@@ -8240,24 +8246,44 @@ html, body {
                     }
                 }
 
-                // مسح معرف جلسة الكمبيوتر من السيرفر إذا كان الجهاز الحالي PC
-                if(getDeviceType() === "desktop") {
-                    db.ref('users/' + currentUser.username + '/pcSessionId').remove();
+                if (currentUser && currentUser.username) {
+                    const databaseUpdates = [];
+                    if (getDeviceType() === 'desktop') {
+                        databaseUpdates.push(
+                            db.ref(`users/${currentUser.username}/pcSessionId`).remove()
+                        );
+                    }
+
+                    if (currentUser.role !== 'admin') {
+                        const today = getServerDateString().replace(/\//g, '-');
+                        databaseUpdates.push(
+                            db.ref(`users/${currentUser.username}/attendance/${today}`).update({
+                                clockOut: getServerTimeString()
+                            }),
+                            db.ref(`users/${currentUser.username}/state`).set('offline')
+                        );
+                    }
+                    await Promise.all(databaseUpdates);
                 }
-                
-                if(currentUser.role !== 'admin') {
-                    const today = getServerDateString().replace(/\//g, '-');
-                    db.ref(`users/${currentUser.username}/attendance/${today}`).update({
-                        clockOut: getServerTimeString()
-                    });
-                    db.ref("users/"+currentUser.username+"/state").set("offline");
-                }
+            } catch (error) {
+                console.error('تعذر إكمال تسجيل الخروج:', error);
+                alert('تعذر حفظ تسجيل الخروج. تحقق من اتصال الإنترنت وحاول مرة أخرى.');
+                return;
             }
-            localStorage.removeItem('break_sys_user'); 
-            localStorage.removeItem('active_pc_session_id'); 
-            sessionStorage.removeItem('systemActive'); 
+
+            localStorage.removeItem('break_sys_user');
+            localStorage.removeItem('active_pc_session_id');
+            sessionStorage.removeItem('systemActive');
             sessionStorage.removeItem('systemActiveDay');
-            location.reload(); 
+
+            if (window.desktopIdle && typeof window.desktopIdle.quitApp === 'function') {
+                window.__desktopQuitApproved = true;
+                const didQuit = await window.desktopIdle.quitApp();
+                if (didQuit) return;
+                window.__desktopQuitApproved = false;
+                alert('تعذر إغلاق تطبيق سطح المكتب. سيتم تسجيل الخروج فقط.');
+            }
+            location.reload();
         }
 
                                                 function showAdmin() {
