@@ -4346,6 +4346,15 @@ html, body {
                                                                     <span id="employeeSoundVolumeLabel" aria-live="polite" style="min-width:42px; text-align:center; font-weight:800;">100%</span>
                                                                     <button type="button" class="btn btn-dark btn-sm" onclick="adjustEmployeeSoundVolume(1)" aria-label="رفع مستوى صوت التطبيق" title="رفع الصوت">+</button>
                                                                 </div>
+                                                                <div id="employeeAudioOutputControl" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:8px;">
+                                                                    <label for="employeeAudioOutput" style="font-size:0.85rem; font-weight:700;">🎧 مخرج الصوت</label>
+                                                                    <select id="employeeAudioOutput" onchange="setEmployeeAudioOutput(this.value)" style="max-width:220px; margin:0;">
+                                                                        <option value="">السماعة الافتراضية</option>
+                                                                    </select>
+                                                                    <button type="button" class="btn btn-dark btn-sm" onclick="chooseEmployeeAudioOutput()">اختيار سماعة</button>
+                                                                    <button type="button" class="btn btn-dark btn-sm" onclick="testEmployeeAudioOutput()">اختبار الصوت</button>
+                                                                    <small id="employeeAudioOutputStatus" role="status" aria-live="polite" style="flex-basis:100%;"></small>
+                                                                </div>
                                                             </div>
                                                         </div>
 
@@ -5090,6 +5099,8 @@ html, body {
                                                 let adminTypingBuffer = {}, adminSelectBuffer = {}, editingUserKey = null, soundActive = false;
                                                 let employeeSoundVolume = 1;
                                                 let employeeSoundVolumeObserver = null;
+                                                let employeeAudioOutputDeviceId = '';
+                                                let employeeAudioOutputChangeId = 0;
                                                 const SILENT_BACKGROUND_AUDIO_ID = 'silentLoop';
                                                 let maxBreaksAllowed = 3, maxPrayersAllowed = 2, lastReceivedBroadcastID = localStorage.getItem('last_broadcast_id') || "";
                                                 let activeBroadcastSoundKey = null;
@@ -7305,20 +7316,229 @@ html, body {
                                                     element.volume = employeeSoundVolume;
                                                 }
 
+                                                function setEmployeeAudioOutputStatus(message, isError = false) {
+                                                    const status = document.getElementById('employeeAudioOutputStatus');
+                                                    if (!status) return;
+                                                    status.textContent = message;
+                                                    status.style.color = isError ? '#fca5a5' : '#86efac';
+                                                }
+
+                                                async function applyEmployeeAudioOutputToElement(element) {
+                                                    if (!(element instanceof HTMLMediaElement) ||
+                                                        element.id === SILENT_BACKGROUND_AUDIO_ID) return;
+                                                    if (typeof element.setSinkId !== 'function') {
+                                                        if (employeeAudioOutputDeviceId) {
+                                                            throw new Error('اختيار مخرج الصوت غير مدعوم في نسخة التطبيق هذه.');
+                                                        }
+                                                        return;
+                                                    }
+                                                    if (element.sinkId === employeeAudioOutputDeviceId) return;
+                                                    await element.setSinkId(employeeAudioOutputDeviceId);
+                                                }
+
+                                                async function applyEmployeeAudioOutput() {
+                                                    const mediaElements = [...document.querySelectorAll('audio, video')]
+                                                        .filter(element => element.id !== SILENT_BACKGROUND_AUDIO_ID);
+                                                    const results = await Promise.allSettled(
+                                                        mediaElements.map(applyEmployeeAudioOutputToElement)
+                                                    );
+                                                    const failed = results.filter(result => result.status === 'rejected');
+                                                    if (failed.length) {
+                                                        const reason = failed[0].reason;
+                                                        console.error('تعذر تغيير مخرج صوت التطبيق:', reason);
+                                                        setEmployeeAudioOutputStatus(
+                                                            `تعذر تحويل ${failed.length} من مشغلات الصوت. ${reason && reason.message ? reason.message : 'تحقق من السماعة المختارة.'}`,
+                                                            true
+                                                        );
+                                                        return false;
+                                                    }
+                                                    return true;
+                                                }
+
+                                                async function refreshEmployeeAudioOutputs(preferredDeviceId = employeeAudioOutputDeviceId) {
+                                                    const select = document.getElementById('employeeAudioOutput');
+                                                    if (!select || !navigator.mediaDevices ||
+                                                        typeof navigator.mediaDevices.enumerateDevices !== 'function') {
+                                                        setEmployeeAudioOutputStatus('اختيار السماعة غير مدعوم في هذا المتصفح؛ سيُستخدم مخرج الصوت الافتراضي.', true);
+                                                        return;
+                                                    }
+
+                                                    try {
+                                                        const devices = await navigator.mediaDevices.enumerateDevices();
+                                                        const outputs = devices.filter(device => device.kind === 'audiooutput');
+                                                        select.replaceChildren(new Option('السماعة الافتراضية', ''));
+                                                        outputs.forEach((device, index) => {
+                                                            if (!device.deviceId || device.deviceId === 'default') return;
+                                                            select.add(new Option(
+                                                                device.label || `مخرج الصوت ${index + 1}`,
+                                                                device.deviceId
+                                                            ));
+                                                        });
+
+                                                        const hasPreferredDevice = preferredDeviceId &&
+                                                            [...select.options].some(option => option.value === preferredDeviceId);
+                                                        select.value = hasPreferredDevice ? preferredDeviceId : '';
+                                                        if (preferredDeviceId && !hasPreferredDevice) {
+                                                            employeeAudioOutputDeviceId = '';
+                                                            localStorage.removeItem(`employee_audio_output_${currentUser.username}`);
+                                                            await applyEmployeeAudioOutput();
+                                                            setEmployeeAudioOutputStatus('السماعة المحفوظة غير متاحة؛ تم الرجوع للسماعة الافتراضية.', true);
+                                                        } else if (outputs.length <= 1) {
+                                                            setEmployeeAudioOutputStatus('لم تظهر سماعات إضافية. استخدم «اختيار سماعة» أو تحقق من توصيلها وإعدادها في Windows.');
+                                                        } else {
+                                                            setEmployeeAudioOutputStatus('اختر مخرج الصوت، ثم اضغط «اختبار الصوت».');
+                                                        }
+                                                    } catch (error) {
+                                                        console.error('تعذر قراءة مخارج الصوت:', error);
+                                                        setEmployeeAudioOutputStatus(
+                                                            `تعذر قراءة السماعات: ${error.message || 'تحقق من إعدادات الجهاز.'}`,
+                                                            true
+                                                        );
+                                                    }
+                                                }
+
+                                                async function chooseEmployeeAudioOutput() {
+                                                    if (!currentUser || currentUser.role === 'admin') return;
+                                                    const mediaDevices = navigator.mediaDevices;
+                                                    if (!mediaDevices || typeof mediaDevices.selectAudioOutput !== 'function') {
+                                                        await refreshEmployeeAudioOutputs();
+                                                        setEmployeeAudioOutputStatus(
+                                                            'اختيار السماعة من نافذة النظام غير مدعوم هنا. اختر من القائمة إن ظهرت سماعات، أو استخدم مخرج Windows الافتراضي.',
+                                                            true
+                                                        );
+                                                        return;
+                                                    }
+
+                                                    try {
+                                                        setEmployeeAudioOutputStatus('اختر السماعة من النافذة التي ظهرت.');
+                                                        const device = await mediaDevices.selectAudioOutput(
+                                                            employeeAudioOutputDeviceId ? { deviceId: employeeAudioOutputDeviceId } : undefined
+                                                        );
+                                                        if (!device || !device.deviceId) {
+                                                            throw new Error('لم يرجع النظام مخرج صوت صالحًا.');
+                                                        }
+                                                        employeeAudioOutputDeviceId = device.deviceId === 'default' ? '' : device.deviceId;
+                                                        if (employeeAudioOutputDeviceId) {
+                                                            localStorage.setItem(`employee_audio_output_${currentUser.username}`, employeeAudioOutputDeviceId);
+                                                        } else {
+                                                            localStorage.removeItem(`employee_audio_output_${currentUser.username}`);
+                                                        }
+                                                        await refreshEmployeeAudioOutputs(employeeAudioOutputDeviceId);
+                                                        const applied = await applyEmployeeAudioOutput();
+                                                        if (applied) setEmployeeAudioOutputStatus(`تم اختيار ${device.label || 'السماعة'}. اضغط «اختبار الصوت» للتأكد.`);
+                                                    } catch (error) {
+                                                        console.error('تعذر اختيار مخرج الصوت:', error);
+                                                        setEmployeeAudioOutputStatus(
+                                                            `لم يتم تغيير السماعة: ${error.message || 'ألغيت العملية أو لم يسمح النظام باختيار المخرج.'}`,
+                                                            true
+                                                        );
+                                                    }
+                                                }
+
+                                                async function setEmployeeAudioOutput(deviceId) {
+                                                    if (!currentUser || currentUser.role === 'admin') return;
+                                                    employeeAudioOutputDeviceId = deviceId || '';
+                                                    const storageKey = `employee_audio_output_${currentUser.username}`;
+                                                    if (employeeAudioOutputDeviceId) localStorage.setItem(storageKey, employeeAudioOutputDeviceId);
+                                                    else localStorage.removeItem(storageKey);
+
+                                                    const changeId = ++employeeAudioOutputChangeId;
+                                                    setEmployeeAudioOutputStatus('جاري تحويل أصوات التطبيق...');
+                                                    const applied = await applyEmployeeAudioOutput();
+                                                    if (changeId !== employeeAudioOutputChangeId) return;
+                                                    if (applied) {
+                                                        const select = document.getElementById('employeeAudioOutput');
+                                                        const selectedOption = select && select.selectedOptions[0];
+                                                        setEmployeeAudioOutputStatus(
+                                                            `مخرج الصوت الحالي: ${selectedOption ? selectedOption.textContent : 'السماعة الافتراضية'}. جرّب «اختبار الصوت».`
+                                                        );
+                                                    }
+                                                }
+
+                                                async function testEmployeeAudioOutput() {
+                                                    if (!currentUser || currentUser.role === 'admin') return;
+                                                    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                                                    if (!AudioContextClass) {
+                                                        setEmployeeAudioOutputStatus('الجهاز لا يدعم إنشاء صوت الاختبار؛ جرّب تشغيل تسجيل صوتي داخل التطبيق.', true);
+                                                        return;
+                                                    }
+
+                                                    const testPlayer = new Audio();
+                                                    let audioContext;
+                                                    let source;
+                                                    let gain;
+                                                    let timeout;
+                                                    try {
+                                                        if (typeof testPlayer.setSinkId === 'function') {
+                                                            await testPlayer.setSinkId(employeeAudioOutputDeviceId);
+                                                        } else if (employeeAudioOutputDeviceId) {
+                                                            throw new Error('اختيار مخرج الصوت غير مدعوم في نسخة التطبيق هذه.');
+                                                        }
+                                                        audioContext = new AudioContextClass();
+                                                        await audioContext.resume();
+                                                        const destination = audioContext.createMediaStreamDestination();
+                                                        testPlayer.srcObject = destination.stream;
+                                                        testPlayer.volume = employeeSoundVolume;
+                                                        await testPlayer.play();
+
+                                                        source = audioContext.createOscillator();
+                                                        gain = audioContext.createGain();
+                                                        source.frequency.value = 880;
+                                                        gain.gain.value = 0.2;
+                                                        source.connect(gain);
+                                                        gain.connect(destination);
+                                                        source.start();
+                                                        setEmployeeAudioOutputStatus('إذا سمعت نغمة الاختبار فمخرج الصوت يعمل.');
+                                                        source.stop(audioContext.currentTime + 0.5);
+                                                        timeout = setTimeout(() => {
+                                                            testPlayer.pause();
+                                                            testPlayer.srcObject = null;
+                                                            destination.stream.getTracks().forEach(track => track.stop());
+                                                            audioContext.close().catch(error => console.error('تعذر إغلاق صوت الاختبار:', error));
+                                                        }, 1000);
+                                                    } catch (error) {
+                                                        if (timeout) clearTimeout(timeout);
+                                                        testPlayer.pause();
+                                                        testPlayer.srcObject = null;
+                                                        if (audioContext && audioContext.state !== 'closed') {
+                                                            await audioContext.close().catch(closeError => console.error('تعذر إغلاق صوت الاختبار:', closeError));
+                                                        }
+                                                        console.error('فشل اختبار صوت التطبيق:', error);
+                                                        const systemMutedHint = error.name === 'NotAllowedError'
+                                                            ? 'اسمح بتشغيل الصوت وتأكد أن التطبيق غير مكتوم في Windows Volume Mixer.'
+                                                            : 'تحقق من توصيل السماعة ومستوى صوت Windows وVolume Mixer.';
+                                                        setEmployeeAudioOutputStatus(`فشل اختبار الصوت: ${error.message || error.name}. ${systemMutedHint}`, true);
+                                                    }
+                                                }
+
                                                 function applyEmployeeSoundVolume() {
                                                     document.querySelectorAll('audio, video').forEach(applyEmployeeSoundVolumeToElement);
+                                                    applyEmployeeAudioOutput().catch(error => {
+                                                        console.error('تعذر تطبيق مخرج صوت التطبيق:', error);
+                                                    });
 
                                                     if (!window.__employeeSoundVolumeControlInstalled) {
                                                         window.__employeeSoundVolumeControlInstalled = true;
                                                         document.addEventListener('play', event => {
                                                             applyEmployeeSoundVolumeToElement(event.target);
+                                                            applyEmployeeAudioOutputToElement(event.target).catch(error => {
+                                                                console.error('تعذر تحويل مخرج صوت المشغل:', error);
+                                                            });
                                                         }, true);
                                                         employeeSoundVolumeObserver = new MutationObserver(records => {
                                                             records.forEach(record => {
                                                                 record.addedNodes.forEach(node => {
                                                                     applyEmployeeSoundVolumeToElement(node);
+                                                                    applyEmployeeAudioOutputToElement(node).catch(error => {
+                                                                        console.error('تعذر تحويل مخرج الصوت:', error);
+                                                                    });
                                                                     if (node.querySelectorAll) {
-                                                                        node.querySelectorAll('audio, video').forEach(applyEmployeeSoundVolumeToElement);
+                                                                        node.querySelectorAll('audio, video').forEach(element => {
+                                                                            applyEmployeeSoundVolumeToElement(element);
+                                                                            applyEmployeeAudioOutputToElement(element).catch(error => {
+                                                                                console.error('تعذر تحويل مخرج الصوت:', error);
+                                                                            });
+                                                                        });
                                                                     }
                                                                 });
                                                             });
@@ -7336,7 +7556,16 @@ html, body {
                                                     employeeSoundVolume = Number.isFinite(savedVolume) && savedVolume >= 0.1 && savedVolume <= 1
                                                         ? savedVolume
                                                         : 1;
+                                                    employeeAudioOutputDeviceId = localStorage.getItem(`employee_audio_output_${currentUser.username}`) || '';
                                                     applyEmployeeSoundVolume();
+                                                    refreshEmployeeAudioOutputs();
+                                                    if (!window.__employeeAudioOutputDeviceChangeListenerInstalled &&
+                                                        navigator.mediaDevices && typeof navigator.mediaDevices.addEventListener === 'function') {
+                                                        window.__employeeAudioOutputDeviceChangeListenerInstalled = true;
+                                                        navigator.mediaDevices.addEventListener('devicechange', () => {
+                                                            refreshEmployeeAudioOutputs();
+                                                        });
+                                                    }
                                                 }
 
                                                 function adjustEmployeeSoundVolume(direction) {
