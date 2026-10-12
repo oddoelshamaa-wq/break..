@@ -3959,12 +3959,8 @@ html, body {
                                                         </div>
         <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 15px;padding:14px;border:1px solid rgba(168,85,247,.4);border-radius:16px;background:rgba(126,34,206,.1);">
             <strong style="color:#e9d5ff;">تحديث تطبيق الموظفين</strong>
-            <input type="file" id="desktopInstallerInput" accept=".exe,application/vnd.microsoft.portable-executable" style="display:none" onchange="showSelectedDesktopInstaller(this)">
-            <button type="button" onclick="document.getElementById('desktopInstallerInput').click()" class="btn" style="background:#334155;color:white;">📁 اختيار ملف التثبيت</button>
-            <button type="button" id="uploadDesktopInstallerButton" onclick="uploadDesktopInstaller()" class="btn" style="background:#7e22ce;color:white;">⬆️ رفع التحديث</button>
-            <span id="selectedDesktopInstallerName" style="color:#cbd5e1;">لم يتم اختيار ملف</span>
-            <progress id="desktopInstallerUploadProgress" class="hidden" max="100" value="0" style="width:min(240px,100%);height:14px;"></progress>
-            <span id="desktopInstallerUploadStatus" role="status" aria-live="polite" style="flex-basis:100%;color:#cbd5e1;"></span>
+            <button type="button" onclick="window.open('https://github.com/oddoelshamaa-wq/break../releases', '_blank', 'noopener,noreferrer')" class="btn" style="background:#7e22ce;color:white;">📦 فتح إصدارات التطبيق المجانية</button>
+            <span style="flex-basis:100%;color:#cbd5e1;">ارفع ملف EXE في GitHub Releases؛ بعدها يقدر الموظفون تنزيل آخر نسخة من الزر في صفحتهم.</span>
         </div>
         <button onclick="forceUpdateAllClients()" class="btn" style="background: #7e22ce; color: white;">
             🔄 إعادة تحميل النظام لدى الموظفين
@@ -15762,7 +15758,7 @@ const isSohra = document.getElementById('isSohraBreak').checked;
             alert('هذا الإجراء متاح للمدير فقط.');
             return;
         }
-        if (!confirm('لازم يكون إصدار التطبيق الجديد منشورًا مسبقًا على GitHub Releases. سيتم فحص وتنزيل أحدث إصدار تلقائيًا على أجهزة ويندوز المتصلة، وتثبيته عند إغلاق التطبيق. كما ستُعاد تحميل صفحة النظام للموظفين. استمرار؟')) return;
+        if (!confirm('لازم يكون الإصدار الجديد منشورًا على GitHub Releases مع ملفات التحديث المطلوبة. ستفحص تطبيقات ويندوز المتصلة الإصدار عند استلام الأمر، ويُثبّت التنزيل عند إغلاق التطبيق؛ كما ستُعاد تحميل صفحة النظام للموظفين. استمرار؟')) return;
 
         const updateTime = Date.now();
         try {
@@ -15784,126 +15780,41 @@ const isSohra = document.getElementById('isSohraBreak').checked;
             return;
         }
 
-        if (status) status.textContent = 'جارٍ تجهيز تنزيل آخر نسخة...';
+        if (status) status.textContent = 'جارٍ البحث عن آخر نسخة منشورة...';
         try {
-            const result = await requestDesktopUpdate({ action: 'download' });
-            if (typeof result.downloadUrl !== 'string' ||
-                !result.downloadUrl.startsWith('https://storage.googleapis.com/')) {
-                throw new Error('رابط تنزيل التحديث غير صالح.');
+            const response = await fetch('https://api.github.com/repos/oddoelshamaa-wq/break../releases/latest', {
+                headers: { Accept: 'application/vnd.github+json' }
+            });
+            if (!response.ok) {
+                throw new Error(`تعذر قراءة آخر إصدار منشور (${response.status}).`);
+            }
+            const release = await response.json();
+            const installer = Array.isArray(release.assets)
+                ? release.assets.find(asset =>
+                    typeof asset.name === 'string' &&
+                    /^ELSHAMAA-Break-Setup-.+\.exe$/i.test(asset.name) &&
+                    typeof asset.browser_download_url === 'string')
+                : null;
+            if (!installer) {
+                throw new Error('ملف EXE مش موجود في آخر إصدار. ارفعه من لوحة المشرف على GitHub Releases.');
+            }
+            const downloadUrl = new URL(installer.browser_download_url);
+            if (downloadUrl.protocol !== 'https:' ||
+                downloadUrl.hostname !== 'github.com' ||
+                !downloadUrl.pathname.startsWith('/oddoelshamaa-wq/break../releases/download/')) {
+                throw new Error('رابط تنزيل ملف التثبيت غير صالح.');
             }
             const downloadLink = document.createElement('a');
-            downloadLink.href = result.downloadUrl;
-            downloadLink.download = result.fileName || 'ELSHAMAA-Break-Setup.exe';
+            downloadLink.href = downloadUrl.toString();
             downloadLink.rel = 'noopener noreferrer';
             document.body.appendChild(downloadLink);
             downloadLink.click();
             downloadLink.remove();
-            if (status) status.textContent = `بدأ تنزيل إصدار ${result.version}. بعد اكتمال التنزيل افتح الملف لتثبيته.`;
+            if (status) status.textContent = `بدأ تنزيل ${installer.name}. بعد اكتماله افتح الملف لتثبيت التطبيق.`;
         } catch (error) {
             console.error('تعذر تنزيل أحدث نسخة من التطبيق:', error);
             if (status) status.textContent = error.message || 'تعذر تنزيل التطبيق. حاول مرة أخرى.';
             alert(error.message || 'تعذر تنزيل التطبيق. تحقق من اتصال الإنترنت وحاول مرة أخرى.');
-        }
-    }
-
-    function showSelectedDesktopInstaller(input) {
-        const file = input && input.files && input.files[0];
-        const name = document.getElementById('selectedDesktopInstallerName');
-        if (name) name.textContent = file ? file.name : 'لم يتم اختيار ملف';
-    }
-
-    async function requestDesktopUpdate(payload) {
-        const response = await fetch('https://us-central1-brak-nagaf-v2.cloudfunctions.net/appUpdates', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        const result = await response.json().catch(() => ({}));
-        if (!response.ok || result.error) {
-            throw new Error(result.error || `تعذر الاتصال بخدمة تحديث التطبيق (${response.status}).`);
-        }
-        return result;
-    }
-
-    async function uploadDesktopInstaller() {
-        const input = document.getElementById('desktopInstallerInput');
-        const status = document.getElementById('desktopInstallerUploadStatus');
-        const progress = document.getElementById('desktopInstallerUploadProgress');
-        const button = document.getElementById('uploadDesktopInstallerButton');
-        const file = input && input.files && input.files[0];
-        if (!currentUser || currentUser.role !== 'admin' || !MANAGERS.includes(currentUser.username)) {
-            alert('رفع تحديث التطبيق متاح للمشرفين فقط.');
-            return;
-        }
-        if (!file) {
-            alert('اختار ملف التثبيت أولاً.');
-            return;
-        }
-        const match = /^ELSHAMAA-Break-Setup-(\d+\.\d+\.\d+(?:-[\w.-]+)?)\.exe$/i.exec(file.name);
-        if (!match) {
-            alert('اسم الملف لازم يكون بالشكل ELSHAMAA-Break-Setup-1.2.3.exe.');
-            return;
-        }
-        if (file.size <= 0 || file.size > 250 * 1024 * 1024) {
-            alert('حجم ملف التثبيت يجب أن يكون أقل من 250 ميجابايت.');
-            return;
-        }
-        const password = prompt('أدخل كلمة مرور المشرف لتأكيد رفع التحديث:');
-        if (password === null || password.length === 0) return;
-
-        button.disabled = true;
-        progress.value = 0;
-        progress.classList.remove('hidden');
-        if (status) status.textContent = 'جارٍ التحقق من صلاحية المشرف وتجهيز الرفع...';
-        try {
-            const upload = await requestDesktopUpdate({
-                action: 'createUploadUrl',
-                username: currentUser.username,
-                password,
-                fileName: file.name,
-                size: file.size
-            });
-            if (typeof upload.uploadUrl !== 'string' ||
-                !upload.uploadUrl.startsWith('https://storage.googleapis.com/')) {
-                throw new Error('تعذر تجهيز رابط الرفع الآمن.');
-            }
-
-            await new Promise((resolve, reject) => {
-                const request = new XMLHttpRequest();
-                request.open('PUT', upload.uploadUrl);
-                request.setRequestHeader('Content-Type', 'application/octet-stream');
-                request.upload.onprogress = event => {
-                    if (!event.lengthComputable) return;
-                    progress.value = Math.round((event.loaded / event.total) * 100);
-                    if (status) status.textContent = `جارٍ رفع ملف التثبيت: ${progress.value}٪`;
-                };
-                request.onload = () => {
-                    if (request.status >= 200 && request.status < 300) resolve();
-                    else reject(new Error(`فشل رفع الملف إلى التخزين (${request.status}).`));
-                };
-                request.onerror = () => reject(new Error('انقطع الاتصال أثناء رفع ملف التثبيت.'));
-                request.onabort = () => reject(new Error('تم إلغاء رفع ملف التثبيت.'));
-                request.send(file);
-            });
-
-            const published = await requestDesktopUpdate({
-                action: 'completeUpload',
-                username: currentUser.username,
-                password,
-                fileName: file.name,
-                size: file.size
-            });
-            if (status) status.textContent = `✅ تم رفع ونشر الإصدار ${published.version}. أصبح متاحًا للموظفين من زر التنزيل.`;
-            progress.value = 100;
-            input.value = '';
-            const selectedName = document.getElementById('selectedDesktopInstallerName');
-            if (selectedName) selectedName.textContent = 'لم يتم اختيار ملف';
-        } catch (error) {
-            console.error('تعذر رفع تحديث التطبيق:', error);
-            if (status) status.textContent = error.message || 'تعذر رفع التحديث.';
-            alert(error.message || 'تعذر رفع التحديث. تحقق من اتصال الإنترنت وإعداد Firebase.');
-        } finally {
-            button.disabled = false;
         }
     }
     // دالة لتنفيذ بدء البريك بناءً على الاختيار التفصيلي
