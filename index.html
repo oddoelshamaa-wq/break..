@@ -3117,6 +3117,45 @@ html, body {
                                             </head>
                                             <body>
 
+                                            <div id="desktopUpdateStatus" role="status" aria-live="polite" style="display:none;position:fixed;right:14px;bottom:14px;z-index:200100;max-width:min(520px,calc(100vw - 28px));padding:10px 16px;border:1px solid rgba(56,189,248,.55);border-radius:14px;background:rgba(15,23,42,.97);box-shadow:0 8px 28px rgba(0,0,0,.45);color:#e2e8f0;font:700 13px 'Cairo',sans-serif;"></div>
+                                            <script>
+                                                (() => {
+                                                    const statusBar = document.getElementById('desktopUpdateStatus');
+                                                    if (!statusBar || !window.desktopIdle ||
+                                                        typeof window.desktopIdle.onUpdateStatus !== 'function') return;
+
+                                                    window.desktopIdle.onUpdateStatus(status => {
+                                                        if (!status || typeof status !== 'object') return;
+                                                        const version = typeof status.version === 'string' ? status.version : '';
+                                                        let message = '';
+                                                        if (status.state === 'current') {
+                                                            message = `إصدار التطبيق الحالي: ${version || 'غير معروف'}`;
+                                                        } else if (status.state === 'downloading') {
+                                                            const percent = Number.isFinite(status.percent)
+                                                                ? ` (${Math.round(status.percent)}٪)`
+                                                                : '';
+                                                            message = `جارٍ تنزيل تحديث التطبيق ${version}${percent}`;
+                                                        } else if (status.state === 'downloaded') {
+                                                            message = `تم تنزيل تحديث التطبيق ${version}. سيكتمل التثبيت عند إغلاق النافذة.`;
+                                                        } else if (status.state === 'error') {
+                                                            message = version
+                                                                ? `تعذر تنزيل تحديث التطبيق ${version}. سيُعاد الفحص لاحقًا.`
+                                                                : 'تعذر فحص تحديث التطبيق. سيُعاد الفحص لاحقًا.';
+                                                        } else {
+                                                            return;
+                                                        }
+
+                                                        statusBar.textContent = message;
+                                                        statusBar.style.display = 'block';
+                                                        statusBar.style.borderColor = status.state === 'error'
+                                                            ? 'rgba(248,113,113,.65)'
+                                                            : status.state === 'downloaded'
+                                                                ? 'rgba(74,222,128,.65)'
+                                                                : 'rgba(56,189,248,.55)';
+                                                    });
+                                                })();
+                                            </script>
+
                                             <div id="appTextSizeControl" role="group" aria-label="التحكم في حجم العرض" style="position:fixed;bottom:14px;left:14px;z-index:9000;display:flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid rgba(148,163,184,.45);border-radius:14px;background:rgba(15,23,42,.94);box-shadow:0 6px 24px rgba(0,0,0,.35);color:#f1f5f9;font-family:'Cairo',sans-serif;">
                                                 <span style="font-size:13px;font-weight:700;">حجم العرض</span>
                                                 <button type="button" onclick="adjustAppTextSize(-0.1)" aria-label="تصغير الخط" title="تصغير الخط" style="min-width:34px;height:34px;border:0;border-radius:9px;background:#334155;color:white;font-size:20px;font-weight:800;cursor:pointer;">−</button>
@@ -3919,7 +3958,7 @@ html, body {
                                                             <button onclick="endDay()" class="btn btn-danger btn-sm">إقفال اليوم 🛑</button>
                                                         </div>
         <button onclick="forceUpdateAllClients()" class="btn" style="background: #7e22ce; color: white;">
-            🚀 نشر التحديث الحالي على أجهزة الموظفين
+            🚀 تحديث التطبيق على أجهزة الموظفين
         </button>
                                                         <div class="table-responsive">
                                                             <table>
@@ -15687,11 +15726,17 @@ const isSohra = document.getElementById('isSohraBreak').checked;
         const updateTimestamp = Number(update && update.timestamp);
         if (!Number.isFinite(updateTimestamp) || updateTimestamp <= 0) return;
 
+        const username = localStorage.getItem('break_sys_user');
+        if (!username || MANAGERS.includes(username)) return;
+
         const lastUpdateProcessed = Number(localStorage.getItem('last_processed_update')) || 0;
         if (updateTimestamp <= lastUpdateProcessed || isGlobalUpdateInProgress) return;
 
         isGlobalUpdateInProgress = true;
         localStorage.setItem('last_processed_update', String(updateTimestamp));
+        if (window.desktopIdle && typeof window.desktopIdle.checkForAppUpdate === 'function') {
+            window.desktopIdle.checkForAppUpdate();
+        }
         reloadForGlobalUpdate(updateTimestamp);
     }, error => {
         console.error('تعذر استقبال أمر تحديث الأجهزة:', error);
@@ -15702,7 +15747,7 @@ const isSohra = document.getElementById('isSohraBreak').checked;
             alert('هذا الإجراء متاح للمدير فقط.');
             return;
         }
-        if (!confirm('تأكد أنك رفعت index.html على GitHub Pages أولاً. سيتم الآن إعادة تحميل الصفحة المنشورة على أجهزة الموظفين المتصلة. استمرار؟')) return;
+        if (!confirm('لازم يكون إصدار التطبيق الجديد منشورًا مسبقًا على GitHub Releases. سيتم فحص وتنزيل أحدث إصدار تلقائيًا على أجهزة ويندوز المتصلة، وتثبيته عند إغلاق التطبيق. كما ستُعاد تحميل صفحة النظام للموظفين. استمرار؟')) return;
 
         const updateTime = Date.now();
         try {
@@ -15710,7 +15755,7 @@ const isSohra = document.getElementById('isSohraBreak').checked;
                 timestamp: updateTime,
                 admin: currentUser.realName || currentUser.username
             });
-            alert('✅ تم إرسال أمر التحديث للأجهزة المتصلة. الأجهزة غير المتصلة ستحدّث عند اتصالها وفتح النظام.');
+            alert('✅ تم إرسال أمر التحديث. أجهزة ويندوز المتصلة ستفحص أحدث إصدار منشور وتنزّله في الخلفية، وسيكتمل التثبيت عند إغلاق التطبيق. الأجهزة غير المتصلة ستنفذ الأمر عند اتصالها وفتح النظام.');
         } catch (error) {
             console.error('تعذر إرسال أمر تحديث الأجهزة:', error);
             alert('تعذر إرسال أمر التحديث. تحقق من اتصال الإنترنت وصلاحية قاعدة البيانات ثم حاول مرة أخرى.');
