@@ -3117,6 +3117,51 @@ html, body {
                                             </head>
                                             <body>
 
+                                            <div id="appTextSizeControl" role="group" aria-label="التحكم في حجم العرض" style="position:fixed;bottom:14px;left:14px;z-index:9000;display:flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid rgba(148,163,184,.45);border-radius:14px;background:rgba(15,23,42,.94);box-shadow:0 6px 24px rgba(0,0,0,.35);color:#f1f5f9;font-family:'Cairo',sans-serif;">
+                                                <span style="font-size:13px;font-weight:700;">حجم العرض</span>
+                                                <button type="button" onclick="adjustAppTextSize(-0.1)" aria-label="تصغير الخط" title="تصغير الخط" style="min-width:34px;height:34px;border:0;border-radius:9px;background:#334155;color:white;font-size:20px;font-weight:800;cursor:pointer;">−</button>
+                                                <span id="appTextSizeValue" aria-live="polite" style="min-width:42px;text-align:center;font-size:12px;font-weight:800;">100%</span>
+                                                <button type="button" onclick="adjustAppTextSize(0.1)" aria-label="تكبير الخط" title="تكبير الخط" style="min-width:34px;height:34px;border:0;border-radius:9px;background:#4f46e5;color:white;font-size:20px;font-weight:800;cursor:pointer;">+</button>
+                                                <button type="button" onclick="resetAppTextSize()" aria-label="إعادة حجم الخط الافتراضي" title="إعادة الحجم الافتراضي" style="height:34px;padding:0 8px;border:0;border-radius:9px;background:#334155;color:white;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">افتراضي</button>
+                                            </div>
+                                            <script>
+                                                (() => {
+                                                    const storageKey = 'elshamaa_app_text_scale';
+                                                    const minScale = 0.8;
+                                                    const maxScale = 1.5;
+                                                    let scale = 1;
+                                                    try {
+                                                        const savedScale = Number(localStorage.getItem(storageKey));
+                                                        if (Number.isFinite(savedScale) && savedScale >= minScale && savedScale <= maxScale) {
+                                                            scale = savedScale;
+                                                        }
+                                                    } catch (error) {
+                                                        console.error('تعذر قراءة حجم الخط المحفوظ:', error);
+                                                    }
+
+                                                    function applyScale() {
+                                                        document.documentElement.style.zoom = String(scale);
+                                                        const label = document.getElementById('appTextSizeValue');
+                                                        if (label) label.textContent = `${Math.round(scale * 100)}%`;
+                                                        try {
+                                                            localStorage.setItem(storageKey, String(scale));
+                                                        } catch (error) {
+                                                            console.error('تعذر حفظ حجم الخط:', error);
+                                                        }
+                                                    }
+
+                                                    window.adjustAppTextSize = change => {
+                                                        scale = Math.min(maxScale, Math.max(minScale, Math.round((scale + change) * 10) / 10));
+                                                        applyScale();
+                                                    };
+                                                    window.resetAppTextSize = () => {
+                                                        scale = 1;
+                                                        applyScale();
+                                                    };
+                                                    applyScale();
+                                                })();
+                                            </script>
+
                                             <!-- مدخلات مخفية لرفع الصور -->
                                             <input type="file" id="selfPicInput" style="display:none" accept="image/*" onchange="handleFileUpload(this, 'self')">
                                             <input type="file" id="adminPicInput" style="display:none" accept="image/*" onchange="handleFileUpload(this, 'admin')">
@@ -19598,7 +19643,7 @@ function shareFilmGameLink() {
                 setDesktopIdleDialog(
                     event.source === 'manager' ? 'المدير بيسألك: أنت نايم؟ 😴' : 'إنت موجود؟',
                     event.source === 'manager'
-                        ? 'رد خلال دقيقة: دوس «لا، أنا صاحي» أو كمل شغلك. لو مفيش رد هنبدأ نحسب وقت النوم.'
+                        ? 'رد خلال دقيقة بالضغط على «لا، أنا صاحي». لو مفيش رد هنبدأ نحسب وقت النوم.'
                         : 'بقالك 3 دقايق من غير حركة! حرّك الماوس أو الكيبورد، أو دوس «أيوه صاحي» خلال دقيقة. لو مفيش رد هنبدأ نحسب وقت الخمول.',
                     '',
                     false
