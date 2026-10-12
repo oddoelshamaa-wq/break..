@@ -3879,7 +3879,7 @@ html, body {
                                                         <div class="table-responsive">
                                                             <table>
                                                                 <thead>
-                                                                    <tr><th>الموظف والجهاز</th><th>الحالة والسبب</th><th>البريك المستخدم</th><th>البريك المتبقي</th><th>صلاة / متبع</th><th>ميتنج / VIP</th><th>التحكم</th></tr>
+                                                                    <tr><th>الموظف والجهاز</th><th>الحالة والسبب</th><th>البريك المستخدم</th><th>البريك المتبقي</th><th>صلاة / متبع</th><th>ميتنج / VIP</th><th>فطار</th><th>التحكم</th></tr>
                                                                 </thead>
                                                                 <tbody id="monitorBody"></tbody>
                                                             </table>
@@ -3943,6 +3943,7 @@ html, body {
                             <div style="background:rgba(0,0,0,0.3); padding:15px; border-radius:20px; text-align:center;"><small>الصلاة</small><p id="monthTotalPrayer" style="font-size:1.4rem;">0 د</p></div>
                             <div style="background:rgba(0,0,0,0.3); padding:15px; border-radius:20px; text-align:center; border:1px solid var(--success);"><small>المتابعة</small><p id="monthTotalFollowUp" style="font-size:1.4rem; color:var(--success);">0 د</p></div>
                             <div style="background:rgba(0,0,0,0.3); padding:15px; border-radius:20px; text-align:center; border:1px solid #ffd700;"><small>VIP</small><p id="monthTotalVIP" style="font-size:1.4rem; color:#ffd700;">0 د</p></div>
+                            <div id="monthBreakfastSummaryCard" style="display:none; background:rgba(0,0,0,0.3); padding:15px; border-radius:20px; text-align:center; border:1px solid #f97316;"><small>الفطار</small><p id="monthTotalBreakfast" style="font-size:1.1rem; color:#fb923c;">0 مرة · 00:00:00</p></div>
                         </div>
 
                         <div class="table-responsive">
@@ -5079,6 +5080,7 @@ html, body {
 
                                                 let allUsersData = {}, currentUser = null, timerInterval = null, isLoaded = false;
                                                 let csApprovalRequests = {};
+                                                let hasLoadedCsApprovalRequests = false;
                                                 const CS_APPROVAL_PREFERRED_AGENT_USERNAMES = ['cs2 2002', 'cs 2001'];
                                                 let csApprovalHiddenHistory = {};
                                                 let csApprovalHiddenHistoryUser = '';
@@ -6971,7 +6973,41 @@ html, body {
                                                 }
 
                                                 db.ref('csApprovalRequests').on('value', snap => {
-                                                    csApprovalRequests = snap.val() || {};
+                                                    const previousRequests = csApprovalRequests;
+                                                    const nextRequests = snap.val() || {};
+                                                    if (hasLoadedCsApprovalRequests &&
+                                                        currentUser &&
+                                                        currentUser.role !== 'admin' &&
+                                                        isCsCallAgent(currentUser)) {
+                                                        const now = getServerTime();
+                                                        const hasNewIncomingRequest = Object.entries(nextRequests).some(([requestKey, request]) => {
+                                                            if (!request ||
+                                                                request.status !== 'pending' ||
+                                                                request.requesterUsername === currentUser.username ||
+                                                                (request.assignedTo && request.assignedTo !== currentUser.username) ||
+                                                                (request.declinedBy && request.declinedBy[currentUser.username] && request.poolAvailable !== true) ||
+                                                                Number(request.snoozedUntil || 0) > now) return false;
+
+                                                            const previousRequest = previousRequests[requestKey];
+                                                            const wasAlreadyIncoming = previousRequest &&
+                                                                previousRequest.status === 'pending' &&
+                                                                previousRequest.requesterUsername !== currentUser.username &&
+                                                                (!previousRequest.assignedTo || previousRequest.assignedTo === currentUser.username) &&
+                                                                (!(previousRequest.declinedBy && previousRequest.declinedBy[currentUser.username]) ||
+                                                                    previousRequest.poolAvailable === true) &&
+                                                                Number(previousRequest.snoozedUntil || 0) <= now;
+                                                            return !wasAlreadyIncoming ||
+                                                                previousRequest.timestamp !== request.timestamp ||
+                                                                previousRequest.assignedTo !== request.assignedTo;
+                                                        });
+                                                        if (hasNewIncomingRequest &&
+                                                            window.desktopIdle &&
+                                                            typeof window.desktopIdle.bringToFrontForRequest === 'function') {
+                                                            window.desktopIdle.bringToFrontForRequest();
+                                                        }
+                                                    }
+                                                    csApprovalRequests = nextRequests;
+                                                    hasLoadedCsApprovalRequests = true;
                                                     renderCsApprovalRequests();
                                                     renderAdminCsApprovalHistory();
                                                     reassignUnavailableCsRequests();
@@ -7746,7 +7782,6 @@ html, body {
                                                     });
                                                 }
 
-                                                // الاستماع لحالة نافذة الصلاة وتحديث الواجهة
                                                 db.ref('settings/prayerOpen').on('value', (snap) => {
                                                     isPrayerWindowOpen = snap.val() === true;
 
@@ -8163,6 +8198,27 @@ html, body {
                                                 
                                                     const newData = snap.val() || {};
                                                     if (currentUser && currentUser.role === 'admin' && isLoaded) {
+                                                        const requestTypes = ['emRequest', 'meetingRequest', 'otRequest', 'permRequest'];
+                                                        const hasNewEmployeeRequest = Object.keys(newData).some(un => {
+                                                            if (MANAGERS.includes(un)) return false;
+                                                            const previousUser = allUsersData[un] || {};
+                                                            const nextUser = newData[un] || {};
+                                                            return requestTypes.some(requestType => {
+                                                                const previousRequest = previousUser[requestType];
+                                                                const nextRequest = nextUser[requestType];
+                                                                return nextRequest &&
+                                                                    nextRequest.status === 'قيد الانتظار' &&
+                                                                    (!previousRequest ||
+                                                                        previousRequest.status !== 'قيد الانتظار' ||
+                                                                        previousRequest.timestamp !== nextRequest.timestamp);
+                                                            });
+                                                        });
+                                                        if (hasNewEmployeeRequest &&
+                                                            window.desktopIdle &&
+                                                            typeof window.desktopIdle.bringToFrontForRequest === 'function') {
+                                                            window.desktopIdle.bringToFrontForRequest();
+                                                        }
+
                                                         Object.keys(newData).forEach(un => {
                                                             const oldUser = allUsersData[un];
                                                             const newUser = newData[un];
@@ -8879,7 +8935,7 @@ html, body {
             if (u.prayerLimit > 0) usersWithCredit++;
             if (u.prayerCountToday > 0) usersFinishedPrayer++;
 
-            let lg = Number(u.usedSeconds) || 0, lp = Number(u.prayerSeconds) || 0, lm = Number(u.meetingSeconds) || 0, lf = Number(u.followUpSeconds) || 0, lv = Number(u.vipSeconds) || 0;
+            let lg = Number(u.usedSeconds) || 0, lp = Number(u.prayerSeconds) || 0, lm = Number(u.meetingSeconds) || 0, lf = Number(u.followUpSeconds) || 0, lv = Number(u.vipSeconds) || 0, lb = Number(u.breakfastSeconds) || 0;
 
             // حساب الوقت الحي إذا كان الموظف في بريك حالياً
             if (u.isOnBreak && u.lastStartTime) {
@@ -8889,6 +8945,7 @@ html, body {
                 else if (u.breakType === 'ميتنج') lm += elap;
                 else if (u.breakType === 'متابع عميل') lf += elap;
                 else if (u.breakType === 'استراحة VIP' || u.breakType === 'VIP سهرة') lv += elap;
+                else if (u.breakType === 'فطار') lb += elap;
             }
 
             const totalAllowance = (u.allowance || 45) * 60;
@@ -8954,6 +9011,7 @@ html, body {
                             <option value="ميتنج" ${savedS=='ميتنج'?'selected':''}>ميتنج</option>
                             <option value="متابع عميل" ${savedS=='متابع عميل'?'selected':''}>متابع</option>
                             <option value="استراحة VIP" ${savedS=='استراحة VIP'?'selected':''}>VIP</option>
+                            <option value="فطار" ${savedS=='فطار'?'selected':''}>فطار</option>
                         </select>
                         <button onclick="adminStart('${u.username}')" class="btn btn-success btn-sm">▶</button>
                         <button onclick="openUserProfile('${u.username}')" class="btn btn-dark btn-sm">📂</button>
@@ -8989,6 +9047,7 @@ html, body {
                         <span id="meet_${u.username}" style="font-weight:bold;">${formatTime(lm)}</span><br>
                         <small style="color:#ffd700;">VIP: <span id="vip_${u.username}">${formatTime(lv)}</span></small>
                     </td>
+                    <td><span id="breakfast_${u.username}" style="font-weight:bold;">${formatDurationHMS(lb)}</span></td>
                     <td>${ctrl}</td>
                 </tr>`;
         });
@@ -9013,7 +9072,7 @@ html, body {
                                                         if (!u || !u.username || MANAGERS.includes(u.username)) return;
 
                                                         let lg = Number(u.usedSeconds) || 0, lp = Number(u.prayerSeconds) || 0, lm = Number(u.meetingSeconds) || 0,
-                                                            lf = Number(u.followUpSeconds) || 0, lv = Number(u.vipSeconds) || 0;
+                                                            lf = Number(u.followUpSeconds) || 0, lv = Number(u.vipSeconds) || 0, lb = Number(u.breakfastSeconds) || 0;
 
                                                         if (u.isOnBreak && u.lastStartTime) {
                                                             let elap = Math.floor((getServerTime() - u.lastStartTime) / 1000);
@@ -9022,6 +9081,7 @@ html, body {
                                                             else if (u.breakType === 'ميتنج') lm += elap;
                                                             else if (u.breakType === 'متابع عميل') lf += elap;
                                                             else if (u.breakType === 'استراحة VIP' || u.breakType === 'VIP سهرة') lv += elap;
+                                                            else if (u.breakType === 'فطار') lb += elap;
                                                         }
 
                                                         const rem = ((u.allowance || 45) * 60) - lg;
@@ -9068,6 +9128,10 @@ html, body {
                                                         updateText(`meet_${u.username}`, lm);
                                                         updateText(`follow_${u.username}`, lf);
                                                         updateText(`vip_${u.username}`, lv);
+                                                        const breakfastEl = document.getElementById(`breakfast_${u.username}`);
+                                                        if (breakfastEl && breakfastEl.innerText !== formatDurationHMS(lb)) {
+                                                            breakfastEl.innerText = formatDurationHMS(lb);
+                                                        }
                                                     });
                                                     const idleCounter = document.getElementById('desktopIdleCounter');
                                                     if (idleCounter) idleCounter.textContent = `😴 خمول: ${sleepingCount}`;
@@ -9238,7 +9302,7 @@ function renderMyBreakReport() {
         return;
     }
 
-    const totals = { break: 0, prayer: 0, vip: 0, oxidation: 0 };
+    const totals = { break: 0, prayer: 0, vip: 0, oxidation: 0, breakfastCount: 0, breakfast: 0 };
     const rows = [];
     const dailyTotals = {};
     const allowanceSeconds = Math.max(0, Number(employee.allowance) || 45) * 60;
@@ -9268,6 +9332,10 @@ function renderMyBreakReport() {
         }
         else if (type === 'صلاة') totals.prayer += duration;
         else if (type === 'استراحة VIP' || type === 'VIP سهرة') totals.vip += duration;
+        else if (type === 'فطار') {
+            totals.breakfastCount += 1;
+            totals.breakfast += duration;
+        }
 
         rows.push({
             date: isoDate,
@@ -9297,6 +9365,10 @@ function renderMyBreakReport() {
             }
             else if (type === 'صلاة') totals.prayer += duration;
             else if (type === 'استراحة VIP' || type === 'VIP سهرة') totals.vip += duration;
+            else if (type === 'فطار') {
+                totals.breakfastCount += 1;
+                totals.breakfast += duration;
+            }
             rows.push({
                 date: isoDate,
                 displayDate: startedAt.toLocaleDateString('ar-EG'),
@@ -9323,6 +9395,9 @@ function renderMyBreakReport() {
         ['الصلاة', totals.prayer, '#38bdf8']
     ];
     if (employee.isVIP) summaryCards.push(['VIP', totals.vip, '#fbbf24']);
+    if (totals.breakfastCount > 0) {
+        summaryCards.push([`الفطار (${totals.breakfastCount} مرة)`, totals.breakfast, '#fb923c']);
+    }
     summary.innerHTML = summaryCards.map(([label, seconds, color]) => `
         <div style="background:rgba(0,0,0,0.25); border:1px solid ${color}; border-radius:14px; padding:12px; text-align:center;">
             <small>${label}</small><div style="font-size:1.2rem; font-weight:bold; color:${color};">${formatDurationHMS(seconds)}</div>
@@ -9369,6 +9444,7 @@ function renderMyBreakReport() {
     const end = document.getElementById('filterEndDate').value;
 
     if(!un) {
+        document.getElementById('monthBreakfastSummaryCard').style.display = 'none';
         renderWorkSleepReport(null, start, end, 'adminWorkSleepSummary', 'adminWorkSleepBody');
         alert("يرجى اختيار موظف أولاً");
         return;
@@ -9378,25 +9454,21 @@ function renderMyBreakReport() {
     renderWorkSleepReport(u, start, end, 'adminWorkSleepSummary', 'adminWorkSleepBody');
     sB.innerHTML = ''; 
     mS.classList.remove('hidden');
-    let tOx=0, tPr=0, tFo=0, tVi=0; 
+    let tOx=0, tPr=0, tFo=0, tVi=0, tBreakfastCount=0, tBreakfast=0; 
     const allowS = (u.allowance || 45) * 60;
 
-    if (!u.sessions || Object.keys(u.sessions).length === 0) {
-        sB.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">⚠️ لا توجد جلسات مسجلة لهذا الموظف بعد.</td></tr>';
-        return;
-    }
-
     const grouped = {};
-    Object.keys(u.sessions).forEach(k => {
-        const s = u.sessions[k];
-        if(!s.date) return;
+    const sessions = u.sessions && typeof u.sessions === 'object' ? u.sessions : {};
+    Object.keys(sessions).forEach(k => {
+        const s = sessions[k];
+        if(!s || !s.date) return;
         
         const parts = s.date.split('/');
         const cD = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
 
         if ((start && cD < start) || (end && cD > end)) return;
 
-        if(!grouped[s.date]) grouped[s.date] = { acts: [], total: 0, prayer: 0, follow: 0, vip: 0 };
+        if(!grouped[s.date]) grouped[s.date] = { acts: [], total: 0, prayer: 0, follow: 0, vip: 0, breakfast: 0, breakfastCount: 0 };
         const dur = parseInt(s.duration) || 0;
         
         // --- منطق تمييز وإخفاء سجلات السهرة ---
@@ -9446,8 +9518,33 @@ function renderMyBreakReport() {
             grouped[s.date].follow += dur; 
         } else if(s.type === 'استراحة VIP' || s.type === 'VIP سهرة') {
             grouped[s.date].vip += dur;
+        } else if(s.type === 'فطار') {
+            grouped[s.date].breakfast += dur;
+            grouped[s.date].breakfastCount += 1;
         }
     });
+
+    const activeStart = Number(u.lastStartTime);
+    if (u.isOnBreak && u.breakType === 'فطار' && Number.isFinite(activeStart) && activeStart > 0) {
+        const startedAt = new Date(activeStart);
+        const displayDate = `${String(startedAt.getDate()).padStart(2, '0')}/${String(startedAt.getMonth() + 1).padStart(2, '0')}/${startedAt.getFullYear()}`;
+        const isoDate = `${startedAt.getFullYear()}-${String(startedAt.getMonth() + 1).padStart(2, '0')}-${String(startedAt.getDate()).padStart(2, '0')}`;
+        if ((!start || isoDate >= start) && (!end || isoDate <= end)) {
+            if(!grouped[displayDate]) grouped[displayDate] = { acts: [], total: 0, prayer: 0, follow: 0, vip: 0, breakfast: 0, breakfastCount: 0 };
+            const duration = Math.max(0, Math.floor((getServerTime() - activeStart) / 1000));
+            grouped[displayDate].breakfast += duration;
+            grouped[displayDate].breakfastCount += 1;
+            grouped[displayDate].acts.push(`
+                <div style="font-size:0.8rem; margin-bottom:8px; background:rgba(249,115,22,0.08); padding:10px; border-radius:12px; border-right:4px solid #f97316;">
+                    <div style="display:flex; justify-content:space-between;">
+                        <b style="color:#fb923c;">فطار · جاري الآن</b>
+                        <span style="color:#fff; font-weight:bold;">${Math.round(duration/60)} د</span>
+                    </div>
+                    <div style="color:#aaa; font-size:0.7rem; margin-top:3px;">(${startedAt.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })} إلى الآن)</div>
+                </div>
+            `);
+        }
+    }
 
     const dates = Object.keys(grouped).sort((a,b) => b.localeCompare(a));
     if(dates.length === 0) {
@@ -9457,6 +9554,8 @@ function renderMyBreakReport() {
     dates.forEach(d => {
         const ox = Math.max(0, grouped[d].total - allowS); 
         tOx += ox; tPr += grouped[d].prayer; tFo += grouped[d].follow; tVi += grouped[d].vip;
+        tBreakfastCount += grouped[d].breakfastCount;
+        tBreakfast += grouped[d].breakfast;
         sB.innerHTML += `
             <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
                 <td style="vertical-align:top; font-weight:bold; color:#94a3b8; padding:15px;">${d}</td>
@@ -9471,6 +9570,8 @@ function renderMyBreakReport() {
     document.getElementById('monthTotalPrayer').innerText = Math.round(tPr/60) + " د";
     document.getElementById('monthTotalFollowUp').innerText = Math.round(tFo/60) + " د";
     document.getElementById('monthTotalVIP').innerText = Math.round(tVi/60) + " د";
+    document.getElementById('monthTotalBreakfast').innerText = `${tBreakfastCount} مرة · ${formatDurationHMS(tBreakfast)}`;
+    document.getElementById('monthBreakfastSummaryCard').style.display = tBreakfastCount > 0 ? '' : 'none';
 }
 
                                                 function deleteSpecificSession(un, key) { if(!['mahmoud', 'ahmed'].includes(currentUser.username)) return; if(confirm("حذف السجل؟")) db.ref(`users/${un}/sessions/${key}`).remove().then(() => renderUserReport()); }
@@ -9749,7 +9850,7 @@ function renderMyBreakReport() {
             console.error("فشل تحديث توقيت دور الصلاة:", error);
         });
             }
-            
+
             // إغلاق أي نافذة اختيار مفتوحة
             document.getElementById('prayerTypePickerModal').classList.add('hidden');
             document.getElementById('breakPickerModal').classList.add('hidden');
@@ -10390,8 +10491,10 @@ if (sohraBtn) {
                     updates[`users/${un}/meetingSeconds`] = 0;
                     updates[`users/${un}/followUpSeconds`] = 0;
                     updates[`users/${un}/vipSeconds`] = 0;
+                    updates[`users/${un}/breakfastSeconds`] = 0;
                     updates[`users/${un}/isOnBreak`] = false;
                     updates[`users/${un}/lastStartTime`] = null;
+                    updates[`users/${un}/breakfastSessionId`] = null;
                     updates[`users/${un}/otRequest`] = null;
                     updates[`users/${un}/emRequest`] = null;
                     updates[`users/${un}/meetingRequest`] = null;
@@ -10403,6 +10506,7 @@ if (sohraBtn) {
             });
 
             updates['settings/prayerOpen'] = false;
+            updates['breakfastControl/active'] = null;
 
             db.ref().update(updates).then(() => {
                 triggerGlobalRefresh();
@@ -10657,6 +10761,7 @@ if (sohraBtn) {
                         meetingSeconds: 0, 
                         followUpSeconds: 0, 
                         vipSeconds: 0, 
+                        breakfastSeconds: 0,
                         isOnBreak: false
                     }).then(() => { 
                         triggerGlobalRefresh(); 
@@ -10684,7 +10789,11 @@ if (sohraBtn) {
                                                 function deleteUser(un) {
                                                     if(confirm("حذف الموظف؟")) {
                                                         logDeletionAction("حذف موظف بالكامل", un, "تم مسح حساب الموظف من السيستم");
-                                                        db.ref('users/'+un).remove().then(() => triggerGlobalRefresh());
+                                                        const updates = { [`users/${un}`]: null };
+                                                        db.ref().update(updates).then(() => triggerGlobalRefresh()).catch((error) => {
+                                                            console.error("فشل حذف الموظف:", error);
+                                                            alert(`تعذر حذف الموظف: ${error.message}`);
+                                                        });
                                                     }
                                                 }
 
@@ -12999,6 +13108,7 @@ if (sohraBtn) {
                     });
 
                     let summaryRows = [];
+                    let breakfastRows = [];
 
                     Object.values(allUsersData).forEach(u => {
                         if (!u.username || MANAGERS.includes(u.username)) return;
@@ -13008,6 +13118,8 @@ if (sohraBtn) {
                             days: new Set(), 
                             ox: 0, 
                             prayer: 0, 
+                            breakfastCount: 0,
+                            breakfast: 0,
                             meet: 0, 
                             ot: 0, 
                             perm: 0, 
@@ -13026,17 +13138,34 @@ if (sohraBtn) {
                         if (u.sessions) {
                             let daily = {};
                             Object.values(u.sessions).forEach(s => {
+                                if (!s || !s.date) return;
                                 const sD = s.date.split('/').reverse().join('-');
                                 if (sD >= startDateVal && sD <= endDateVal) {
                                     uS.days.add(s.date);
                                     const dur = parseInt(s.duration) || 0;
                                     if (s.type === 'بريك عام' || s.type === 'طوارئ') daily[s.date] = (daily[s.date] || 0) + dur;
                                     else if (s.type === 'صلاة') uS.prayer += dur;
+                                    else if (s.type === 'فطار') {
+                                        uS.breakfastCount += 1;
+                                        uS.breakfast += dur;
+                                    }
                                     else if (s.type === 'ميتنج') uS.meet += dur;
                                 }
                             });
                             const allow = (u.allowance || 45) * 60;
                             Object.values(daily).forEach(v => { if(v > allow) uS.ox += (v - allow); });
+                        }
+
+                        if (u.isOnBreak && u.breakType === 'فطار') {
+                            const activeStart = Number(u.lastStartTime);
+                            if (Number.isFinite(activeStart) && activeStart > 0) {
+                                const activeDate = new Date(activeStart);
+                                const activeIsoDate = `${activeDate.getFullYear()}-${String(activeDate.getMonth() + 1).padStart(2, '0')}-${String(activeDate.getDate()).padStart(2, '0')}`;
+                                if (activeIsoDate >= startDateVal && activeIsoDate <= endDateVal) {
+                                    uS.breakfastCount += 1;
+                                    uS.breakfast += Math.max(0, Math.floor((getServerTime() - activeStart) / 1000));
+                                }
+                            }
                         }
 
                         if (u.overtimeHistory) {
@@ -13074,6 +13203,10 @@ if (sohraBtn) {
                     });
                 }
 
+                        if (uS.breakfastCount > 0) {
+                            breakfastRows.push([uS.name, uS.breakfastCount, formatDurationHMS(uS.breakfast)]);
+                        }
+
                         summaryRows.push([
                             uS.name, 
                             uS.days.size, 
@@ -13081,6 +13214,8 @@ if (sohraBtn) {
                             clockOutTime, 
                             Math.round(uS.ox/60), 
                             Math.round(uS.prayer/60), 
+                            uS.breakfastCount > 0 ? uS.breakfastCount : '',
+                            uS.breakfastCount > 0 ? Math.round(uS.breakfast/60) : '',
                             Math.round(uS.meet/60), 
                             uS.ot, 
                             uS.perm, 
@@ -13090,14 +13225,14 @@ if (sohraBtn) {
                         ]);
                     });
 
-                    worksheet.mergeCells('A1:L1');
+                    worksheet.mergeCells('A1:N1');
                     const titleCell = worksheet.getCell('A1');
                     titleCell.value = 'نظام ELSHAMAA - تقرير الأداء والمخالفات المطور';
                     titleCell.font = { size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
                     titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
                     titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
 
-                    const mainHeader = ["اسم الموظف", "أيام الحضور", "وقت الحضور", "وقت الانصراف", "الأكسدة (د)", "الصلاة (د)", "الميتنج (د)", "إضافي (س)", "استأذان (س)", "مخالفات عادية", "مخالفات بخصم", "إجمالي الخصم (ج.م)"];
+                    const mainHeader = ["اسم الموظف", "أيام الحضور", "وقت الحضور", "وقت الانصراف", "الأكسدة (د)", "الصلاة (د)", "مرات الفطار", "الفطار (د)", "الميتنج (د)", "إضافي (س)", "استأذان (س)", "مخالفات عادية", "مخالفات بخصم", "إجمالي الخصم (ج.م)"];
                     const headerRow = worksheet.addRow(mainHeader);
 
                     headerRow.eachCell((cell) => {
@@ -13119,7 +13254,35 @@ if (sohraBtn) {
                     });
 
                     worksheet.getColumn(1).width = 25;
-                    for (let i = 2; i <= 12; i++) { worksheet.getColumn(i).width = 15; }
+                    for (let i = 2; i <= 14; i++) { worksheet.getColumn(i).width = 15; }
+
+                    if (breakfastRows.length > 0) {
+                        const breakfastWorksheet = workbook.addWorksheet('تقرير الفطار', {
+                            views: [{ rightToLeft: true }]
+                        });
+                        breakfastWorksheet.mergeCells('A1:C1');
+                        breakfastWorksheet.getCell('A1').value = 'تقرير الفطار للموظفين المستخدمين فقط';
+                        breakfastWorksheet.getCell('A1').font = { size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+                        breakfastWorksheet.getCell('A1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
+                        breakfastWorksheet.getCell('A1').alignment = { vertical: 'middle', horizontal: 'center' };
+                        const breakfastHeader = breakfastWorksheet.addRow(['اسم الموظف', 'عدد مرات الفطار', 'إجمالي مدة الفطار']);
+                        breakfastHeader.eachCell((cell) => {
+                            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF97316' } };
+                            cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
+                            cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                            cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+                        });
+                        breakfastRows.forEach((rowData) => {
+                            const row = breakfastWorksheet.addRow(rowData);
+                            row.eachCell((cell) => {
+                                cell.alignment = { horizontal: 'center' };
+                                cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+                            });
+                        });
+                        breakfastWorksheet.getColumn(1).width = 28;
+                        breakfastWorksheet.getColumn(2).width = 20;
+                        breakfastWorksheet.getColumn(3).width = 24;
+                    }
 
                     const buffer = await workbook.xlsx.writeBuffer();
                     saveAs(new Blob([buffer]), `ELSHAMAA_Advanced_Report_${startDateVal}.xlsx`);
@@ -15789,17 +15952,67 @@ const isSohra = document.getElementById('isSohraBreak').checked;
         }
     }
 
-    function beginUserActivity(username, type, reason, onSuccess) {
+    function reserveBreakfastSlot(username, date, token, callback) {
+        let rejectionReason = 'breakfast_limit';
+        db.ref('breakfastControl').transaction((state) => {
+            state = state && typeof state === 'object' ? state : {};
+            if (state.active) {
+                rejectionReason = 'breakfast_busy';
+                return;
+            }
+
+            if (state.date !== date) {
+                state.date = date;
+                state.count = 0;
+            }
+            state.count = Number(state.count) || 0;
+            if (state.count >= 2) {
+                rejectionReason = 'breakfast_limit';
+                return;
+            }
+
+            state.count += 1;
+            state.active = { username, token };
+            return state;
+        }, (error, committed, snapshot) => {
+            callback(error, committed, snapshot, rejectionReason);
+        }, false);
+    }
+
+    function releaseBreakfastSlot(token, rollbackCount, reservationDate) {
+        if (!token) return Promise.resolve(false);
+        return new Promise((resolve, reject) => {
+            db.ref('breakfastControl').transaction((state) => {
+                if (!state || !state.active || state.active.token !== token) return;
+                if (rollbackCount && state.date === reservationDate) {
+                    state.count = Math.max(0, (Number(state.count) || 0) - 1);
+                }
+                state.active = null;
+                return state;
+            }, (error, committed) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(committed);
+                }
+            }, false);
+        });
+    }
+
+    function beginUserActivity(username, type, reason, onSuccess, onFailure) {
         if (!isServerTimeSynchronized) {
-            alert("⏳ جاري مزامنة ساعة النظام، حاول مرة أخرى بعد لحظات.");
+            if (typeof onFailure === "function") onFailure(null, 'clock');
+            else alert("⏳ جاري مزامنة ساعة النظام، حاول مرة أخرى بعد لحظات.");
             return;
         }
         if (!isDatabaseConnected) {
-            alert("الاتصال بقاعدة البيانات مقطوع؛ لم يبدأ النشاط. انتظر عودة الاتصال ثم حاول مرة أخرى.");
+            if (typeof onFailure === "function") onFailure(null, 'offline');
+            else alert("الاتصال بقاعدة البيانات مقطوع؛ لم يبدأ النشاط. انتظر عودة الاتصال ثم حاول مرة أخرى.");
             return;
         }
         if (isActivityWritePending) {
-            alert("هناك تحديث نشاط قيد الحفظ؛ انتظر تأكيده قبل المحاولة مرة أخرى.");
+            if (typeof onFailure === "function") onFailure(null, 'pending');
+            else alert("هناك تحديث نشاط قيد الحفظ؛ انتظر تأكيده قبل المحاولة مرة أخرى.");
             return;
         }
         if (type === 'بريك عام' || type === 'طوارئ') {
@@ -15814,32 +16027,114 @@ const isSohra = document.getElementById('isSohraBreak').checked;
         isActivityWritePending = true;
         const showActivityLoading = Boolean(currentUser);
         if (showActivityLoading) setActivityLoading(true, 'جارٍ بدء البريك وحفظه...');
-        db.ref('users/' + username).transaction((user) => {
-            if (!user || user.isOnBreak) return;
+        const isBreakfast = type === 'فطار';
+        const breakfastDate = isBreakfast ? getServerDateString() : null;
+        const breakfastToken = isBreakfast ? db.ref().push().key : null;
 
-            user.isOnBreak = true;
-            user.breakType = type;
-            user.lastStartTime = getServerTime();
-            user.lastReason = reason || type;
-            if (isCsCallAgent(user)) user.isCSAvailable = false;
-            return user;
-        }, (error, committed, snapshot) => {
-            isActivityWritePending = false;
-            if (showActivityLoading) setActivityLoading(false);
-            if (error) {
-                console.error("فشل بدء النشاط:", error);
-                alert("تعذر بدء النشاط: " + error.message);
+        const finishFailure = (user, failureReason) => {
+            const reportFailure = (releaseError) => {
+                isActivityWritePending = false;
+                if (showActivityLoading) setActivityLoading(false);
+                if (releaseError) {
+                    console.error("فشل تحرير حجز الفطار بعد تعذر بدء النشاط:", releaseError);
+                    alert("تعذر بدء الفطار وتحرير حجزه: " + releaseError.message);
+                } else if (typeof onFailure === "function") {
+                    onFailure(user, failureReason);
+                } else if (failureReason === 'breakfast_busy') {
+                    alert("الفطار مفتوح حاليًا؛ لا يمكن بدء فطار آخر بالتزامن.");
+                } else if (failureReason === 'breakfast_limit') {
+                    alert("اكتمل الحد اليومي للفطار (مرتان).");
+                } else {
+                    alert(isBreakfast
+                        ? "لم يبدأ الفطار: الموظف مسجل بالفعل في نشاط آخر."
+                        : "هذا الموظف مسجل بالفعل في نشاط آخر. حدّث الصفحة للتحقق من حالته.");
+                }
                 if (currentUser && currentUser.role !== 'admin') updateUserUI();
-                return;
+            };
+
+            if (isBreakfast) {
+                releaseBreakfastSlot(breakfastToken, true, breakfastDate).then(() => reportFailure()).catch(reportFailure);
+            } else {
+                reportFailure();
             }
-            if (!committed) {
-                alert("هذا الموظف مسجل بالفعل في نشاط آخر. حدّث الصفحة للتحقق من حالته.");
+        };
+
+        const startUserTransaction = () => {
+            db.ref('users/' + username).transaction((user) => {
+                if (!user || user.isOnBreak) return;
+                if (isBreakfast) {
+                    user.breakfastSessionId = breakfastToken;
+                }
+
+                user.isOnBreak = true;
+                user.breakType = type;
+                user.lastStartTime = getServerTime();
+                user.lastReason = reason || type;
+                if (isCsCallAgent(user)) user.isCSAvailable = false;
+                return user;
+            }, (error, committed, snapshot) => {
+                if (error) {
+                    console.error("فشل بدء النشاط:", error);
+                    if (isBreakfast) {
+                        releaseBreakfastSlot(breakfastToken, true, breakfastDate).then(() => {
+                            isActivityWritePending = false;
+                            if (showActivityLoading) setActivityLoading(false);
+                            alert("تعذر بدء النشاط: " + error.message);
+                            if (currentUser && currentUser.role !== 'admin') updateUserUI();
+                        }).catch((releaseError) => {
+                            isActivityWritePending = false;
+                            if (showActivityLoading) setActivityLoading(false);
+                            console.error("فشل تحرير حجز الفطار بعد خطأ بدء النشاط:", releaseError);
+                            alert("تعذر بدء الفطار أو تحرير حجزه: " + releaseError.message);
+                            if (currentUser && currentUser.role !== 'admin') updateUserUI();
+                        });
+                    } else {
+                        isActivityWritePending = false;
+                        if (showActivityLoading) setActivityLoading(false);
+                        alert("تعذر بدء النشاط: " + error.message);
+                        if (currentUser && currentUser.role !== 'admin') updateUserUI();
+                    }
+                    return;
+                }
+                if (!committed) {
+                    finishFailure(snapshot.val(), snapshot.val() && snapshot.val().isOnBreak ? 'employee_busy' : 'unavailable');
+                    return;
+                }
+                isActivityWritePending = false;
+                if (showActivityLoading) setActivityLoading(false);
                 if (currentUser && currentUser.role !== 'admin') updateUserUI();
-                return;
-            }
-            if (currentUser && currentUser.role !== 'admin') updateUserUI();
-            if (typeof onSuccess === "function") onSuccess(snapshot.val());
-        }, false);
+                if (typeof onSuccess === "function") onSuccess(snapshot.val());
+            }, false);
+        };
+
+        if (isBreakfast) {
+            reserveBreakfastSlot(username, breakfastDate, breakfastToken, (error, committed, snapshot, failureReason) => {
+                if (error) {
+                    isActivityWritePending = false;
+                    if (showActivityLoading) setActivityLoading(false);
+                    console.error("تعذر حجز وقت الفطار:", error);
+                    alert("تعذر بدء الفطار: " + error.message);
+                    if (currentUser && currentUser.role !== 'admin') updateUserUI();
+                    return;
+                }
+                if (!committed) {
+                    isActivityWritePending = false;
+                    if (showActivityLoading) setActivityLoading(false);
+                    if (typeof onFailure === "function") {
+                        onFailure(snapshot.val(), failureReason);
+                    } else {
+                        alert(failureReason === 'breakfast_busy'
+                            ? "الفطار مفتوح حاليًا؛ لا يمكن بدء فطار آخر بالتزامن."
+                            : "اكتمل الحد اليومي للفطار (مرتان).");
+                    }
+                    if (currentUser && currentUser.role !== 'admin') updateUserUI();
+                    return;
+                }
+                startUserTransaction();
+            }, false);
+        } else {
+            startUserTransaction();
+        }
     }
 
     function completeUserActivity(username, isAdminAction = false) {
@@ -15868,6 +16163,7 @@ const isSohra = document.getElementById('isSohraBreak').checked;
         const sessionKey = userRef.child('sessions').push().key;
         const overflowSessionKey = userRef.child('sessions').push().key;
         let completedType = "";
+        let completedBreakfastSessionId = null;
 
         userRef.transaction((user) => {
             if (!user || !user.isOnBreak) return;
@@ -15877,6 +16173,7 @@ const isSohra = document.getElementById('isSohraBreak').checked;
 
             const completedAt = getServerTime();
             completedType = user.breakType || "";
+            completedBreakfastSessionId = user.breakfastSessionId || null;
             const duration = Math.max(0, Math.floor((completedAt - startTime) / 1000));
             user.sessions = user.sessions && typeof user.sessions === 'object' ? user.sessions : {};
             const saveSession = (key, type, reason, start, end, seconds) => {
@@ -15916,7 +16213,8 @@ const isSohra = document.getElementById('isSohraBreak').checked;
                 'ميتنج': 'meetingSeconds',
                 'متابع عميل': 'followUpSeconds',
                 'استراحة VIP': 'vipSeconds',
-                'VIP سهرة': 'vipSeconds'
+                'VIP سهرة': 'vipSeconds',
+                'فطار': 'breakfastSeconds'
             };
             const counter = counterByType[completedType];
 
@@ -15940,6 +16238,7 @@ const isSohra = document.getElementById('isSohraBreak').checked;
             }
             user.isOnBreak = false;
             user.lastStartTime = null;
+            user.breakfastSessionId = null;
             user.lastEndedTime = completedAt;
             user.lastEndedType = completedType;
             user.emRequest = null;
@@ -15961,6 +16260,16 @@ const isSohra = document.getElementById('isSohraBreak').checked;
             }
 
             if (completedType === 'صلاة') removeFromQueueByUsername(username);
+            if (completedType === 'فطار' && completedBreakfastSessionId) {
+                releaseBreakfastSlot(completedBreakfastSessionId, false).then((released) => {
+                    if (!released) {
+                        console.warn("تم إنهاء الفطار لكن لم يعد الحجز النشط مطابقًا لجلسة الموظف:", username);
+                    }
+                }).catch((releaseError) => {
+                    console.error("فشل تحرير حجز الفطار بعد إنهاء النشاط:", releaseError);
+                    alert("تم إنهاء الفطار، لكن تعذر تحرير حجزه: " + releaseError.message);
+                });
+            }
             if (username === (currentUser && currentUser.username)) {
                 const reasonInput = document.getElementById('breakReason');
                 if (reasonInput) reasonInput.value = "";
@@ -16984,6 +17293,7 @@ function sendChatMessage() {
 
     const isCsAssistantCode = text === '#مساعد_خدمة_عملاء';
     const isCsAssistantCancelCode = text === '#إلغاء_مساعد_خدمة_عملاء';
+    const isBreakfastCode = /^#?فطار$/u.test(text.normalize('NFKC'));
     if ((isCsAssistantCode || isCsAssistantCancelCode) &&
         (currentUser.role === 'admin' || currentChatType !== 'private' || !MANAGERS.includes(currentChatRecipient))) {
         alert('اكتب كود التفعيل أو الإلغاء في محادثة خاصة مع أحد المديرين.');
@@ -17014,6 +17324,31 @@ function sendChatMessage() {
         }
         if (isCsAssistantCode) activateCsAssistantForToday();
         if (isCsAssistantCancelCode) deactivateCsAssistantForToday();
+        if (isBreakfastCode && currentUser && !MANAGERS.includes(currentUser.username)) {
+            beginUserActivity(
+                currentUser.username,
+                'فطار',
+                'طلب فطار من الشات',
+                () => sendBotMessage(`✅ تم بدء وقت الفطار لك يا ${currentUser.realName || currentUser.username}. الوقت يُحسب تصاعديًا ولا يُخصم من رصيد البريك.`),
+                (user, failureReason) => {
+                    let message = '🚫 لم يبدأ الفطار.';
+                    if (failureReason === 'clock') {
+                        message = '⏳ جاري مزامنة ساعة النظام؛ أعد إرسال «فطار» بعد لحظات.';
+                    } else if (failureReason === 'offline') {
+                        message = '⚠️ الاتصال بقاعدة البيانات غير متاح؛ أعد إرسال «فطار» بعد عودة الاتصال.';
+                    } else if (failureReason === 'pending') {
+                        message = '⏳ يوجد تحديث نشاط قيد الحفظ؛ أعد إرسال «فطار» بعد انتهائه.';
+                    } else if (failureReason === 'breakfast_busy') {
+                        message = '⏳ الفطار مفتوح حاليًا؛ لا يمكن لشخص آخر بدء الفطار في نفس الوقت.';
+                    } else if (failureReason === 'breakfast_limit') {
+                        message = '⏰ اكتمل الحد اليومي للفطار (مرتان).';
+                    } else if (user && user.isOnBreak) {
+                        message = `⚠️ لا يمكن بدء الفطار وأنت مسجل في نشاط (${user.breakType || 'نشاط آخر'}).`;
+                    }
+                    sendBotMessage(message);
+                }
+            );
+        }
     }).catch(error => {
         console.error('فشل إرسال رسالة الشات:', error);
         alert(`تعذر إرسال الرسالة: ${error.message}`);
@@ -18908,7 +19243,15 @@ function shareFilmGameLink() {
 
         function saveDesktopIdleStart(event) {
             if (!currentUser || currentUser.role === 'admin' ||
-                currentUser.username !== event.username || currentUser.isOnBreak || !db) return;
+                currentUser.username !== event.username || currentUser.isOnBreak) {
+                console.warn('تم تجاهل بدء تسجيل الخمول لأن جلسة الموظف الحالية لا تطابق جلسة المراقبة.');
+                hideDesktopIdleDialog();
+                return;
+            }
+            if (!db) {
+                showDesktopIdleDatabaseError('تسجيل الخمول', new Error('اتصال قاعدة البيانات غير جاهز.'));
+                return;
+            }
 
             const startedAt = desktopIdleServerTime(event.startedAt);
             const promptedAt = desktopIdleServerTime(event.promptedAt);
