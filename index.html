@@ -8292,7 +8292,17 @@ html, body {
                                                             if (MANAGERS.includes(un)) return false;
                                                             const previousUser = allUsersData[un] || {};
                                                             const nextUser = newData[un] || {};
-                                                            return requestTypes.some(requestType => {
+                                                            const hasNewSleepAnswer = nextUser.idlePromptRequest &&
+                                                                nextUser.idlePromptRequest.status === 'answered' &&
+                                                                (!previousUser.idlePromptRequest ||
+                                                                    previousUser.idlePromptRequest.id !== nextUser.idlePromptRequest.id ||
+                                                                    previousUser.idlePromptRequest.status !== 'answered');
+                                                            const hasNewRepeatedKeyAlert = nextUser.repeatedInputAlert &&
+                                                                !nextUser.repeatedInputAlert.acknowledgedAt &&
+                                                                (!previousUser.repeatedInputAlert ||
+                                                                    previousUser.repeatedInputAlert.detectedAt !== nextUser.repeatedInputAlert.detectedAt);
+                                                            return hasNewSleepAnswer || hasNewRepeatedKeyAlert ||
+                                                                requestTypes.some(requestType => {
                                                                 const previousRequest = previousUser[requestType];
                                                                 const nextRequest = nextUser[requestType];
                                                                 return nextRequest &&
@@ -8334,7 +8344,9 @@ html, body {
                                                                 (newData[un].otRequest && newData[un].otRequest.status === 'قيد الانتظار') ||
                                                                 (newData[un].emRequest && newData[un].emRequest.status === 'قيد الانتظار') ||
                                                                 (newData[un].meetingRequest && newData[un].meetingRequest.status === 'قيد الانتظار') ||
-                                                                (newData[un].permRequest && newData[un].permRequest.status === 'قيد الانتظار')
+                                                                (newData[un].permRequest && newData[un].permRequest.status === 'قيد الانتظار') ||
+                                                                (newData[un].idlePromptRequest && newData[un].idlePromptRequest.status === 'answered') ||
+                                                                (newData[un].repeatedInputAlert && !newData[un].repeatedInputAlert.acknowledgedAt)
                                                             ) {
                                                                 pending = true;
                                                             }
@@ -8355,6 +8367,11 @@ html, body {
                                                         if(updatedMe) { const r = currentUser.role; currentUser = updatedMe; currentUser.role = r; }
                                                         if (currentUser.role !== 'admin') {
                                                             const idlePromptRequest = currentUser.idlePromptRequest;
+                                                            if (idlePromptRequest &&
+                                                                ['approved', 'rejected'].includes(idlePromptRequest.status) &&
+                                                                idlePromptRequest.id !== handledManagerIdleDecisionId) {
+                                                                handleManagerIdleDecision(idlePromptRequest);
+                                                            }
                                                             const previousIdlePromptRequest = previousUsersData[currentUser.username] &&
                                                                 previousUsersData[currentUser.username].idlePromptRequest;
                                                             if (idlePromptRequest &&
@@ -8364,7 +8381,8 @@ html, body {
                                                                 const request = {
                                                                     username: currentUser.username,
                                                                     id: idlePromptRequest.id,
-                                                                    requestedAt: Number(idlePromptRequest.requestedAt) || getServerTime()
+                                                                    requestedAt: Number(idlePromptRequest.requestedAt) || getServerTime(),
+                                                                    question: idlePromptRequest.question
                                                                 };
                                                                 if (window.desktopIdle &&
                                                                     typeof window.desktopIdle.askEmployeeIfSleeping === 'function') {
@@ -8395,7 +8413,7 @@ html, body {
                                 // حساب "شكل" الجدول الحالي (عدد الموظفين + أسماؤهم + حالاتهم)
                                 const currentTableStructure = Object.values(allUsersData).filter(u => u && u.username && !MANAGERS.includes(u.username)).map(u => {
                                     const websiteSession = getLatestWebsiteSession(u);
-                                    return `${u.username}-${u.isOnBreak}-${u.breakType}-${u.state}-${u.desktopAppStatus && u.desktopAppStatus.state}-${websiteSession && websiteSession.state}-${websiteSession && websiteSession.openedAt}-${websiteSession && websiteSession.closedAt}-${isActiveDesktopIdle(u)}-${u.lastIdleSleep && u.lastIdleSleep.endedAt}`;
+                                    return `${u.username}-${u.isOnBreak}-${u.breakType}-${u.state}-${u.desktopAppStatus && u.desktopAppStatus.state}-${websiteSession && websiteSession.state}-${websiteSession && websiteSession.openedAt}-${websiteSession && websiteSession.closedAt}-${isActiveDesktopIdle(u)}-${u.lastIdleSleep && u.lastIdleSleep.endedAt}-${u.idlePromptRequest && u.idlePromptRequest.id}-${u.idlePromptRequest && u.idlePromptRequest.status}-${u.repeatedInputAlert && u.repeatedInputAlert.detectedAt}-${u.repeatedInputAlert && u.repeatedInputAlert.acknowledgedAt}`;
                                 }).join('|');
 
                                 // لو الشكل اتغير (موظف جديد أو غادر أو غير حالته)، نرسم الجدول من جديد
@@ -9152,17 +9170,30 @@ html, body {
             `;
 
             const sleepCheckRequest = u.idlePromptRequest;
+            const repeatedInputAlert = u.repeatedInputAlert;
+            const repeatedInputAlertMarkup = repeatedInputAlert
+                ? repeatedInputAlert.acknowledgedAt
+                    ? `<small style="color:#94a3b8;">تمت مراجعة تنبيه تكرار الضغطات</small>`
+                    : `<small style="color:#fca5a5;">⚠️ تكرار آلي لزر «${escapeHtml(String(repeatedInputAlert.key || '؟'))}» (${Math.max(0, Number(repeatedInputAlert.count) || 0)} مرة) — تنبيه فقط <button onclick="acknowledgeRepeatedInputAlert('${u.username}')" class="btn btn-dark btn-sm">تمت المراجعة</button></small>`
+                : '';
             const sleepCheckPending = sleepCheckRequest &&
-                ['pending', 'prompted'].includes(sleepCheckRequest.status) &&
-                getServerTime() - Number(sleepCheckRequest.requestedAt) < 120000;
+                (sleepCheckRequest.status === 'answered' ||
+                    ['pending', 'prompted'].includes(sleepCheckRequest.status) &&
+                    getServerTime() - Number(sleepCheckRequest.requestedAt) < 120000);
             const employeeAlreadySleeping = isActiveDesktopIdle(u);
             const sleepCheckDisabled = !isOnline || u.isOnBreak || employeeAlreadySleeping || sleepCheckPending;
-            const sleepCheckStatus = sleepCheckRequest && sleepCheckRequest.status === 'unavailable'
+            const sleepCheckStatus = sleepCheckRequest && sleepCheckRequest.status === 'answered'
+                ? `<div style="max-width:220px;margin-top:5px;padding:7px;border-radius:8px;background:rgba(251,191,36,.1);text-align:right;"><small style="display:block;color:#fbbf24;">السؤال: ${escapeHtml(sleepCheckRequest.question || '')}</small><small style="display:block;color:#e2e8f0;">الإجابة: ${escapeHtml(sleepCheckRequest.answer || '')}</small><div style="display:flex;gap:4px;margin-top:5px;"><button onclick="reviewIdleQuestionAnswer('${u.username}','${sleepCheckRequest.id}',true)" class="btn btn-success btn-sm">✅ صحيحة</button><button onclick="reviewIdleQuestionAnswer('${u.username}','${sleepCheckRequest.id}',false)" class="btn btn-danger btn-sm">❌ خطأ</button></div></div>`
+                : sleepCheckRequest && sleepCheckRequest.status === 'approved'
+                    ? `<small style="color:#86efac;">✅ آخر إجابة صحيحة</small>`
+                : sleepCheckRequest && sleepCheckRequest.status === 'rejected'
+                    ? `<small style="color:#fca5a5;">❌ آخر إجابة خاطئة؛ دخل النوم</small>`
+                : sleepCheckRequest && sleepCheckRequest.status === 'unavailable'
                 ? `<small style="color:#fca5a5;">لم يصل السؤال للموظف؛ تأكد أن التطبيق مفتوح ثم أعد المحاولة.</small>`
                 : sleepCheckRequest && ['pending', 'prompted'].includes(sleepCheckRequest.status) && !sleepCheckPending
                     ? `<small style="color:#fca5a5;">انتهت مهلة السؤال السابق؛ يمكنك إعادة المحاولة.</small>`
                 : '';
-            const sleepCheckButton = `<button onclick="askEmployeeAboutSleep('${u.username}')" class="btn btn-sm ${sleepCheckDisabled ? 'btn-dark' : 'btn-warning'}" style="white-space:nowrap;" ${sleepCheckDisabled ? 'disabled' : ''} title="${!isOnline ? 'الموظف غير متصل' : u.isOnBreak ? 'لا يمكن سؤاله أثناء نشاط أو بريك' : employeeAlreadySleeping ? 'الموظف مسجل بالفعل في وضع النوم' : sleepCheckPending ? 'تم إرسال سؤال النوم بالفعل' : 'إظهار سؤال النوم للموظف'}">${sleepCheckPending ? '⏳ السؤال مرسل' : employeeAlreadySleeping ? '😴 في وضع النوم' : '😴 هل أنت نايم؟'}</button>${sleepCheckStatus}`;
+            const sleepCheckButton = `<button onclick="askEmployeeAboutSleep('${u.username}')" class="btn btn-sm ${sleepCheckDisabled ? 'btn-dark' : 'btn-warning'}" style="white-space:nowrap;" ${sleepCheckDisabled ? 'disabled' : ''} title="${!isOnline ? 'الموظف غير متصل' : u.isOnBreak ? 'لا يمكن سؤاله أثناء نشاط أو بريك' : employeeAlreadySleeping ? 'الموظف مسجل بالفعل في وضع النوم' : sleepCheckPending ? 'تم إرسال سؤال النوم بالفعل' : 'إظهار سؤال النوم للموظف'}">${sleepCheckRequest && sleepCheckRequest.status === 'answered' ? '⏳ في انتظار المراجعة' : sleepCheckPending ? '⏳ السؤال مرسل' : employeeAlreadySleeping ? '😴 في وضع النوم' : '😴 هل أنت نايم؟'}</button>${sleepCheckStatus}${repeatedInputAlertMarkup}`;
 
             // عمود التحكم (Action)
             const ctrl = u.isOnBreak
@@ -14521,6 +14552,13 @@ if (sohraBtn) {
                     alert("إرسال سؤال النوم متاح للمشرفين فقط.");
                     return;
                 }
+                const question = window.prompt("اكتب سؤالًا للموظف (بحد أقصى 500 حرف):");
+                if (question === null) return;
+                const cleanQuestion = question.trim();
+                if (!cleanQuestion || cleanQuestion.length > 500) {
+                    alert("اكتب سؤالًا واضحًا لا يتجاوز 500 حرف.");
+                    return;
+                }
                 const employee = allUsersData[un];
                 if (!employee || employee.state !== 'online' || employee.isOnBreak || isActiveDesktopIdle(employee)) {
                     alert("لا يمكن سؤال الموظف الآن؛ تأكد أنه متصل وليس في بريك أو وضع نوم.");
@@ -14532,13 +14570,16 @@ if (sohraBtn) {
                 const requestedAt = getServerTime();
                 try {
                     const result = await requestRef.transaction(request => {
+                        if (request && request.status === 'answered') return;
                         if (request && ['pending', 'prompted'].includes(request.status) &&
                             requestedAt - Number(request.requestedAt) < 120000) return;
                         return {
                             id: requestId,
                             status: 'pending',
                             requestedAt,
-                            requestedBy: currentUser.username
+                            requestedBy: currentUser.username,
+                            question: cleanQuestion,
+                            responseWindowMs: 40000
                         };
                     });
                     if (!result.committed) {
@@ -14549,6 +14590,51 @@ if (sohraBtn) {
                 } catch (error) {
                     console.error("فشل إرسال سؤال النوم للموظف:", error);
                     alert(`تعذر إرسال سؤال النوم: ${error.message}`);
+                }
+            };
+            window.reviewIdleQuestionAnswer = async function(un, requestId, correct) {
+                if (!currentUser || !MANAGERS.includes(currentUser.username) ||
+                    typeof requestId !== 'string' || typeof correct !== 'boolean') {
+                    alert("مراجعة الإجابة متاحة للمشرفين فقط.");
+                    return;
+                }
+                try {
+                    const requestRef = db.ref(`users/${un}/idlePromptRequest`);
+                    const result = await requestRef.transaction(request => {
+                        if (!request || request.id !== requestId || request.status !== 'answered') return;
+                        return {
+                            ...request,
+                            status: correct ? 'approved' : 'rejected',
+                            reviewedAt: getServerTime(),
+                            reviewedBy: currentUser.username
+                        };
+                    });
+                    if (!result.committed) {
+                        alert("تم حسم هذا السؤال بالفعل أو تغيّرت حالته.");
+                    }
+                } catch (error) {
+                    console.error("تعذر حفظ مراجعة إجابة سؤال النوم:", error);
+                    alert(`تعذر حفظ المراجعة: ${error.message}`);
+                }
+            };
+            window.acknowledgeRepeatedInputAlert = async function(un) {
+                if (!currentUser || !MANAGERS.includes(currentUser.username)) {
+                    alert("مراجعة تنبيه الضغطات متاحة للمشرفين فقط.");
+                    return;
+                }
+                try {
+                    const alertRef = db.ref(`users/${un}/repeatedInputAlert`);
+                    await alertRef.transaction(repeatedInputAlert => {
+                        if (!repeatedInputAlert || repeatedInputAlert.acknowledgedAt) return;
+                        return {
+                            ...repeatedInputAlert,
+                            acknowledgedAt: getServerTime(),
+                            acknowledgedBy: currentUser.username
+                        };
+                    });
+                } catch (error) {
+                    console.error("تعذر حفظ مراجعة تنبيه تكرار الضغطات:", error);
+                    alert(`تعذر حفظ المراجعة: ${error.message}`);
                 }
             };
             window.adminStop = (un) => {
@@ -19430,15 +19516,24 @@ function shareFilmGameLink() {
         <div style="width:min(calc(100vw - 40px),420px); box-sizing:border-box; padding:24px; border:2px solid #fbbf24; border-radius:28px; background:#0f172a; text-align:center; box-shadow:0 20px 70px rgba(0,0,0,.6); pointer-events:auto;">
             <div id="desktopIdleIcon" style="font-size:3rem;">😴</div>
             <h2 id="desktopIdleTitle" style="margin:8px 0; color:#fbbf24;">إنت موجود؟</h2>
-            <p id="desktopIdleMessage" style="line-height:1.8;color:#e2e8f0;">إنت صاحي ولا الماوس دخل إجازة؟ 😴 بقالك 3 دقايق من غير حركة. دوس «أيوه صاحي» أو كمل شغلك عادي.</p>
+            <p id="desktopIdleMessage" style="line-height:1.8;color:#e2e8f0;">إنت صاحي؟ لو موجود دوس «أيوه صاحي»؛ حركة الماوس أو الكيبورد وحدها مش هتلغي التنبيه.</p>
+            <div id="desktopIdleAnswerArea" class="hidden" style="margin-top:12px;">
+                <textarea id="desktopIdleAnswerInput" maxlength="1000" rows="2" aria-label="إجابة سؤال المدير" placeholder="اكتب إجابتك هنا..." style="width:100%;box-sizing:border-box;"></textarea>
+                <small id="desktopIdleAnswerError" role="alert" style="display:block;color:#fca5a5;margin-top:6px;"></small>
+            </div>
             <p id="desktopIdleCountdown" aria-live="polite" style="min-height:24px; color:#94a3b8;"></p>
-            <button id="desktopIdleRespondButton" onclick="acknowledgeDesktopIdle()" class="btn btn-success" style="width:100%; margin-top:8px; font-size:1rem;">✅ أيوه صاحي 😂</button>
+            <button id="desktopIdleRespondButton" onclick="acknowledgeDesktopIdle(event)" class="btn btn-success" style="width:100%; margin-top:8px; font-size:1rem;">✅ أيوه صاحي 😂</button>
             <p id="desktopIdleError" role="alert" style="color:#fca5a5; font-size:.85rem;"></p>
         </div>
     </div>
 
     <script>
         window.__desktopIdleMonitorInstalled = true;
+        const DESKTOP_IDLE_THRESHOLD_MS = 3 * 60 * 1000;
+        const DESKTOP_IDLE_RESPONSE_WINDOW_MS = 60 * 1000;
+        const DESKTOP_MANAGER_RESPONSE_WINDOW_MS = 40 * 1000;
+        const REPEATED_KEY_ALERT_THRESHOLD = 12;
+        const REPEATED_KEY_ALERT_WINDOW_MS = 5000;
         let activeDesktopSleep = null;
         let desktopIdleCountdownTimer = null;
         let desktopIdleDeadlineRetryTimer = null;
@@ -19447,10 +19542,14 @@ function shareFilmGameLink() {
         let browserIdlePromptedAt = 0;
         let browserIdleStartedAt = 0;
         let browserIdleManagerRequestId = null;
+        let browserIdleResponseWindowMs = DESKTOP_IDLE_RESPONSE_WINDOW_MS;
+        let activeManagerIdleRequestId = null;
+        let handledManagerIdleDecisionId = null;
+        let browserIdleWaitingForManagerDecision = false;
+        let repeatedKeyState = null;
+        let lastRepeatedKeyAlertAt = 0;
         let browserIdleLastActivityAt = Date.now();
         let browserIdleContext = { username: null, enabled: false };
-        const DESKTOP_IDLE_THRESHOLD_MS = 3 * 60 * 1000;
-        const DESKTOP_IDLE_RESPONSE_WINDOW_MS = 60 * 1000;
 
         function isActiveDesktopIdle(user) {
             if (!user || user.isOnBreak || !user.idleStatus || user.idleStatus.state !== 'sleeping') return false;
@@ -19505,22 +19604,42 @@ function shareFilmGameLink() {
             document.getElementById('desktopIdleRespondButton').textContent = sleeping
                 ? '✅ رجعت للشغل'
                 : '✅ أيوه صاحي 😂';
+            document.getElementById('desktopIdleRespondButton').disabled = false;
             document.getElementById('desktopIdleError').textContent = '';
             if (sleeping) {
+                document.getElementById('desktopIdleRespondButton').onclick = acknowledgeDesktopIdle;
+                document.getElementById('desktopIdleAnswerArea').classList.add('hidden');
+                document.getElementById('desktopIdleAnswerInput').value = '';
+                document.getElementById('desktopIdleAnswerInput').disabled = false;
+                document.getElementById('desktopIdleAnswerError').textContent = '';
                 modal.style.cssText = 'position:fixed;inset:0;z-index:200000;display:flex;align-items:center;justify-content:center;padding:24px;pointer-events:none;background:rgba(2,6,23,.97);';
                 if (card) card.style.cssText = 'width:min(90vw,720px);box-sizing:border-box;padding:48px 32px;border:2px solid #fbbf24;border-radius:32px;background:#0f172a;color:#e2e8f0;text-align:center;box-shadow:0 20px 70px rgba(0,0,0,.6);';
                 document.getElementById('desktopIdleTitle').textContent = '😴 دخلت في وضع النوم';
-                document.getElementById('desktopIdleMessage').textContent = 'لم يصل رد خلال دقيقة. رجوعك لاستخدام الجهاز ينهي تسجيل الخمول.';
+                document.getElementById('desktopIdleMessage').textContent = 'مدة الخمول تُحتسب الآن. لإنهاء التسجيل، اضغط «رجعت للشغل». حركة الماوس أو ضغطات المفاتيح وحدها لا تنهيه.';
             } else {
                 modal.style.cssText = 'position:fixed;inset:0;z-index:200000;display:flex;align-items:flex-end;justify-content:flex-start;padding:20px;pointer-events:none;background:transparent;';
                 if (card) card.style.cssText = 'width:min(calc(100vw - 40px),420px);box-sizing:border-box;padding:24px;border:2px solid #fbbf24;border-radius:28px;background:#0f172a;color:#e2e8f0;text-align:center;box-shadow:0 20px 70px rgba(0,0,0,.6);pointer-events:auto;';
             }
             modal.classList.remove('hidden');
-            if (!sleeping) document.getElementById('desktopIdleRespondButton').focus();
+        }
+
+        function configureManagerAnswerForm(question) {
+            const area = document.getElementById('desktopIdleAnswerArea');
+            const input = document.getElementById('desktopIdleAnswerInput');
+            const button = document.getElementById('desktopIdleRespondButton');
+            const hasQuestion = typeof question === 'string' && question.trim().length > 0;
+            area.classList.toggle('hidden', !hasQuestion);
+            input.value = '';
+            input.disabled = false;
+            document.getElementById('desktopIdleAnswerError').textContent = '';
+            button.disabled = false;
+            button.onclick = hasQuestion ? submitManagerIdleAnswer : acknowledgeDesktopIdle;
+            if (hasQuestion) button.textContent = 'إرسال الإجابة';
         }
 
         function hideDesktopIdleDialog() {
             const modal = document.getElementById('desktopIdleModal');
+            if (modal && modal.contains(document.activeElement)) document.activeElement.blur();
             if (modal) modal.classList.add('hidden');
             if (desktopIdleCountdownTimer) clearInterval(desktopIdleCountdownTimer);
             desktopIdleCountdownTimer = null;
@@ -19528,13 +19647,128 @@ function shareFilmGameLink() {
             desktopIdleDeadlineRetryTimer = null;
         }
 
-        function acknowledgeDesktopIdle() {
+        function acknowledgeDesktopIdle(event) {
+            if (!event || !event.isTrusted) return;
             if (window.desktopIdle) {
                 hideDesktopIdleDialog();
                 window.desktopIdle.respond();
             } else {
                 finishBrowserIdle('employee-response');
             }
+        }
+
+        async function submitManagerIdleAnswer(event) {
+            if (!event || !event.isTrusted || !activeManagerIdleRequestId ||
+                !currentUser || currentUser.role === 'admin') return;
+            if (!db) {
+                showDesktopIdleDatabaseError('إرسال إجابة سؤال النوم', new Error('اتصال قاعدة البيانات غير جاهز.'));
+                return;
+            }
+
+            const input = document.getElementById('desktopIdleAnswerInput');
+            const button = document.getElementById('desktopIdleRespondButton');
+            const error = document.getElementById('desktopIdleAnswerError');
+            const answer = input.value.trim();
+            if (!answer) {
+                error.textContent = 'اكتب إجابتك أولًا.';
+                input.focus();
+                return;
+            }
+
+            const requestId = activeManagerIdleRequestId;
+            error.textContent = '';
+            button.blur();
+            input.disabled = true;
+            button.disabled = true;
+            button.textContent = 'جارٍ إرسال الإجابة...';
+            if (window.desktopIdle) {
+                window.desktopIdle.managerAnswerSubmitting(requestId);
+            } else {
+                browserIdleWaitingForManagerDecision = true;
+            }
+
+            try {
+                const requestRef = db.ref(`users/${currentUser.username}/idlePromptRequest`);
+                const result = await requestRef.transaction(request => {
+                    if (!request || request.id !== requestId ||
+                        !['pending', 'prompted'].includes(request.status)) return;
+                    return {
+                        ...request,
+                        status: 'answered',
+                        answer,
+                        answeredAt: getServerTime()
+                    };
+                });
+                if (!result.committed) throw new Error('انتهت مهلة السؤال أو تم حسمه بالفعل.');
+
+                if (desktopIdleCountdownTimer) clearInterval(desktopIdleCountdownTimer);
+                desktopIdleCountdownTimer = null;
+                if (desktopIdleDeadlineRetryTimer) clearTimeout(desktopIdleDeadlineRetryTimer);
+                desktopIdleDeadlineRetryTimer = null;
+                document.getElementById('desktopIdleMessage').textContent =
+                    'تم إرسال إجابتك للمدير. سيظل تسجيل النوم متوقفًا حتى يراجعها.';
+                document.getElementById('desktopIdleCountdown').textContent =
+                    'في انتظار قرار المدير...';
+                button.textContent = 'تم إرسال الإجابة';
+            } catch (submitError) {
+                if (window.desktopIdle) {
+                    window.desktopIdle.managerAnswerFailed(requestId);
+                } else {
+                    browserIdleWaitingForManagerDecision = false;
+                }
+                input.disabled = false;
+                button.disabled = false;
+                button.textContent = 'إرسال الإجابة';
+                error.textContent = submitError.message || 'تعذر إرسال الإجابة. حاول مرة أخرى.';
+                console.error('تعذر إرسال إجابة سؤال النوم:', submitError);
+            }
+        }
+        window.submitManagerIdleAnswer = submitManagerIdleAnswer;
+
+        async function handleManagerIdleDecision(request) {
+            if (!request || !request.id ||
+                !['approved', 'rejected'].includes(request.status) ||
+                request.id !== activeManagerIdleRequestId ||
+                request.id === handledManagerIdleDecisionId) return;
+            handledManagerIdleDecisionId = request.id;
+            const correct = request.status === 'approved';
+            if (window.desktopIdle) {
+                try {
+                    const applied = await window.desktopIdle.managerDecision({
+                        requestId: request.id,
+                        correct
+                    });
+                    if (!applied) {
+                        handledManagerIdleDecisionId = null;
+                        console.warn('تم تجاهل قرار المدير لأن تنبيه السؤال لم يعد نشطًا.');
+                    }
+                } catch (error) {
+                    handledManagerIdleDecisionId = null;
+                    console.error('تعذر تطبيق قرار المدير على سؤال النوم:', error);
+                }
+                return;
+            }
+
+            if (browserIdlePhase !== 'prompt' ||
+                browserIdleManagerRequestId !== request.id ||
+                !browserIdleWaitingForManagerDecision) {
+                handledManagerIdleDecisionId = null;
+                return;
+            }
+            browserIdleWaitingForManagerDecision = false;
+            if (correct) {
+                finishBrowserIdle('employee-response');
+                return;
+            }
+            browserIdlePhase = 'sleeping';
+            browserIdleStartedAt = Date.now();
+            saveDesktopIdleStart({
+                username: browserIdleContext.username,
+                promptedAt: browserIdlePromptedAt,
+                startedAt: browserIdleStartedAt,
+                device: 'browser',
+                managerRequestId: browserIdleManagerRequestId
+            });
         }
 
         function showDesktopIdleDatabaseError(action, error) {
@@ -19559,6 +19793,10 @@ function shareFilmGameLink() {
             const requestRef = db.ref(`users/${username}/idlePromptRequest`);
             await requestRef.transaction(request => {
                 if (!request || request.id !== requestId) return;
+                if (['prompted', 'unavailable'].includes(status) && request.status !== 'pending') return;
+                if (status === 'sleeping' && !['pending', 'prompted'].includes(request.status)) return;
+                if (['responded', 'cancelled'].includes(status) &&
+                    !['pending', 'prompted'].includes(request.status)) return;
                 return { ...request, status, statusUpdatedAt: getServerTime() };
             });
         };
@@ -19615,7 +19853,7 @@ function shareFilmGameLink() {
                 if (activeDesktopSleep === sleep) {
                     setDesktopIdleDialog(
                         '😴 دخلت في وضع النوم',
-                        'لم يصل رد خلال دقيقة. مدة الخمول تُحتسب الآن، وستتوقف عند عودتك لاستخدام الجهاز.',
+                        'مدة الخمول تُحتسب الآن. لإنهاء التسجيل، اضغط «رجعت للشغل». حركة الماوس أو ضغطات المفاتيح وحدها لا تنهيه.',
                         '',
                         true
                     );
@@ -19638,6 +19876,9 @@ function shareFilmGameLink() {
             hideDesktopIdleDialog();
             const sleep = activeDesktopSleep;
             activeDesktopSleep = null;
+            if (event.managerRequestId === activeManagerIdleRequestId) {
+                activeManagerIdleRequestId = null;
+            }
             if (!db || !event.username) return;
 
             if (sleep && sleep.username === event.username && sleep.startPromise) {
@@ -19706,6 +19947,9 @@ function shareFilmGameLink() {
             browserIdlePromptedAt = 0;
             browserIdleStartedAt = 0;
             browserIdleManagerRequestId = null;
+            browserIdleResponseWindowMs = DESKTOP_IDLE_RESPONSE_WINDOW_MS;
+            browserIdleWaitingForManagerDecision = false;
+            activeManagerIdleRequestId = null;
             browserIdleLastActivityAt = Date.now();
         }
 
@@ -19725,6 +19969,9 @@ function shareFilmGameLink() {
                 browserIdlePromptedAt = 0;
                 browserIdleStartedAt = 0;
                 browserIdleManagerRequestId = null;
+                browserIdleResponseWindowMs = DESKTOP_IDLE_RESPONSE_WINDOW_MS;
+                browserIdleWaitingForManagerDecision = false;
+                activeManagerIdleRequestId = null;
             }
         }
 
@@ -19738,30 +19985,63 @@ function shareFilmGameLink() {
             browserIdlePhase = 'prompt';
             browserIdlePromptedAt = Date.now();
             browserIdleManagerRequestId = request.id;
+            browserIdleResponseWindowMs = DESKTOP_MANAGER_RESPONSE_WINDOW_MS;
+            browserIdleWaitingForManagerDecision = false;
+            activeManagerIdleRequestId = request.id;
             setDesktopIdleDialog(
                 'المدير بيسألك: أنت نايم؟ 😴',
-                'رد خلال دقيقة: دوس «لا، أنا صاحي» أو كمل شغلك. لو مفيش رد هنبدأ نحسب وقت النوم.',
+                request.question,
                 '',
                 false
             );
+            configureManagerAnswerForm(request.question);
             return true;
         };
 
         function handleBrowserActivity() {
             if (window.desktopIdle) {
-                const modal = document.getElementById('desktopIdleModal');
-                if (modal && !modal.classList.contains('hidden')) {
-                    hideDesktopIdleDialog();
-                    window.desktopIdle.respond();
-                }
                 return;
             }
             if (!browserIdleContext.enabled || document.visibilityState !== 'visible') return;
-            if (browserIdlePhase === 'prompt' || browserIdlePhase === 'sleeping') {
-                finishBrowserIdle('activity');
-            } else {
+            if (browserIdlePhase === 'idle') {
                 browserIdleLastActivityAt = Date.now();
             }
+        }
+
+        function handleRepeatedKeyInput(event) {
+            if (!event.repeat || typeof event.key !== 'string' ||
+                !/^\p{L}$/u.test(event.key) || !currentUser ||
+                currentUser.role === 'admin' || currentUser.isOnBreak || !db) {
+                repeatedKeyState = null;
+                return;
+            }
+
+            const now = Date.now();
+            const key = event.key.toLowerCase();
+            if (!repeatedKeyState || repeatedKeyState.key !== key ||
+                now - repeatedKeyState.startedAt > REPEATED_KEY_ALERT_WINDOW_MS) {
+                repeatedKeyState = { key, count: 1, startedAt: now };
+                return;
+            }
+            repeatedKeyState.count += 1;
+            if (repeatedKeyState.count < REPEATED_KEY_ALERT_THRESHOLD ||
+                now - lastRepeatedKeyAlertAt < 60000) return;
+
+            lastRepeatedKeyAlertAt = now;
+            const alertRef = db.ref(`users/${currentUser.username}/repeatedInputAlert`);
+            alertRef.transaction(existing => {
+                const existingDetectedAt = Number(existing && existing.detectedAt);
+                if (existing && !existing.acknowledgedAt &&
+                    Number.isFinite(existingDetectedAt) && getServerTime() - existingDetectedAt < 60000) return;
+                return {
+                    key,
+                    count: repeatedKeyState.count,
+                    detectedAt: getServerTime(),
+                    acknowledgedAt: null
+                };
+            }).catch(error => {
+                console.error('تعذر إرسال تنبيه تكرار ضغطات المفتاح إلى المدير:', error);
+            });
         }
 
         function monitorBrowserIdle() {
@@ -19774,16 +20054,17 @@ function shareFilmGameLink() {
                 browserIdlePhase = 'prompt';
                 browserIdlePromptedAt = now;
                 browserIdleManagerRequestId = null;
+                browserIdleResponseWindowMs = DESKTOP_IDLE_RESPONSE_WINDOW_MS;
                 setDesktopIdleDialog(
                     'الماوس نام ولا إنت؟ 😴',
-                    'بقالك 3 دقايق من غير تفاعل مع الصفحة! حرّك الماوس أو الكيبورد، أو دوس «أيوه صاحي» خلال دقيقة. لو مفيش رد هنبدأ نحسب وقت الخمول.',
+                    'بقالك 3 دقايق من غير حركة. لو صاحي، دوس «أيوه صاحي» خلال دقيقة؛ حركة الماوس أو الكيبورد وحدها مش هتلغي التنبيه.',
                     '',
                     false
                 );
             }
 
-            if (browserIdlePhase === 'prompt') {
-                const deadline = browserIdlePromptedAt + DESKTOP_IDLE_RESPONSE_WINDOW_MS;
+            if (browserIdlePhase === 'prompt' && !browserIdleWaitingForManagerDecision) {
+                const deadline = browserIdlePromptedAt + browserIdleResponseWindowMs;
                 const remaining = Math.max(0, Math.ceil((deadline - now) / 1000));
                 const countdown = document.getElementById('desktopIdleCountdown');
                 if (countdown) countdown.textContent = `الرد خلال ${formatDurationHMS(remaining)}`;
@@ -19810,12 +20091,14 @@ function shareFilmGameLink() {
         }
 
         function initializeDesktopIdleMonitor() {
+            document.addEventListener('keydown', handleRepeatedKeyInput);
             ['pointermove', 'pointerdown', 'mousemove', 'keydown', 'mousedown', 'wheel', 'touchstart', 'click'].forEach(eventName => {
                 document.addEventListener(eventName, handleBrowserActivity, { passive: true });
             });
             if (!window.desktopIdle) {
                 document.addEventListener('visibilitychange', () => {
                     if (document.visibilityState === 'hidden') {
+                        if (browserIdlePhase === 'prompt' && browserIdleWaitingForManagerDecision) return;
                         stopBrowserIdle('page-hidden');
                     } else {
                         browserIdleLastActivityAt = Date.now();
@@ -19837,21 +20120,28 @@ function shareFilmGameLink() {
                     window.updateManagerIdlePromptStatus(event.username, event.managerRequestId, 'prompted')
                         .catch(error => console.error("تعذر تحديث حالة سؤال النوم:", error));
                 }
+                activeManagerIdleRequestId = event.source === 'manager' && event.question
+                    ? event.managerRequestId
+                    : null;
                 setDesktopIdleDialog(
                     event.source === 'manager' ? 'المدير بيسألك: أنت نايم؟ 😴' : 'إنت موجود؟',
                     event.source === 'manager'
-                        ? 'رد خلال دقيقة بالضغط على «لا، أنا صاحي». لو مفيش رد هنبدأ نحسب وقت النوم.'
-                        : 'بقالك 3 دقايق من غير حركة! حرّك الماوس أو الكيبورد، أو دوس «أيوه صاحي» خلال دقيقة. لو مفيش رد هنبدأ نحسب وقت الخمول.',
+                        ? event.question || 'أجب خلال 40 ثانية؛ إذا لم يصل رد سيبدأ احتساب النوم.'
+                        : 'بقالك 3 دقايق من غير حركة. لو صاحي، دوس «أيوه صاحي» خلال دقيقة؛ حركة الماوس أو الكيبورد وحدها مش هتلغي التنبيه.',
                     '',
                     false
                 );
+                configureManagerAnswerForm(event.source === 'manager' ? event.question : null);
+                if (currentUser && currentUser.idlePromptRequest) {
+                    handleManagerIdleDecision(currentUser.idlePromptRequest);
+                }
                 if (desktopIdleCountdownTimer) clearInterval(desktopIdleCountdownTimer);
                 let deadlineCheckInProgress = false;
                 const confirmPromptDeadline = async () => {
                     if (deadlineCheckInProgress) return;
                     deadlineCheckInProgress = true;
                     const countdown = document.getElementById('desktopIdleCountdown');
-                    if (countdown) countdown.textContent = 'جاري التحقق من حركة الجهاز...';
+                    if (countdown) countdown.textContent = 'جاري بدء احتساب الخمول...';
                     try {
                         const result = await window.desktopIdle.confirmPromptDeadline({
                             username: event.username,
