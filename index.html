@@ -3117,6 +3117,90 @@ html, body {
                                             </head>
                                             <body>
 
+                                            <div id="desktopUpdateStatus" role="status" aria-live="polite" style="display:none;position:fixed;right:14px;bottom:14px;z-index:200100;max-width:min(520px,calc(100vw - 28px));padding:10px 16px;border:1px solid rgba(56,189,248,.55);border-radius:14px;background:rgba(15,23,42,.97);box-shadow:0 8px 28px rgba(0,0,0,.45);color:#e2e8f0;font:700 13px 'Cairo',sans-serif;"></div>
+                                            <script>
+                                                (() => {
+                                                    const statusBar = document.getElementById('desktopUpdateStatus');
+                                                    if (!statusBar || !window.desktopIdle ||
+                                                        typeof window.desktopIdle.onUpdateStatus !== 'function') return;
+
+                                                    window.desktopIdle.onUpdateStatus(status => {
+                                                        if (!status || typeof status !== 'object') return;
+                                                        const version = typeof status.version === 'string' ? status.version : '';
+                                                        let message = '';
+                                                        if (status.state === 'current') {
+                                                            message = `إصدار التطبيق الحالي: ${version || 'غير معروف'}`;
+                                                        } else if (status.state === 'downloading') {
+                                                            const percent = Number.isFinite(status.percent)
+                                                                ? ` (${Math.round(status.percent)}٪)`
+                                                                : '';
+                                                            message = `جارٍ تنزيل تحديث التطبيق ${version}${percent}`;
+                                                        } else if (status.state === 'downloaded') {
+                                                            message = `تم تنزيل تحديث التطبيق ${version}. سيكتمل التثبيت عند إغلاق النافذة.`;
+                                                        } else if (status.state === 'error') {
+                                                            message = version
+                                                                ? `تعذر تنزيل تحديث التطبيق ${version}. سيُعاد الفحص لاحقًا.`
+                                                                : 'تعذر فحص تحديث التطبيق. سيُعاد الفحص لاحقًا.';
+                                                        } else {
+                                                            return;
+                                                        }
+
+                                                        statusBar.textContent = message;
+                                                        statusBar.style.display = 'block';
+                                                        statusBar.style.borderColor = status.state === 'error'
+                                                            ? 'rgba(248,113,113,.65)'
+                                                            : status.state === 'downloaded'
+                                                                ? 'rgba(74,222,128,.65)'
+                                                                : 'rgba(56,189,248,.55)';
+                                                    });
+                                                })();
+                                            </script>
+
+                                            <div id="appTextSizeControl" role="group" aria-label="التحكم في حجم العرض" style="position:fixed;bottom:14px;left:14px;z-index:9000;display:flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid rgba(148,163,184,.45);border-radius:14px;background:rgba(15,23,42,.94);box-shadow:0 6px 24px rgba(0,0,0,.35);color:#f1f5f9;font-family:'Cairo',sans-serif;">
+                                                <span style="font-size:13px;font-weight:700;">حجم العرض</span>
+                                                <button type="button" onclick="adjustAppTextSize(-0.1)" aria-label="تصغير الخط" title="تصغير الخط" style="min-width:34px;height:34px;border:0;border-radius:9px;background:#334155;color:white;font-size:20px;font-weight:800;cursor:pointer;">−</button>
+                                                <span id="appTextSizeValue" aria-live="polite" style="min-width:42px;text-align:center;font-size:12px;font-weight:800;">100%</span>
+                                                <button type="button" onclick="adjustAppTextSize(0.1)" aria-label="تكبير الخط" title="تكبير الخط" style="min-width:34px;height:34px;border:0;border-radius:9px;background:#4f46e5;color:white;font-size:20px;font-weight:800;cursor:pointer;">+</button>
+                                                <button type="button" onclick="resetAppTextSize()" aria-label="إعادة حجم الخط الافتراضي" title="إعادة الحجم الافتراضي" style="height:34px;padding:0 8px;border:0;border-radius:9px;background:#334155;color:white;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">افتراضي</button>
+                                            </div>
+                                            <script>
+                                                (() => {
+                                                    const storageKey = 'elshamaa_app_text_scale';
+                                                    const minScale = 0.8;
+                                                    const maxScale = 1.5;
+                                                    let scale = 1;
+                                                    try {
+                                                        const savedScale = Number(localStorage.getItem(storageKey));
+                                                        if (Number.isFinite(savedScale) && savedScale >= minScale && savedScale <= maxScale) {
+                                                            scale = savedScale;
+                                                        }
+                                                    } catch (error) {
+                                                        console.error('تعذر قراءة حجم الخط المحفوظ:', error);
+                                                    }
+
+                                                    function applyScale() {
+                                                        document.documentElement.style.zoom = String(scale);
+                                                        const label = document.getElementById('appTextSizeValue');
+                                                        if (label) label.textContent = `${Math.round(scale * 100)}%`;
+                                                        try {
+                                                            localStorage.setItem(storageKey, String(scale));
+                                                        } catch (error) {
+                                                            console.error('تعذر حفظ حجم الخط:', error);
+                                                        }
+                                                    }
+
+                                                    window.adjustAppTextSize = change => {
+                                                        scale = Math.min(maxScale, Math.max(minScale, Math.round((scale + change) * 10) / 10));
+                                                        applyScale();
+                                                    };
+                                                    window.resetAppTextSize = () => {
+                                                        scale = 1;
+                                                        applyScale();
+                                                    };
+                                                    applyScale();
+                                                })();
+                                            </script>
+
                                             <!-- مدخلات مخفية لرفع الصور -->
                                             <input type="file" id="selfPicInput" style="display:none" accept="image/*" onchange="handleFileUpload(this, 'self')">
                                             <input type="file" id="adminPicInput" style="display:none" accept="image/*" onchange="handleFileUpload(this, 'admin')">
@@ -3596,6 +3680,11 @@ html, body {
                     <div class="field">
                         <input type="password" id="loginPass" placeholder="كلمة المرور" autocomplete="current-password" onfocus="stateHide()" onblur="stateActive()">
                     </div>
+                    <label id="rememberLoginRow" class="hidden" style="display:flex;align-items:center;gap:8px;margin-top:10px;color:#cbd5e1;font-size:.9rem;">
+                        <input type="checkbox" id="rememberLogin">
+                        حفظ كلمة المرور على هذا الجهاز
+                    </label>
+                    <small id="rememberLoginStatus" class="hidden" role="status" style="display:block;min-height:1.2em;margin-top:4px;color:#fca5a5;"></small>
                 </div>
 
                 <div style="display:flex; align-items:stretch; gap:12px; margin-top:8px;">
@@ -3879,7 +3968,7 @@ html, body {
                                                         <div class="table-responsive">
                                                             <table>
                                                                 <thead>
-                                                                    <tr><th>الموظف والجهاز</th><th>الحالة والسبب</th><th>البريك المستخدم</th><th>البريك المتبقي</th><th>صلاة / متبع</th><th>ميتنج / VIP</th><th>التحكم</th></tr>
+                                                                    <tr><th>الموظف والجهاز</th><th>الحالة والسبب</th><th>البريك المستخدم</th><th>البريك المتبقي</th><th>صلاة / متبع</th><th>ميتنج / VIP</th><th>فطار</th><th>التحكم</th></tr>
                                                                 </thead>
                                                                 <tbody id="monitorBody"></tbody>
                                                             </table>
@@ -3943,6 +4032,7 @@ html, body {
                             <div style="background:rgba(0,0,0,0.3); padding:15px; border-radius:20px; text-align:center;"><small>الصلاة</small><p id="monthTotalPrayer" style="font-size:1.4rem;">0 د</p></div>
                             <div style="background:rgba(0,0,0,0.3); padding:15px; border-radius:20px; text-align:center; border:1px solid var(--success);"><small>المتابعة</small><p id="monthTotalFollowUp" style="font-size:1.4rem; color:var(--success);">0 د</p></div>
                             <div style="background:rgba(0,0,0,0.3); padding:15px; border-radius:20px; text-align:center; border:1px solid #ffd700;"><small>VIP</small><p id="monthTotalVIP" style="font-size:1.4rem; color:#ffd700;">0 د</p></div>
+                            <div id="monthBreakfastSummaryCard" style="display:none; background:rgba(0,0,0,0.3); padding:15px; border-radius:20px; text-align:center; border:1px solid #f97316;"><small>الفطار</small><p id="monthTotalBreakfast" style="font-size:1.1rem; color:#fb923c;">0 مرة · 00:00:00</p></div>
                         </div>
 
                         <div class="table-responsive">
@@ -3960,7 +4050,7 @@ html, body {
                             <div id="adminWorkSleepSummary" style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:14px;"></div>
                             <div class="table-responsive" style="margin-top:0;">
                                 <table style="min-width:620px;">
-                                    <thead><tr><th>تاريخ التنبيه</th><th>بداية النوم</th><th>نهاية النوم</th><th>المدة</th></tr></thead>
+                                    <thead><tr><th>تاريخ التنبيه</th><th>بداية النوم</th><th>نهاية النوم</th><th>المدة</th><th>إجراء</th></tr></thead>
                                     <tbody id="adminWorkSleepBody"></tbody>
                                 </table>
                             </div>
@@ -4345,6 +4435,15 @@ html, body {
                                                                     <button type="button" class="btn btn-dark btn-sm" onclick="adjustEmployeeSoundVolume(-1)" aria-label="خفض مستوى صوت التطبيق" title="خفض الصوت">−</button>
                                                                     <span id="employeeSoundVolumeLabel" aria-live="polite" style="min-width:42px; text-align:center; font-weight:800;">100%</span>
                                                                     <button type="button" class="btn btn-dark btn-sm" onclick="adjustEmployeeSoundVolume(1)" aria-label="رفع مستوى صوت التطبيق" title="رفع الصوت">+</button>
+                                                                </div>
+                                                                <div id="employeeAudioOutputControl" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:8px;">
+                                                                    <label for="employeeAudioOutput" style="font-size:0.85rem; font-weight:700;">🎧 مخرج الصوت</label>
+                                                                    <select id="employeeAudioOutput" onchange="setEmployeeAudioOutput(this.value)" style="max-width:220px; margin:0;">
+                                                                        <option value="">السماعة الافتراضية</option>
+                                                                    </select>
+                                                                    <button type="button" class="btn btn-dark btn-sm" onclick="chooseEmployeeAudioOutput()">اختيار سماعة</button>
+                                                                    <button type="button" class="btn btn-dark btn-sm" onclick="testEmployeeAudioOutput()">اختبار الصوت</button>
+                                                                    <small id="employeeAudioOutputStatus" role="status" aria-live="polite" style="flex-basis:100%;"></small>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -5070,6 +5169,7 @@ html, body {
 
                                                 let allUsersData = {}, currentUser = null, timerInterval = null, isLoaded = false;
                                                 let csApprovalRequests = {};
+                                                let hasLoadedCsApprovalRequests = false;
                                                 const CS_APPROVAL_PREFERRED_AGENT_USERNAMES = ['cs2 2002', 'cs 2001'];
                                                 let csApprovalHiddenHistory = {};
                                                 let csApprovalHiddenHistoryUser = '';
@@ -5090,6 +5190,8 @@ html, body {
                                                 let adminTypingBuffer = {}, adminSelectBuffer = {}, editingUserKey = null, soundActive = false;
                                                 let employeeSoundVolume = 1;
                                                 let employeeSoundVolumeObserver = null;
+                                                let employeeAudioOutputDeviceId = '';
+                                                let employeeAudioOutputChangeId = 0;
                                                 const SILENT_BACKGROUND_AUDIO_ID = 'silentLoop';
                                                 let maxBreaksAllowed = 3, maxPrayersAllowed = 2, lastReceivedBroadcastID = localStorage.getItem('last_broadcast_id') || "";
                                                 let activeBroadcastSoundKey = null;
@@ -6960,7 +7062,41 @@ html, body {
                                                 }
 
                                                 db.ref('csApprovalRequests').on('value', snap => {
-                                                    csApprovalRequests = snap.val() || {};
+                                                    const previousRequests = csApprovalRequests;
+                                                    const nextRequests = snap.val() || {};
+                                                    if (hasLoadedCsApprovalRequests &&
+                                                        currentUser &&
+                                                        currentUser.role !== 'admin' &&
+                                                        isCsCallAgent(currentUser)) {
+                                                        const now = getServerTime();
+                                                        const hasNewIncomingRequest = Object.entries(nextRequests).some(([requestKey, request]) => {
+                                                            if (!request ||
+                                                                request.status !== 'pending' ||
+                                                                request.requesterUsername === currentUser.username ||
+                                                                (request.assignedTo && request.assignedTo !== currentUser.username) ||
+                                                                (request.declinedBy && request.declinedBy[currentUser.username] && request.poolAvailable !== true) ||
+                                                                Number(request.snoozedUntil || 0) > now) return false;
+
+                                                            const previousRequest = previousRequests[requestKey];
+                                                            const wasAlreadyIncoming = previousRequest &&
+                                                                previousRequest.status === 'pending' &&
+                                                                previousRequest.requesterUsername !== currentUser.username &&
+                                                                (!previousRequest.assignedTo || previousRequest.assignedTo === currentUser.username) &&
+                                                                (!(previousRequest.declinedBy && previousRequest.declinedBy[currentUser.username]) ||
+                                                                    previousRequest.poolAvailable === true) &&
+                                                                Number(previousRequest.snoozedUntil || 0) <= now;
+                                                            return !wasAlreadyIncoming ||
+                                                                previousRequest.timestamp !== request.timestamp ||
+                                                                previousRequest.assignedTo !== request.assignedTo;
+                                                        });
+                                                        if (hasNewIncomingRequest &&
+                                                            window.desktopIdle &&
+                                                            typeof window.desktopIdle.bringToFrontForRequest === 'function') {
+                                                            window.desktopIdle.bringToFrontForRequest();
+                                                        }
+                                                    }
+                                                    csApprovalRequests = nextRequests;
+                                                    hasLoadedCsApprovalRequests = true;
                                                     renderCsApprovalRequests();
                                                     renderAdminCsApprovalHistory();
                                                     reassignUnavailableCsRequests();
@@ -7305,20 +7441,229 @@ html, body {
                                                     element.volume = employeeSoundVolume;
                                                 }
 
+                                                function setEmployeeAudioOutputStatus(message, isError = false) {
+                                                    const status = document.getElementById('employeeAudioOutputStatus');
+                                                    if (!status) return;
+                                                    status.textContent = message;
+                                                    status.style.color = isError ? '#fca5a5' : '#86efac';
+                                                }
+
+                                                async function applyEmployeeAudioOutputToElement(element) {
+                                                    if (!(element instanceof HTMLMediaElement) ||
+                                                        element.id === SILENT_BACKGROUND_AUDIO_ID) return;
+                                                    if (typeof element.setSinkId !== 'function') {
+                                                        if (employeeAudioOutputDeviceId) {
+                                                            throw new Error('اختيار مخرج الصوت غير مدعوم في نسخة التطبيق هذه.');
+                                                        }
+                                                        return;
+                                                    }
+                                                    if (element.sinkId === employeeAudioOutputDeviceId) return;
+                                                    await element.setSinkId(employeeAudioOutputDeviceId);
+                                                }
+
+                                                async function applyEmployeeAudioOutput() {
+                                                    const mediaElements = [...document.querySelectorAll('audio, video')]
+                                                        .filter(element => element.id !== SILENT_BACKGROUND_AUDIO_ID);
+                                                    const results = await Promise.allSettled(
+                                                        mediaElements.map(applyEmployeeAudioOutputToElement)
+                                                    );
+                                                    const failed = results.filter(result => result.status === 'rejected');
+                                                    if (failed.length) {
+                                                        const reason = failed[0].reason;
+                                                        console.error('تعذر تغيير مخرج صوت التطبيق:', reason);
+                                                        setEmployeeAudioOutputStatus(
+                                                            `تعذر تحويل ${failed.length} من مشغلات الصوت. ${reason && reason.message ? reason.message : 'تحقق من السماعة المختارة.'}`,
+                                                            true
+                                                        );
+                                                        return false;
+                                                    }
+                                                    return true;
+                                                }
+
+                                                async function refreshEmployeeAudioOutputs(preferredDeviceId = employeeAudioOutputDeviceId) {
+                                                    const select = document.getElementById('employeeAudioOutput');
+                                                    if (!select || !navigator.mediaDevices ||
+                                                        typeof navigator.mediaDevices.enumerateDevices !== 'function') {
+                                                        setEmployeeAudioOutputStatus('اختيار السماعة غير مدعوم في هذا المتصفح؛ سيُستخدم مخرج الصوت الافتراضي.', true);
+                                                        return;
+                                                    }
+
+                                                    try {
+                                                        const devices = await navigator.mediaDevices.enumerateDevices();
+                                                        const outputs = devices.filter(device => device.kind === 'audiooutput');
+                                                        select.replaceChildren(new Option('السماعة الافتراضية', ''));
+                                                        outputs.forEach((device, index) => {
+                                                            if (!device.deviceId || device.deviceId === 'default') return;
+                                                            select.add(new Option(
+                                                                device.label || `مخرج الصوت ${index + 1}`,
+                                                                device.deviceId
+                                                            ));
+                                                        });
+
+                                                        const hasPreferredDevice = preferredDeviceId &&
+                                                            [...select.options].some(option => option.value === preferredDeviceId);
+                                                        select.value = hasPreferredDevice ? preferredDeviceId : '';
+                                                        if (preferredDeviceId && !hasPreferredDevice) {
+                                                            employeeAudioOutputDeviceId = '';
+                                                            localStorage.removeItem(`employee_audio_output_${currentUser.username}`);
+                                                            await applyEmployeeAudioOutput();
+                                                            setEmployeeAudioOutputStatus('السماعة المحفوظة غير متاحة؛ تم الرجوع للسماعة الافتراضية.', true);
+                                                        } else if (outputs.length <= 1) {
+                                                            setEmployeeAudioOutputStatus('لم تظهر سماعات إضافية. استخدم «اختيار سماعة» أو تحقق من توصيلها وإعدادها في Windows.');
+                                                        } else {
+                                                            setEmployeeAudioOutputStatus('اختر مخرج الصوت، ثم اضغط «اختبار الصوت».');
+                                                        }
+                                                    } catch (error) {
+                                                        console.error('تعذر قراءة مخارج الصوت:', error);
+                                                        setEmployeeAudioOutputStatus(
+                                                            `تعذر قراءة السماعات: ${error.message || 'تحقق من إعدادات الجهاز.'}`,
+                                                            true
+                                                        );
+                                                    }
+                                                }
+
+                                                async function chooseEmployeeAudioOutput() {
+                                                    if (!currentUser || currentUser.role === 'admin') return;
+                                                    const mediaDevices = navigator.mediaDevices;
+                                                    if (!mediaDevices || typeof mediaDevices.selectAudioOutput !== 'function') {
+                                                        await refreshEmployeeAudioOutputs();
+                                                        setEmployeeAudioOutputStatus(
+                                                            'اختيار السماعة من نافذة النظام غير مدعوم هنا. اختر من القائمة إن ظهرت سماعات، أو استخدم مخرج Windows الافتراضي.',
+                                                            true
+                                                        );
+                                                        return;
+                                                    }
+
+                                                    try {
+                                                        setEmployeeAudioOutputStatus('اختر السماعة من النافذة التي ظهرت.');
+                                                        const device = await mediaDevices.selectAudioOutput(
+                                                            employeeAudioOutputDeviceId ? { deviceId: employeeAudioOutputDeviceId } : undefined
+                                                        );
+                                                        if (!device || !device.deviceId) {
+                                                            throw new Error('لم يرجع النظام مخرج صوت صالحًا.');
+                                                        }
+                                                        employeeAudioOutputDeviceId = device.deviceId === 'default' ? '' : device.deviceId;
+                                                        if (employeeAudioOutputDeviceId) {
+                                                            localStorage.setItem(`employee_audio_output_${currentUser.username}`, employeeAudioOutputDeviceId);
+                                                        } else {
+                                                            localStorage.removeItem(`employee_audio_output_${currentUser.username}`);
+                                                        }
+                                                        await refreshEmployeeAudioOutputs(employeeAudioOutputDeviceId);
+                                                        const applied = await applyEmployeeAudioOutput();
+                                                        if (applied) setEmployeeAudioOutputStatus(`تم اختيار ${device.label || 'السماعة'}. اضغط «اختبار الصوت» للتأكد.`);
+                                                    } catch (error) {
+                                                        console.error('تعذر اختيار مخرج الصوت:', error);
+                                                        setEmployeeAudioOutputStatus(
+                                                            `لم يتم تغيير السماعة: ${error.message || 'ألغيت العملية أو لم يسمح النظام باختيار المخرج.'}`,
+                                                            true
+                                                        );
+                                                    }
+                                                }
+
+                                                async function setEmployeeAudioOutput(deviceId) {
+                                                    if (!currentUser || currentUser.role === 'admin') return;
+                                                    employeeAudioOutputDeviceId = deviceId || '';
+                                                    const storageKey = `employee_audio_output_${currentUser.username}`;
+                                                    if (employeeAudioOutputDeviceId) localStorage.setItem(storageKey, employeeAudioOutputDeviceId);
+                                                    else localStorage.removeItem(storageKey);
+
+                                                    const changeId = ++employeeAudioOutputChangeId;
+                                                    setEmployeeAudioOutputStatus('جاري تحويل أصوات التطبيق...');
+                                                    const applied = await applyEmployeeAudioOutput();
+                                                    if (changeId !== employeeAudioOutputChangeId) return;
+                                                    if (applied) {
+                                                        const select = document.getElementById('employeeAudioOutput');
+                                                        const selectedOption = select && select.selectedOptions[0];
+                                                        setEmployeeAudioOutputStatus(
+                                                            `مخرج الصوت الحالي: ${selectedOption ? selectedOption.textContent : 'السماعة الافتراضية'}. جرّب «اختبار الصوت».`
+                                                        );
+                                                    }
+                                                }
+
+                                                async function testEmployeeAudioOutput() {
+                                                    if (!currentUser || currentUser.role === 'admin') return;
+                                                    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                                                    if (!AudioContextClass) {
+                                                        setEmployeeAudioOutputStatus('الجهاز لا يدعم إنشاء صوت الاختبار؛ جرّب تشغيل تسجيل صوتي داخل التطبيق.', true);
+                                                        return;
+                                                    }
+
+                                                    const testPlayer = new Audio();
+                                                    let audioContext;
+                                                    let source;
+                                                    let gain;
+                                                    let timeout;
+                                                    try {
+                                                        if (typeof testPlayer.setSinkId === 'function') {
+                                                            await testPlayer.setSinkId(employeeAudioOutputDeviceId);
+                                                        } else if (employeeAudioOutputDeviceId) {
+                                                            throw new Error('اختيار مخرج الصوت غير مدعوم في نسخة التطبيق هذه.');
+                                                        }
+                                                        audioContext = new AudioContextClass();
+                                                        await audioContext.resume();
+                                                        const destination = audioContext.createMediaStreamDestination();
+                                                        testPlayer.srcObject = destination.stream;
+                                                        testPlayer.volume = employeeSoundVolume;
+                                                        await testPlayer.play();
+
+                                                        source = audioContext.createOscillator();
+                                                        gain = audioContext.createGain();
+                                                        source.frequency.value = 880;
+                                                        gain.gain.value = 0.2;
+                                                        source.connect(gain);
+                                                        gain.connect(destination);
+                                                        source.start();
+                                                        setEmployeeAudioOutputStatus('إذا سمعت نغمة الاختبار فمخرج الصوت يعمل.');
+                                                        source.stop(audioContext.currentTime + 0.5);
+                                                        timeout = setTimeout(() => {
+                                                            testPlayer.pause();
+                                                            testPlayer.srcObject = null;
+                                                            destination.stream.getTracks().forEach(track => track.stop());
+                                                            audioContext.close().catch(error => console.error('تعذر إغلاق صوت الاختبار:', error));
+                                                        }, 1000);
+                                                    } catch (error) {
+                                                        if (timeout) clearTimeout(timeout);
+                                                        testPlayer.pause();
+                                                        testPlayer.srcObject = null;
+                                                        if (audioContext && audioContext.state !== 'closed') {
+                                                            await audioContext.close().catch(closeError => console.error('تعذر إغلاق صوت الاختبار:', closeError));
+                                                        }
+                                                        console.error('فشل اختبار صوت التطبيق:', error);
+                                                        const systemMutedHint = error.name === 'NotAllowedError'
+                                                            ? 'اسمح بتشغيل الصوت وتأكد أن التطبيق غير مكتوم في Windows Volume Mixer.'
+                                                            : 'تحقق من توصيل السماعة ومستوى صوت Windows وVolume Mixer.';
+                                                        setEmployeeAudioOutputStatus(`فشل اختبار الصوت: ${error.message || error.name}. ${systemMutedHint}`, true);
+                                                    }
+                                                }
+
                                                 function applyEmployeeSoundVolume() {
                                                     document.querySelectorAll('audio, video').forEach(applyEmployeeSoundVolumeToElement);
+                                                    applyEmployeeAudioOutput().catch(error => {
+                                                        console.error('تعذر تطبيق مخرج صوت التطبيق:', error);
+                                                    });
 
                                                     if (!window.__employeeSoundVolumeControlInstalled) {
                                                         window.__employeeSoundVolumeControlInstalled = true;
                                                         document.addEventListener('play', event => {
                                                             applyEmployeeSoundVolumeToElement(event.target);
+                                                            applyEmployeeAudioOutputToElement(event.target).catch(error => {
+                                                                console.error('تعذر تحويل مخرج صوت المشغل:', error);
+                                                            });
                                                         }, true);
                                                         employeeSoundVolumeObserver = new MutationObserver(records => {
                                                             records.forEach(record => {
                                                                 record.addedNodes.forEach(node => {
                                                                     applyEmployeeSoundVolumeToElement(node);
+                                                                    applyEmployeeAudioOutputToElement(node).catch(error => {
+                                                                        console.error('تعذر تحويل مخرج الصوت:', error);
+                                                                    });
                                                                     if (node.querySelectorAll) {
-                                                                        node.querySelectorAll('audio, video').forEach(applyEmployeeSoundVolumeToElement);
+                                                                        node.querySelectorAll('audio, video').forEach(element => {
+                                                                            applyEmployeeSoundVolumeToElement(element);
+                                                                            applyEmployeeAudioOutputToElement(element).catch(error => {
+                                                                                console.error('تعذر تحويل مخرج الصوت:', error);
+                                                                            });
+                                                                        });
                                                                     }
                                                                 });
                                                             });
@@ -7336,7 +7681,16 @@ html, body {
                                                     employeeSoundVolume = Number.isFinite(savedVolume) && savedVolume >= 0.1 && savedVolume <= 1
                                                         ? savedVolume
                                                         : 1;
+                                                    employeeAudioOutputDeviceId = localStorage.getItem(`employee_audio_output_${currentUser.username}`) || '';
                                                     applyEmployeeSoundVolume();
+                                                    refreshEmployeeAudioOutputs();
+                                                    if (!window.__employeeAudioOutputDeviceChangeListenerInstalled &&
+                                                        navigator.mediaDevices && typeof navigator.mediaDevices.addEventListener === 'function') {
+                                                        window.__employeeAudioOutputDeviceChangeListenerInstalled = true;
+                                                        navigator.mediaDevices.addEventListener('devicechange', () => {
+                                                            refreshEmployeeAudioOutputs();
+                                                        });
+                                                    }
                                                 }
 
                                                 function adjustEmployeeSoundVolume(direction) {
@@ -7517,7 +7871,6 @@ html, body {
                                                     });
                                                 }
 
-                                                // الاستماع لحالة نافذة الصلاة وتحديث الواجهة
                                                 db.ref('settings/prayerOpen').on('value', (snap) => {
                                                     isPrayerWindowOpen = snap.val() === true;
 
@@ -7931,9 +8284,30 @@ html, body {
                     });
 
                                                 db.ref('users').on('value', (snap) => {
-                                                
+                                                    const previousUsersData = allUsersData;
                                                     const newData = snap.val() || {};
                                                     if (currentUser && currentUser.role === 'admin' && isLoaded) {
+                                                        const requestTypes = ['emRequest', 'meetingRequest', 'otRequest', 'permRequest'];
+                                                        const hasNewEmployeeRequest = Object.keys(newData).some(un => {
+                                                            if (MANAGERS.includes(un)) return false;
+                                                            const previousUser = allUsersData[un] || {};
+                                                            const nextUser = newData[un] || {};
+                                                            return requestTypes.some(requestType => {
+                                                                const previousRequest = previousUser[requestType];
+                                                                const nextRequest = nextUser[requestType];
+                                                                return nextRequest &&
+                                                                    nextRequest.status === 'قيد الانتظار' &&
+                                                                    (!previousRequest ||
+                                                                        previousRequest.status !== 'قيد الانتظار' ||
+                                                                        previousRequest.timestamp !== nextRequest.timestamp);
+                                                            });
+                                                        });
+                                                        if (hasNewEmployeeRequest &&
+                                                            window.desktopIdle &&
+                                                            typeof window.desktopIdle.bringToFrontForRequest === 'function') {
+                                                            window.desktopIdle.bringToFrontForRequest();
+                                                        }
+
                                                         Object.keys(newData).forEach(un => {
                                                             const oldUser = allUsersData[un];
                                                             const newUser = newData[un];
@@ -7979,6 +8353,43 @@ html, body {
                                                     if (currentUser) {
                                                         const updatedMe = allUsersData[currentUser.username];
                                                         if(updatedMe) { const r = currentUser.role; currentUser = updatedMe; currentUser.role = r; }
+                                                        if (currentUser.role !== 'admin') {
+                                                            const idlePromptRequest = currentUser.idlePromptRequest;
+                                                            const previousIdlePromptRequest = previousUsersData[currentUser.username] &&
+                                                                previousUsersData[currentUser.username].idlePromptRequest;
+                                                            if (idlePromptRequest &&
+                                                                idlePromptRequest.status === 'pending' &&
+                                                                idlePromptRequest.id &&
+                                                                idlePromptRequest.id !== (previousIdlePromptRequest && previousIdlePromptRequest.id)) {
+                                                                const request = {
+                                                                    username: currentUser.username,
+                                                                    id: idlePromptRequest.id,
+                                                                    requestedAt: Number(idlePromptRequest.requestedAt) || getServerTime()
+                                                                };
+                                                                if (window.desktopIdle &&
+                                                                    typeof window.desktopIdle.askEmployeeIfSleeping === 'function') {
+                                                                    window.desktopIdle.askEmployeeIfSleeping(request).then(started => {
+                                                                        if (typeof window.updateManagerIdlePromptStatus === 'function') {
+                                                                            return window.updateManagerIdlePromptStatus(
+                                                                                request.username,
+                                                                                request.id,
+                                                                                started ? 'prompted' : 'unavailable'
+                                                                            );
+                                                                        }
+                                                                        return null;
+                                                                    }).catch(error => {
+                                                                        console.error("تعذر عرض سؤال النوم في تطبيق الموظف:", error);
+                                                                    });
+                                                                } else if (typeof window.askEmployeeIfSleepingInBrowser === 'function') {
+                                                                    const started = window.askEmployeeIfSleepingInBrowser(request);
+                                                                    window.updateManagerIdlePromptStatus(
+                                                                        request.username,
+                                                                        request.id,
+                                                                        started ? 'prompted' : 'unavailable'
+                                                                    ).catch(error => console.error("تعذر تحديث حالة سؤال النوم:", error));
+                                                                }
+                                                            }
+                                                        }
                             syncDesktopIdleContext();
                             if (currentUser.role === 'admin') {
                                 // حساب "شكل" الجدول الحالي (عدد الموظفين + أسماؤهم + حالاتهم)
@@ -8132,6 +8543,7 @@ html, body {
             const p = document.getElementById('loginPass').value.trim(); 
             
             if (allUsersData[u] && allUsersData[u].password === p) { 
+                saveRememberedLoginAfterAuthentication(u, p);
                 currentUser = allUsersData[u]; 
                 currentUser.role = MANAGERS.includes(u) ? 'admin' : 'employee'; 
                 syncDesktopIdleContext();
@@ -8145,6 +8557,34 @@ html, body {
             } else {
                 alert('بيانات الدخول غير صحيحة'); 
             }
+        }
+
+        function saveRememberedLoginAfterAuthentication(username, password) {
+            const desktop = window.desktopIdle;
+            const checkbox = document.getElementById('rememberLogin');
+            const status = document.getElementById('rememberLoginStatus');
+            if (!desktop || typeof desktop.saveRememberedLogin !== 'function' ||
+                typeof desktop.clearRememberedLogin !== 'function' || !checkbox || !status) return;
+
+            const shouldRemember = checkbox.checked;
+            status.classList.remove('hidden');
+            const save = shouldRemember
+                ? desktop.saveRememberedLogin({
+                    username,
+                    password,
+                    isManager: MANAGERS.includes(username)
+                })
+                : desktop.clearRememberedLogin();
+            save.then(() => {
+                status.textContent = shouldRemember
+                    ? 'تم حفظ كلمة المرور مشفّرة على هذا الجهاز.'
+                    : 'لم يتم حفظ كلمة المرور.';
+                status.style.color = '#94a3b8';
+            }).catch(error => {
+                console.error('تعذر تحديث كلمة المرور المحفوظة:', error);
+                status.textContent = 'تعذر حفظ كلمة المرور؛ تحقق من إعدادات حماية الجهاز.';
+                status.style.color = '#fca5a5';
+            });
         }
 
         function getLatestWebsiteSession(user) {
@@ -8650,7 +9090,7 @@ html, body {
             if (u.prayerLimit > 0) usersWithCredit++;
             if (u.prayerCountToday > 0) usersFinishedPrayer++;
 
-            let lg = Number(u.usedSeconds) || 0, lp = Number(u.prayerSeconds) || 0, lm = Number(u.meetingSeconds) || 0, lf = Number(u.followUpSeconds) || 0, lv = Number(u.vipSeconds) || 0;
+            let lg = Number(u.usedSeconds) || 0, lp = Number(u.prayerSeconds) || 0, lm = Number(u.meetingSeconds) || 0, lf = Number(u.followUpSeconds) || 0, lv = Number(u.vipSeconds) || 0, lb = Number(u.breakfastSeconds) || 0;
 
             // حساب الوقت الحي إذا كان الموظف في بريك حالياً
             if (u.isOnBreak && u.lastStartTime) {
@@ -8660,6 +9100,7 @@ html, body {
                 else if (u.breakType === 'ميتنج') lm += elap;
                 else if (u.breakType === 'متابع عميل') lf += elap;
                 else if (u.breakType === 'استراحة VIP' || u.breakType === 'VIP سهرة') lv += elap;
+                else if (u.breakType === 'فطار') lb += elap;
             }
 
             const totalAllowance = (u.allowance || 45) * 60;
@@ -8710,6 +9151,19 @@ html, body {
                 <button onclick="openQualityDashboard('${u.username}')" class="btn btn-primary btn-sm" style="background:#6366f1; color:white; padding:5px 8px;" title="عرض وتعديل السجل">📜</button>
             `;
 
+            const sleepCheckRequest = u.idlePromptRequest;
+            const sleepCheckPending = sleepCheckRequest &&
+                ['pending', 'prompted'].includes(sleepCheckRequest.status) &&
+                getServerTime() - Number(sleepCheckRequest.requestedAt) < 120000;
+            const employeeAlreadySleeping = isActiveDesktopIdle(u);
+            const sleepCheckDisabled = !isOnline || u.isOnBreak || employeeAlreadySleeping || sleepCheckPending;
+            const sleepCheckStatus = sleepCheckRequest && sleepCheckRequest.status === 'unavailable'
+                ? `<small style="color:#fca5a5;">لم يصل السؤال للموظف؛ تأكد أن التطبيق مفتوح ثم أعد المحاولة.</small>`
+                : sleepCheckRequest && ['pending', 'prompted'].includes(sleepCheckRequest.status) && !sleepCheckPending
+                    ? `<small style="color:#fca5a5;">انتهت مهلة السؤال السابق؛ يمكنك إعادة المحاولة.</small>`
+                : '';
+            const sleepCheckButton = `<button onclick="askEmployeeAboutSleep('${u.username}')" class="btn btn-sm ${sleepCheckDisabled ? 'btn-dark' : 'btn-warning'}" style="white-space:nowrap;" ${sleepCheckDisabled ? 'disabled' : ''} title="${!isOnline ? 'الموظف غير متصل' : u.isOnBreak ? 'لا يمكن سؤاله أثناء نشاط أو بريك' : employeeAlreadySleeping ? 'الموظف مسجل بالفعل في وضع النوم' : sleepCheckPending ? 'تم إرسال سؤال النوم بالفعل' : 'إظهار سؤال النوم للموظف'}">${sleepCheckPending ? '⏳ السؤال مرسل' : employeeAlreadySleeping ? '😴 في وضع النوم' : '😴 هل أنت نايم؟'}</button>${sleepCheckStatus}`;
+
             // عمود التحكم (Action)
             const ctrl = u.isOnBreak
                 ? `<div style="display:flex; gap:4px; justify-content:center;">
@@ -8725,6 +9179,7 @@ html, body {
                             <option value="ميتنج" ${savedS=='ميتنج'?'selected':''}>ميتنج</option>
                             <option value="متابع عميل" ${savedS=='متابع عميل'?'selected':''}>متابع</option>
                             <option value="استراحة VIP" ${savedS=='استراحة VIP'?'selected':''}>VIP</option>
+                            <option value="فطار" ${savedS=='فطار'?'selected':''}>فطار</option>
                         </select>
                         <button onclick="adminStart('${u.username}')" class="btn btn-success btn-sm">▶</button>
                         <button onclick="openUserProfile('${u.username}')" class="btn btn-dark btn-sm">📂</button>
@@ -8760,7 +9215,8 @@ html, body {
                         <span id="meet_${u.username}" style="font-weight:bold;">${formatTime(lm)}</span><br>
                         <small style="color:#ffd700;">VIP: <span id="vip_${u.username}">${formatTime(lv)}</span></small>
                     </td>
-                    <td>${ctrl}</td>
+                    <td><span id="breakfast_${u.username}" style="font-weight:bold;">${formatDurationHMS(lb)}</span></td>
+                    <td><div style="display:flex; flex-direction:column; gap:4px; align-items:center;">${sleepCheckButton}${ctrl}</div></td>
                 </tr>`;
         });
 
@@ -8784,7 +9240,7 @@ html, body {
                                                         if (!u || !u.username || MANAGERS.includes(u.username)) return;
 
                                                         let lg = Number(u.usedSeconds) || 0, lp = Number(u.prayerSeconds) || 0, lm = Number(u.meetingSeconds) || 0,
-                                                            lf = Number(u.followUpSeconds) || 0, lv = Number(u.vipSeconds) || 0;
+                                                            lf = Number(u.followUpSeconds) || 0, lv = Number(u.vipSeconds) || 0, lb = Number(u.breakfastSeconds) || 0;
 
                                                         if (u.isOnBreak && u.lastStartTime) {
                                                             let elap = Math.floor((getServerTime() - u.lastStartTime) / 1000);
@@ -8793,6 +9249,7 @@ html, body {
                                                             else if (u.breakType === 'ميتنج') lm += elap;
                                                             else if (u.breakType === 'متابع عميل') lf += elap;
                                                             else if (u.breakType === 'استراحة VIP' || u.breakType === 'VIP سهرة') lv += elap;
+                                                            else if (u.breakType === 'فطار') lb += elap;
                                                         }
 
                                                         const rem = ((u.allowance || 45) * 60) - lg;
@@ -8839,6 +9296,10 @@ html, body {
                                                         updateText(`meet_${u.username}`, lm);
                                                         updateText(`follow_${u.username}`, lf);
                                                         updateText(`vip_${u.username}`, lv);
+                                                        const breakfastEl = document.getElementById(`breakfast_${u.username}`);
+                                                        if (breakfastEl && breakfastEl.innerText !== formatDurationHMS(lb)) {
+                                                            breakfastEl.innerText = formatDurationHMS(lb);
+                                                        }
                                                     });
                                                     const idleCounter = document.getElementById('desktopIdleCounter');
                                                     if (idleCounter) idleCounter.textContent = `😴 خمول: ${sleepingCount}`;
@@ -8876,29 +9337,32 @@ function renderWorkSleepReport(employee, from, to, summaryId, bodyId) {
     const summary = document.getElementById(summaryId);
     const tbody = document.getElementById(bodyId);
     if (!summary || !tbody) return;
+    const isAdminReport = bodyId === 'adminWorkSleepBody' &&
+        currentUser && currentUser.role === 'admin';
 
     if (from && to && from > to) {
         summary.replaceChildren();
         tbody.replaceChildren();
         const row = tbody.insertRow();
         const cell = row.insertCell();
-        cell.colSpan = 4;
+        cell.colSpan = isAdminReport ? 5 : 4;
         cell.textContent = 'تاريخ البداية يجب أن يكون قبل تاريخ النهاية.';
         return;
     }
 
     const idleHistory = employee && employee.idleHistory;
     const records = idleHistory && typeof idleHistory === 'object'
-        ? (Array.isArray(idleHistory) ? idleHistory : Object.values(idleHistory))
-            .filter(record => record && typeof record === 'object')
+        ? Object.entries(idleHistory)
+            .filter(([, record]) => record && typeof record === 'object')
+            .map(([historyKey, record]) => ({ record, historyKey }))
         : [];
     const lastRecord = employee && employee.lastIdleSleep;
     if (lastRecord && typeof lastRecord === 'object' &&
-        !records.some(record => Number(record.endedAt) === Number(lastRecord.endedAt))) {
-        records.push(lastRecord);
+        !records.some(({ record }) => Number(record.endedAt) === Number(lastRecord.endedAt))) {
+        records.push({ record: lastRecord, historyKey: null });
     }
 
-    const reportRecords = records.filter(record => {
+    const reportRecords = records.filter(({ record }) => {
         const promptedAt = Number(record.promptedAt) || Number(record.startedAt);
         if (!Number.isFinite(promptedAt) || !Number.isFinite(Number(record.startedAt))) return false;
         const promptedDate = new Date(promptedAt);
@@ -8918,17 +9382,20 @@ function renderWorkSleepReport(employee, from, to, summaryId, bodyId) {
             const isoDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
             if ((!from || isoDate >= from) && (!to || isoDate <= to)) {
                 reportRecords.push({
-                    promptedAt,
-                    startedAt,
-                    durationSeconds: Math.max(0, Math.floor((currentTime - startedAt) / 1000)),
-                    active: true
+                    record: {
+                        promptedAt,
+                        startedAt,
+                        durationSeconds: Math.max(0, Math.floor((currentTime - startedAt) / 1000)),
+                        active: true
+                    },
+                    historyKey: null
                 });
             }
         }
     }
 
-    reportRecords.sort((left, right) => Number(right.startedAt) - Number(left.startedAt));
-    const totalSeconds = reportRecords.reduce((total, record) =>
+    reportRecords.sort((left, right) => Number(right.record.startedAt) - Number(left.record.startedAt));
+    const totalSeconds = reportRecords.reduce((total, { record }) =>
         total + Math.max(0, Number(record.durationSeconds) || 0), 0);
 
     const createCard = (label, value) => {
@@ -8953,7 +9420,7 @@ function renderWorkSleepReport(employee, from, to, summaryId, bodyId) {
     if (!reportRecords.length) {
         const row = tbody.insertRow();
         const cell = row.insertCell();
-        cell.colSpan = 4;
+        cell.colSpan = isAdminReport ? 5 : 4;
         cell.style.color = '#94a3b8';
         cell.textContent = 'لا توجد نوبات مسجلة في الفترة المحددة.';
         return;
@@ -8967,7 +9434,7 @@ function renderWorkSleepReport(employee, from, to, summaryId, bodyId) {
         minute: '2-digit'
     });
 
-    reportRecords.forEach(record => {
+    reportRecords.forEach(({ record, historyKey }) => {
         const row = tbody.insertRow();
         const promptedAt = Number(record.promptedAt) || Number(record.startedAt);
         const endedAt = Number(record.endedAt);
@@ -8979,7 +9446,86 @@ function renderWorkSleepReport(employee, from, to, summaryId, bodyId) {
         ].forEach(value => {
             row.insertCell().textContent = value;
         });
+        if (isAdminReport) {
+            const actionCell = row.insertCell();
+            if (!record.active && Number.isFinite(endedAt)) {
+                const deleteButton = document.createElement('button');
+                deleteButton.type = 'button';
+                deleteButton.className = 'btn btn-danger btn-sm';
+                deleteButton.textContent = 'حذف';
+                deleteButton.setAttribute('aria-label', 'حذف سجل النوم');
+                deleteButton.addEventListener('click', () => {
+                    deleteIdleSleepRecord(
+                        document.getElementById('reportUserSelect').value,
+                        historyKey,
+                        record
+                    );
+                });
+                actionCell.appendChild(deleteButton);
+            } else {
+                actionCell.textContent = '—';
+            }
+        }
     });
+}
+
+async function deleteIdleSleepRecord(username, historyKey, record) {
+    if (!currentUser || currentUser.role !== 'admin' || !MANAGERS.includes(currentUser.username) ||
+        !username || !record || !confirm('هل تريد حذف سجل النوم المحدد نهائيًا؟')) return;
+
+    try {
+        const result = await db.ref(`users/${username}`).transaction(user => {
+            if (!user || typeof user !== 'object') return;
+
+            const history = user.idleHistory && typeof user.idleHistory === 'object'
+                ? user.idleHistory
+                : {};
+            const target = historyKey === null
+                ? user.lastIdleSleep
+                : history[historyKey];
+            if (!target ||
+                Number(target.startedAt) !== Number(record.startedAt) ||
+                Number(target.endedAt) !== Number(record.endedAt)) return;
+
+            const remainingHistory = Object.fromEntries(
+                Object.entries(history).filter(([key]) => key !== historyKey)
+            );
+            user.idleHistory = Object.keys(remainingHistory).length ? remainingHistory : null;
+            const remaining = Object.values(remainingHistory).filter(item =>
+                item && typeof item === 'object'
+            );
+            const lastIdleSleep = user.lastIdleSleep;
+            if (lastIdleSleep && typeof lastIdleSleep === 'object' &&
+                !(Number(lastIdleSleep.startedAt) === Number(record.startedAt) &&
+                  Number(lastIdleSleep.endedAt) === Number(record.endedAt)) &&
+                !remaining.some(item => Number(item.endedAt) === Number(lastIdleSleep.endedAt))) {
+                remaining.push(lastIdleSleep);
+            }
+            remaining.sort((left, right) =>
+                (Number(right.endedAt) || Number(right.startedAt)) -
+                (Number(left.endedAt) || Number(left.startedAt))
+            );
+            user.lastIdleSleep = remaining[0] || null;
+            return user;
+        });
+        if (!result.committed) {
+            throw new Error('لم يعد سجل النوم موجودًا، حدّث التقرير وحاول مرة أخرى.');
+        }
+
+        allUsersData[username] = result.snapshot.val();
+        if (document.getElementById('reportUserSelect').value === username) {
+            renderWorkSleepReport(
+                allUsersData[username],
+                document.getElementById('filterStartDate').value,
+                document.getElementById('filterEndDate').value,
+                'adminWorkSleepSummary',
+                'adminWorkSleepBody'
+            );
+        }
+    } catch (error) {
+        console.error('تعذر حذف سجل النوم:', error);
+        alert('تعذر حذف سجل النوم. تحقق من اتصال الإنترنت وصلاحيات المشرف ثم حاول مرة أخرى.');
+    }
 }
 
 function renderMyBreakReport() {
@@ -9009,7 +9555,7 @@ function renderMyBreakReport() {
         return;
     }
 
-    const totals = { break: 0, prayer: 0, vip: 0, oxidation: 0 };
+    const totals = { break: 0, prayer: 0, vip: 0, oxidation: 0, breakfastCount: 0, breakfast: 0 };
     const rows = [];
     const dailyTotals = {};
     const allowanceSeconds = Math.max(0, Number(employee.allowance) || 45) * 60;
@@ -9039,6 +9585,10 @@ function renderMyBreakReport() {
         }
         else if (type === 'صلاة') totals.prayer += duration;
         else if (type === 'استراحة VIP' || type === 'VIP سهرة') totals.vip += duration;
+        else if (type === 'فطار') {
+            totals.breakfastCount += 1;
+            totals.breakfast += duration;
+        }
 
         rows.push({
             date: isoDate,
@@ -9068,6 +9618,10 @@ function renderMyBreakReport() {
             }
             else if (type === 'صلاة') totals.prayer += duration;
             else if (type === 'استراحة VIP' || type === 'VIP سهرة') totals.vip += duration;
+            else if (type === 'فطار') {
+                totals.breakfastCount += 1;
+                totals.breakfast += duration;
+            }
             rows.push({
                 date: isoDate,
                 displayDate: startedAt.toLocaleDateString('ar-EG'),
@@ -9094,6 +9648,9 @@ function renderMyBreakReport() {
         ['الصلاة', totals.prayer, '#38bdf8']
     ];
     if (employee.isVIP) summaryCards.push(['VIP', totals.vip, '#fbbf24']);
+    if (totals.breakfastCount > 0) {
+        summaryCards.push([`الفطار (${totals.breakfastCount} مرة)`, totals.breakfast, '#fb923c']);
+    }
     summary.innerHTML = summaryCards.map(([label, seconds, color]) => `
         <div style="background:rgba(0,0,0,0.25); border:1px solid ${color}; border-radius:14px; padding:12px; text-align:center;">
             <small>${label}</small><div style="font-size:1.2rem; font-weight:bold; color:${color};">${formatDurationHMS(seconds)}</div>
@@ -9140,6 +9697,7 @@ function renderMyBreakReport() {
     const end = document.getElementById('filterEndDate').value;
 
     if(!un) {
+        document.getElementById('monthBreakfastSummaryCard').style.display = 'none';
         renderWorkSleepReport(null, start, end, 'adminWorkSleepSummary', 'adminWorkSleepBody');
         alert("يرجى اختيار موظف أولاً");
         return;
@@ -9149,25 +9707,21 @@ function renderMyBreakReport() {
     renderWorkSleepReport(u, start, end, 'adminWorkSleepSummary', 'adminWorkSleepBody');
     sB.innerHTML = ''; 
     mS.classList.remove('hidden');
-    let tOx=0, tPr=0, tFo=0, tVi=0; 
+    let tOx=0, tPr=0, tFo=0, tVi=0, tBreakfastCount=0, tBreakfast=0; 
     const allowS = (u.allowance || 45) * 60;
 
-    if (!u.sessions || Object.keys(u.sessions).length === 0) {
-        sB.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">⚠️ لا توجد جلسات مسجلة لهذا الموظف بعد.</td></tr>';
-        return;
-    }
-
     const grouped = {};
-    Object.keys(u.sessions).forEach(k => {
-        const s = u.sessions[k];
-        if(!s.date) return;
+    const sessions = u.sessions && typeof u.sessions === 'object' ? u.sessions : {};
+    Object.keys(sessions).forEach(k => {
+        const s = sessions[k];
+        if(!s || !s.date) return;
         
         const parts = s.date.split('/');
         const cD = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
 
         if ((start && cD < start) || (end && cD > end)) return;
 
-        if(!grouped[s.date]) grouped[s.date] = { acts: [], total: 0, prayer: 0, follow: 0, vip: 0 };
+        if(!grouped[s.date]) grouped[s.date] = { acts: [], total: 0, prayer: 0, follow: 0, vip: 0, breakfast: 0, breakfastCount: 0 };
         const dur = parseInt(s.duration) || 0;
         
         // --- منطق تمييز وإخفاء سجلات السهرة ---
@@ -9217,8 +9771,33 @@ function renderMyBreakReport() {
             grouped[s.date].follow += dur; 
         } else if(s.type === 'استراحة VIP' || s.type === 'VIP سهرة') {
             grouped[s.date].vip += dur;
+        } else if(s.type === 'فطار') {
+            grouped[s.date].breakfast += dur;
+            grouped[s.date].breakfastCount += 1;
         }
     });
+
+    const activeStart = Number(u.lastStartTime);
+    if (u.isOnBreak && u.breakType === 'فطار' && Number.isFinite(activeStart) && activeStart > 0) {
+        const startedAt = new Date(activeStart);
+        const displayDate = `${String(startedAt.getDate()).padStart(2, '0')}/${String(startedAt.getMonth() + 1).padStart(2, '0')}/${startedAt.getFullYear()}`;
+        const isoDate = `${startedAt.getFullYear()}-${String(startedAt.getMonth() + 1).padStart(2, '0')}-${String(startedAt.getDate()).padStart(2, '0')}`;
+        if ((!start || isoDate >= start) && (!end || isoDate <= end)) {
+            if(!grouped[displayDate]) grouped[displayDate] = { acts: [], total: 0, prayer: 0, follow: 0, vip: 0, breakfast: 0, breakfastCount: 0 };
+            const duration = Math.max(0, Math.floor((getServerTime() - activeStart) / 1000));
+            grouped[displayDate].breakfast += duration;
+            grouped[displayDate].breakfastCount += 1;
+            grouped[displayDate].acts.push(`
+                <div style="font-size:0.8rem; margin-bottom:8px; background:rgba(249,115,22,0.08); padding:10px; border-radius:12px; border-right:4px solid #f97316;">
+                    <div style="display:flex; justify-content:space-between;">
+                        <b style="color:#fb923c;">فطار · جاري الآن</b>
+                        <span style="color:#fff; font-weight:bold;">${Math.round(duration/60)} د</span>
+                    </div>
+                    <div style="color:#aaa; font-size:0.7rem; margin-top:3px;">(${startedAt.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })} إلى الآن)</div>
+                </div>
+            `);
+        }
+    }
 
     const dates = Object.keys(grouped).sort((a,b) => b.localeCompare(a));
     if(dates.length === 0) {
@@ -9228,6 +9807,8 @@ function renderMyBreakReport() {
     dates.forEach(d => {
         const ox = Math.max(0, grouped[d].total - allowS); 
         tOx += ox; tPr += grouped[d].prayer; tFo += grouped[d].follow; tVi += grouped[d].vip;
+        tBreakfastCount += grouped[d].breakfastCount;
+        tBreakfast += grouped[d].breakfast;
         sB.innerHTML += `
             <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
                 <td style="vertical-align:top; font-weight:bold; color:#94a3b8; padding:15px;">${d}</td>
@@ -9242,6 +9823,8 @@ function renderMyBreakReport() {
     document.getElementById('monthTotalPrayer').innerText = Math.round(tPr/60) + " د";
     document.getElementById('monthTotalFollowUp').innerText = Math.round(tFo/60) + " د";
     document.getElementById('monthTotalVIP').innerText = Math.round(tVi/60) + " د";
+    document.getElementById('monthTotalBreakfast').innerText = `${tBreakfastCount} مرة · ${formatDurationHMS(tBreakfast)}`;
+    document.getElementById('monthBreakfastSummaryCard').style.display = tBreakfastCount > 0 ? '' : 'none';
 }
 
                                                 function deleteSpecificSession(un, key) { if(!['mahmoud', 'ahmed'].includes(currentUser.username)) return; if(confirm("حذف السجل؟")) db.ref(`users/${un}/sessions/${key}`).remove().then(() => renderUserReport()); }
@@ -9520,7 +10103,7 @@ function renderMyBreakReport() {
             console.error("فشل تحديث توقيت دور الصلاة:", error);
         });
             }
-            
+
             // إغلاق أي نافذة اختيار مفتوحة
             document.getElementById('prayerTypePickerModal').classList.add('hidden');
             document.getElementById('breakPickerModal').classList.add('hidden');
@@ -10161,8 +10744,10 @@ if (sohraBtn) {
                     updates[`users/${un}/meetingSeconds`] = 0;
                     updates[`users/${un}/followUpSeconds`] = 0;
                     updates[`users/${un}/vipSeconds`] = 0;
+                    updates[`users/${un}/breakfastSeconds`] = 0;
                     updates[`users/${un}/isOnBreak`] = false;
                     updates[`users/${un}/lastStartTime`] = null;
+                    updates[`users/${un}/breakfastSessionId`] = null;
                     updates[`users/${un}/otRequest`] = null;
                     updates[`users/${un}/emRequest`] = null;
                     updates[`users/${un}/meetingRequest`] = null;
@@ -10174,6 +10759,7 @@ if (sohraBtn) {
             });
 
             updates['settings/prayerOpen'] = false;
+            updates['breakfastControl/active'] = null;
 
             db.ref().update(updates).then(() => {
                 triggerGlobalRefresh();
@@ -10428,6 +11014,7 @@ if (sohraBtn) {
                         meetingSeconds: 0, 
                         followUpSeconds: 0, 
                         vipSeconds: 0, 
+                        breakfastSeconds: 0,
                         isOnBreak: false
                     }).then(() => { 
                         triggerGlobalRefresh(); 
@@ -10455,7 +11042,11 @@ if (sohraBtn) {
                                                 function deleteUser(un) {
                                                     if(confirm("حذف الموظف؟")) {
                                                         logDeletionAction("حذف موظف بالكامل", un, "تم مسح حساب الموظف من السيستم");
-                                                        db.ref('users/'+un).remove().then(() => triggerGlobalRefresh());
+                                                        const updates = { [`users/${un}`]: null };
+                                                        db.ref().update(updates).then(() => triggerGlobalRefresh()).catch((error) => {
+                                                            console.error("فشل حذف الموظف:", error);
+                                                            alert(`تعذر حذف الموظف: ${error.message}`);
+                                                        });
                                                     }
                                                 }
 
@@ -12770,6 +13361,7 @@ if (sohraBtn) {
                     });
 
                     let summaryRows = [];
+                    let breakfastRows = [];
 
                     Object.values(allUsersData).forEach(u => {
                         if (!u.username || MANAGERS.includes(u.username)) return;
@@ -12779,6 +13371,8 @@ if (sohraBtn) {
                             days: new Set(), 
                             ox: 0, 
                             prayer: 0, 
+                            breakfastCount: 0,
+                            breakfast: 0,
                             meet: 0, 
                             ot: 0, 
                             perm: 0, 
@@ -12797,17 +13391,34 @@ if (sohraBtn) {
                         if (u.sessions) {
                             let daily = {};
                             Object.values(u.sessions).forEach(s => {
+                                if (!s || !s.date) return;
                                 const sD = s.date.split('/').reverse().join('-');
                                 if (sD >= startDateVal && sD <= endDateVal) {
                                     uS.days.add(s.date);
                                     const dur = parseInt(s.duration) || 0;
                                     if (s.type === 'بريك عام' || s.type === 'طوارئ') daily[s.date] = (daily[s.date] || 0) + dur;
                                     else if (s.type === 'صلاة') uS.prayer += dur;
+                                    else if (s.type === 'فطار') {
+                                        uS.breakfastCount += 1;
+                                        uS.breakfast += dur;
+                                    }
                                     else if (s.type === 'ميتنج') uS.meet += dur;
                                 }
                             });
                             const allow = (u.allowance || 45) * 60;
                             Object.values(daily).forEach(v => { if(v > allow) uS.ox += (v - allow); });
+                        }
+
+                        if (u.isOnBreak && u.breakType === 'فطار') {
+                            const activeStart = Number(u.lastStartTime);
+                            if (Number.isFinite(activeStart) && activeStart > 0) {
+                                const activeDate = new Date(activeStart);
+                                const activeIsoDate = `${activeDate.getFullYear()}-${String(activeDate.getMonth() + 1).padStart(2, '0')}-${String(activeDate.getDate()).padStart(2, '0')}`;
+                                if (activeIsoDate >= startDateVal && activeIsoDate <= endDateVal) {
+                                    uS.breakfastCount += 1;
+                                    uS.breakfast += Math.max(0, Math.floor((getServerTime() - activeStart) / 1000));
+                                }
+                            }
                         }
 
                         if (u.overtimeHistory) {
@@ -12845,6 +13456,10 @@ if (sohraBtn) {
                     });
                 }
 
+                        if (uS.breakfastCount > 0) {
+                            breakfastRows.push([uS.name, uS.breakfastCount, formatDurationHMS(uS.breakfast)]);
+                        }
+
                         summaryRows.push([
                             uS.name, 
                             uS.days.size, 
@@ -12852,6 +13467,8 @@ if (sohraBtn) {
                             clockOutTime, 
                             Math.round(uS.ox/60), 
                             Math.round(uS.prayer/60), 
+                            uS.breakfastCount > 0 ? uS.breakfastCount : '',
+                            uS.breakfastCount > 0 ? Math.round(uS.breakfast/60) : '',
                             Math.round(uS.meet/60), 
                             uS.ot, 
                             uS.perm, 
@@ -12861,14 +13478,14 @@ if (sohraBtn) {
                         ]);
                     });
 
-                    worksheet.mergeCells('A1:L1');
+                    worksheet.mergeCells('A1:N1');
                     const titleCell = worksheet.getCell('A1');
                     titleCell.value = 'نظام ELSHAMAA - تقرير الأداء والمخالفات المطور';
                     titleCell.font = { size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
                     titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
                     titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
 
-                    const mainHeader = ["اسم الموظف", "أيام الحضور", "وقت الحضور", "وقت الانصراف", "الأكسدة (د)", "الصلاة (د)", "الميتنج (د)", "إضافي (س)", "استأذان (س)", "مخالفات عادية", "مخالفات بخصم", "إجمالي الخصم (ج.م)"];
+                    const mainHeader = ["اسم الموظف", "أيام الحضور", "وقت الحضور", "وقت الانصراف", "الأكسدة (د)", "الصلاة (د)", "مرات الفطار", "الفطار (د)", "الميتنج (د)", "إضافي (س)", "استأذان (س)", "مخالفات عادية", "مخالفات بخصم", "إجمالي الخصم (ج.م)"];
                     const headerRow = worksheet.addRow(mainHeader);
 
                     headerRow.eachCell((cell) => {
@@ -12890,7 +13507,35 @@ if (sohraBtn) {
                     });
 
                     worksheet.getColumn(1).width = 25;
-                    for (let i = 2; i <= 12; i++) { worksheet.getColumn(i).width = 15; }
+                    for (let i = 2; i <= 14; i++) { worksheet.getColumn(i).width = 15; }
+
+                    if (breakfastRows.length > 0) {
+                        const breakfastWorksheet = workbook.addWorksheet('تقرير الفطار', {
+                            views: [{ rightToLeft: true }]
+                        });
+                        breakfastWorksheet.mergeCells('A1:C1');
+                        breakfastWorksheet.getCell('A1').value = 'تقرير الفطار للموظفين المستخدمين فقط';
+                        breakfastWorksheet.getCell('A1').font = { size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+                        breakfastWorksheet.getCell('A1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
+                        breakfastWorksheet.getCell('A1').alignment = { vertical: 'middle', horizontal: 'center' };
+                        const breakfastHeader = breakfastWorksheet.addRow(['اسم الموظف', 'عدد مرات الفطار', 'إجمالي مدة الفطار']);
+                        breakfastHeader.eachCell((cell) => {
+                            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF97316' } };
+                            cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
+                            cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                            cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+                        });
+                        breakfastRows.forEach((rowData) => {
+                            const row = breakfastWorksheet.addRow(rowData);
+                            row.eachCell((cell) => {
+                                cell.alignment = { horizontal: 'center' };
+                                cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+                            });
+                        });
+                        breakfastWorksheet.getColumn(1).width = 28;
+                        breakfastWorksheet.getColumn(2).width = 20;
+                        breakfastWorksheet.getColumn(3).width = 24;
+                    }
 
                     const buffer = await workbook.xlsx.writeBuffer();
                     saveAs(new Blob([buffer]), `ELSHAMAA_Advanced_Report_${startDateVal}.xlsx`);
@@ -13871,6 +14516,41 @@ if (sohraBtn) {
                         alert("✅ تم بدء الـ " + type + " للموظف بنجاح");
                     });
                 }
+            window.askEmployeeAboutSleep = async function(un) {
+                if (!currentUser || !MANAGERS.includes(currentUser.username)) {
+                    alert("إرسال سؤال النوم متاح للمشرفين فقط.");
+                    return;
+                }
+                const employee = allUsersData[un];
+                if (!employee || employee.state !== 'online' || employee.isOnBreak || isActiveDesktopIdle(employee)) {
+                    alert("لا يمكن سؤال الموظف الآن؛ تأكد أنه متصل وليس في بريك أو وضع نوم.");
+                    return;
+                }
+
+                const requestRef = db.ref(`users/${un}/idlePromptRequest`);
+                const requestId = requestRef.push().key;
+                const requestedAt = getServerTime();
+                try {
+                    const result = await requestRef.transaction(request => {
+                        if (request && ['pending', 'prompted'].includes(request.status) &&
+                            requestedAt - Number(request.requestedAt) < 120000) return;
+                        return {
+                            id: requestId,
+                            status: 'pending',
+                            requestedAt,
+                            requestedBy: currentUser.username
+                        };
+                    });
+                    if (!result.committed) {
+                        alert("يوجد سؤال نوم لم يُحسم بعد لهذا الموظف.");
+                        return;
+                    }
+                    renderMonitorTable();
+                } catch (error) {
+                    console.error("فشل إرسال سؤال النوم للموظف:", error);
+                    alert(`تعذر إرسال سؤال النوم: ${error.message}`);
+                }
+            };
             window.adminStop = (un) => {
                 completeUserActivity(un, true);
             };
@@ -15560,17 +16240,67 @@ const isSohra = document.getElementById('isSohraBreak').checked;
         }
     }
 
-    function beginUserActivity(username, type, reason, onSuccess) {
+    function reserveBreakfastSlot(username, date, token, callback) {
+        let rejectionReason = 'breakfast_limit';
+        db.ref('breakfastControl').transaction((state) => {
+            state = state && typeof state === 'object' ? state : {};
+            if (state.active) {
+                rejectionReason = 'breakfast_busy';
+                return;
+            }
+
+            if (state.date !== date) {
+                state.date = date;
+                state.count = 0;
+            }
+            state.count = Number(state.count) || 0;
+            if (state.count >= 2) {
+                rejectionReason = 'breakfast_limit';
+                return;
+            }
+
+            state.count += 1;
+            state.active = { username, token };
+            return state;
+        }, (error, committed, snapshot) => {
+            callback(error, committed, snapshot, rejectionReason);
+        }, false);
+    }
+
+    function releaseBreakfastSlot(token, rollbackCount, reservationDate) {
+        if (!token) return Promise.resolve(false);
+        return new Promise((resolve, reject) => {
+            db.ref('breakfastControl').transaction((state) => {
+                if (!state || !state.active || state.active.token !== token) return;
+                if (rollbackCount && state.date === reservationDate) {
+                    state.count = Math.max(0, (Number(state.count) || 0) - 1);
+                }
+                state.active = null;
+                return state;
+            }, (error, committed) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(committed);
+                }
+            }, false);
+        });
+    }
+
+    function beginUserActivity(username, type, reason, onSuccess, onFailure) {
         if (!isServerTimeSynchronized) {
-            alert("⏳ جاري مزامنة ساعة النظام، حاول مرة أخرى بعد لحظات.");
+            if (typeof onFailure === "function") onFailure(null, 'clock');
+            else alert("⏳ جاري مزامنة ساعة النظام، حاول مرة أخرى بعد لحظات.");
             return;
         }
         if (!isDatabaseConnected) {
-            alert("الاتصال بقاعدة البيانات مقطوع؛ لم يبدأ النشاط. انتظر عودة الاتصال ثم حاول مرة أخرى.");
+            if (typeof onFailure === "function") onFailure(null, 'offline');
+            else alert("الاتصال بقاعدة البيانات مقطوع؛ لم يبدأ النشاط. انتظر عودة الاتصال ثم حاول مرة أخرى.");
             return;
         }
         if (isActivityWritePending) {
-            alert("هناك تحديث نشاط قيد الحفظ؛ انتظر تأكيده قبل المحاولة مرة أخرى.");
+            if (typeof onFailure === "function") onFailure(null, 'pending');
+            else alert("هناك تحديث نشاط قيد الحفظ؛ انتظر تأكيده قبل المحاولة مرة أخرى.");
             return;
         }
         if (type === 'بريك عام' || type === 'طوارئ') {
@@ -15585,32 +16315,114 @@ const isSohra = document.getElementById('isSohraBreak').checked;
         isActivityWritePending = true;
         const showActivityLoading = Boolean(currentUser);
         if (showActivityLoading) setActivityLoading(true, 'جارٍ بدء البريك وحفظه...');
-        db.ref('users/' + username).transaction((user) => {
-            if (!user || user.isOnBreak) return;
+        const isBreakfast = type === 'فطار';
+        const breakfastDate = isBreakfast ? getServerDateString() : null;
+        const breakfastToken = isBreakfast ? db.ref().push().key : null;
 
-            user.isOnBreak = true;
-            user.breakType = type;
-            user.lastStartTime = getServerTime();
-            user.lastReason = reason || type;
-            if (isCsCallAgent(user)) user.isCSAvailable = false;
-            return user;
-        }, (error, committed, snapshot) => {
-            isActivityWritePending = false;
-            if (showActivityLoading) setActivityLoading(false);
-            if (error) {
-                console.error("فشل بدء النشاط:", error);
-                alert("تعذر بدء النشاط: " + error.message);
+        const finishFailure = (user, failureReason) => {
+            const reportFailure = (releaseError) => {
+                isActivityWritePending = false;
+                if (showActivityLoading) setActivityLoading(false);
+                if (releaseError) {
+                    console.error("فشل تحرير حجز الفطار بعد تعذر بدء النشاط:", releaseError);
+                    alert("تعذر بدء الفطار وتحرير حجزه: " + releaseError.message);
+                } else if (typeof onFailure === "function") {
+                    onFailure(user, failureReason);
+                } else if (failureReason === 'breakfast_busy') {
+                    alert("الفطار مفتوح حاليًا؛ لا يمكن بدء فطار آخر بالتزامن.");
+                } else if (failureReason === 'breakfast_limit') {
+                    alert("اكتمل الحد اليومي للفطار (مرتان).");
+                } else {
+                    alert(isBreakfast
+                        ? "لم يبدأ الفطار: الموظف مسجل بالفعل في نشاط آخر."
+                        : "هذا الموظف مسجل بالفعل في نشاط آخر. حدّث الصفحة للتحقق من حالته.");
+                }
                 if (currentUser && currentUser.role !== 'admin') updateUserUI();
-                return;
+            };
+
+            if (isBreakfast) {
+                releaseBreakfastSlot(breakfastToken, true, breakfastDate).then(() => reportFailure()).catch(reportFailure);
+            } else {
+                reportFailure();
             }
-            if (!committed) {
-                alert("هذا الموظف مسجل بالفعل في نشاط آخر. حدّث الصفحة للتحقق من حالته.");
+        };
+
+        const startUserTransaction = () => {
+            db.ref('users/' + username).transaction((user) => {
+                if (!user || user.isOnBreak) return;
+                if (isBreakfast) {
+                    user.breakfastSessionId = breakfastToken;
+                }
+
+                user.isOnBreak = true;
+                user.breakType = type;
+                user.lastStartTime = getServerTime();
+                user.lastReason = reason || type;
+                if (isCsCallAgent(user)) user.isCSAvailable = false;
+                return user;
+            }, (error, committed, snapshot) => {
+                if (error) {
+                    console.error("فشل بدء النشاط:", error);
+                    if (isBreakfast) {
+                        releaseBreakfastSlot(breakfastToken, true, breakfastDate).then(() => {
+                            isActivityWritePending = false;
+                            if (showActivityLoading) setActivityLoading(false);
+                            alert("تعذر بدء النشاط: " + error.message);
+                            if (currentUser && currentUser.role !== 'admin') updateUserUI();
+                        }).catch((releaseError) => {
+                            isActivityWritePending = false;
+                            if (showActivityLoading) setActivityLoading(false);
+                            console.error("فشل تحرير حجز الفطار بعد خطأ بدء النشاط:", releaseError);
+                            alert("تعذر بدء الفطار أو تحرير حجزه: " + releaseError.message);
+                            if (currentUser && currentUser.role !== 'admin') updateUserUI();
+                        });
+                    } else {
+                        isActivityWritePending = false;
+                        if (showActivityLoading) setActivityLoading(false);
+                        alert("تعذر بدء النشاط: " + error.message);
+                        if (currentUser && currentUser.role !== 'admin') updateUserUI();
+                    }
+                    return;
+                }
+                if (!committed) {
+                    finishFailure(snapshot.val(), snapshot.val() && snapshot.val().isOnBreak ? 'employee_busy' : 'unavailable');
+                    return;
+                }
+                isActivityWritePending = false;
+                if (showActivityLoading) setActivityLoading(false);
                 if (currentUser && currentUser.role !== 'admin') updateUserUI();
-                return;
-            }
-            if (currentUser && currentUser.role !== 'admin') updateUserUI();
-            if (typeof onSuccess === "function") onSuccess(snapshot.val());
-        }, false);
+                if (typeof onSuccess === "function") onSuccess(snapshot.val());
+            }, false);
+        };
+
+        if (isBreakfast) {
+            reserveBreakfastSlot(username, breakfastDate, breakfastToken, (error, committed, snapshot, failureReason) => {
+                if (error) {
+                    isActivityWritePending = false;
+                    if (showActivityLoading) setActivityLoading(false);
+                    console.error("تعذر حجز وقت الفطار:", error);
+                    alert("تعذر بدء الفطار: " + error.message);
+                    if (currentUser && currentUser.role !== 'admin') updateUserUI();
+                    return;
+                }
+                if (!committed) {
+                    isActivityWritePending = false;
+                    if (showActivityLoading) setActivityLoading(false);
+                    if (typeof onFailure === "function") {
+                        onFailure(snapshot.val(), failureReason);
+                    } else {
+                        alert(failureReason === 'breakfast_busy'
+                            ? "الفطار مفتوح حاليًا؛ لا يمكن بدء فطار آخر بالتزامن."
+                            : "اكتمل الحد اليومي للفطار (مرتان).");
+                    }
+                    if (currentUser && currentUser.role !== 'admin') updateUserUI();
+                    return;
+                }
+                startUserTransaction();
+            }, false);
+        } else {
+            startUserTransaction();
+        }
     }
 
     function completeUserActivity(username, isAdminAction = false) {
@@ -15639,6 +16451,7 @@ const isSohra = document.getElementById('isSohraBreak').checked;
         const sessionKey = userRef.child('sessions').push().key;
         const overflowSessionKey = userRef.child('sessions').push().key;
         let completedType = "";
+        let completedBreakfastSessionId = null;
 
         userRef.transaction((user) => {
             if (!user || !user.isOnBreak) return;
@@ -15648,6 +16461,7 @@ const isSohra = document.getElementById('isSohraBreak').checked;
 
             const completedAt = getServerTime();
             completedType = user.breakType || "";
+            completedBreakfastSessionId = user.breakfastSessionId || null;
             const duration = Math.max(0, Math.floor((completedAt - startTime) / 1000));
             user.sessions = user.sessions && typeof user.sessions === 'object' ? user.sessions : {};
             const saveSession = (key, type, reason, start, end, seconds) => {
@@ -15687,7 +16501,8 @@ const isSohra = document.getElementById('isSohraBreak').checked;
                 'ميتنج': 'meetingSeconds',
                 'متابع عميل': 'followUpSeconds',
                 'استراحة VIP': 'vipSeconds',
-                'VIP سهرة': 'vipSeconds'
+                'VIP سهرة': 'vipSeconds',
+                'فطار': 'breakfastSeconds'
             };
             const counter = counterByType[completedType];
 
@@ -15711,6 +16526,7 @@ const isSohra = document.getElementById('isSohraBreak').checked;
             }
             user.isOnBreak = false;
             user.lastStartTime = null;
+            user.breakfastSessionId = null;
             user.lastEndedTime = completedAt;
             user.lastEndedType = completedType;
             user.emRequest = null;
@@ -15732,6 +16548,16 @@ const isSohra = document.getElementById('isSohraBreak').checked;
             }
 
             if (completedType === 'صلاة') removeFromQueueByUsername(username);
+            if (completedType === 'فطار' && completedBreakfastSessionId) {
+                releaseBreakfastSlot(completedBreakfastSessionId, false).then((released) => {
+                    if (!released) {
+                        console.warn("تم إنهاء الفطار لكن لم يعد الحجز النشط مطابقًا لجلسة الموظف:", username);
+                    }
+                }).catch((releaseError) => {
+                    console.error("فشل تحرير حجز الفطار بعد إنهاء النشاط:", releaseError);
+                    alert("تم إنهاء الفطار، لكن تعذر تحرير حجزه: " + releaseError.message);
+                });
+            }
             if (username === (currentUser && currentUser.username)) {
                 const reasonInput = document.getElementById('breakReason');
                 if (reasonInput) reasonInput.value = "";
@@ -15903,6 +16729,12 @@ const isSohra = document.getElementById('isSohraBreak').checked;
 
         if (users.some(user => user.username === selectedUsername)) {
             select.value = selectedUsername;
+        }
+        const rememberedLogin = window.__rememberedLogin;
+        if (rememberedLogin && !rememberedLogin.isManager &&
+            users.some(user => user.username === rememberedLogin.username)) {
+            select.value = rememberedLogin.username;
+            window.__rememberedLogin = null;
         }
     }
 
@@ -16755,6 +17587,7 @@ function sendChatMessage() {
 
     const isCsAssistantCode = text === '#مساعد_خدمة_عملاء';
     const isCsAssistantCancelCode = text === '#إلغاء_مساعد_خدمة_عملاء';
+    const isBreakfastCode = /^#?فطار$/u.test(text.normalize('NFKC'));
     if ((isCsAssistantCode || isCsAssistantCancelCode) &&
         (currentUser.role === 'admin' || currentChatType !== 'private' || !MANAGERS.includes(currentChatRecipient))) {
         alert('اكتب كود التفعيل أو الإلغاء في محادثة خاصة مع أحد المديرين.');
@@ -16785,6 +17618,31 @@ function sendChatMessage() {
         }
         if (isCsAssistantCode) activateCsAssistantForToday();
         if (isCsAssistantCancelCode) deactivateCsAssistantForToday();
+        if (isBreakfastCode && currentUser && currentUser.role !== 'admin' && !MANAGERS.includes(currentUser.username)) {
+            beginUserActivity(
+                currentUser.username,
+                'فطار',
+                'طلب فطار من الشات',
+                () => sendBotMessage(`✅ تم بدء وقت الفطار لك يا ${currentUser.realName || currentUser.username}. الوقت يُحسب تصاعديًا ولا يُخصم من رصيد البريك.`),
+                (user, failureReason) => {
+                    let message = '🚫 لم يبدأ الفطار.';
+                    if (failureReason === 'clock') {
+                        message = '⏳ جاري مزامنة ساعة النظام؛ أعد إرسال «فطار» بعد لحظات.';
+                    } else if (failureReason === 'offline') {
+                        message = '⚠️ الاتصال بقاعدة البيانات غير متاح؛ أعد إرسال «فطار» بعد عودة الاتصال.';
+                    } else if (failureReason === 'pending') {
+                        message = '⏳ يوجد تحديث نشاط قيد الحفظ؛ أعد إرسال «فطار» بعد انتهائه.';
+                    } else if (failureReason === 'breakfast_busy') {
+                        message = '⏳ الفطار مفتوح حاليًا؛ لا يمكن لشخص آخر بدء الفطار في نفس الوقت.';
+                    } else if (failureReason === 'breakfast_limit') {
+                        message = '⏰ اكتمل الحد اليومي للفطار (مرتان).';
+                    } else if (user && user.isOnBreak) {
+                        message = `⚠️ لا يمكن بدء الفطار وأنت مسجل في نشاط (${user.breakType || 'نشاط آخر'}).`;
+                    }
+                    sendBotMessage(message);
+                }
+            );
+        }
     }).catch(error => {
         console.error('فشل إرسال رسالة الشات:', error);
         alert(`تعذر إرسال الرسالة: ${error.message}`);
@@ -18583,10 +19441,12 @@ function shareFilmGameLink() {
         window.__desktopIdleMonitorInstalled = true;
         let activeDesktopSleep = null;
         let desktopIdleCountdownTimer = null;
+        let desktopIdleDeadlineRetryTimer = null;
         let browserIdleInterval = null;
         let browserIdlePhase = 'idle';
         let browserIdlePromptedAt = 0;
         let browserIdleStartedAt = 0;
+        let browserIdleManagerRequestId = null;
         let browserIdleLastActivityAt = Date.now();
         let browserIdleContext = { username: null, enabled: false };
         const DESKTOP_IDLE_THRESHOLD_MS = 3 * 60 * 1000;
@@ -18627,6 +19487,14 @@ function shareFilmGameLink() {
         function setDesktopIdleDialog(title, message, countdown, sleeping) {
             const modal = document.getElementById('desktopIdleModal');
             if (!modal) return;
+            if (sleeping && window.__desktopIdleMainCountdown) {
+                clearInterval(window.__desktopIdleMainCountdown);
+                window.__desktopIdleMainCountdown = null;
+            }
+            if (sleeping && desktopIdleDeadlineRetryTimer) {
+                clearTimeout(desktopIdleDeadlineRetryTimer);
+                desktopIdleDeadlineRetryTimer = null;
+            }
             const card = modal.firstElementChild;
             document.getElementById('desktopIdleTitle').textContent = title;
             document.getElementById('desktopIdleMessage').textContent = message;
@@ -18656,6 +19524,8 @@ function shareFilmGameLink() {
             if (modal) modal.classList.add('hidden');
             if (desktopIdleCountdownTimer) clearInterval(desktopIdleCountdownTimer);
             desktopIdleCountdownTimer = null;
+            if (desktopIdleDeadlineRetryTimer) clearTimeout(desktopIdleDeadlineRetryTimer);
+            desktopIdleDeadlineRetryTimer = null;
         }
 
         function acknowledgeDesktopIdle() {
@@ -18677,9 +19547,36 @@ function shareFilmGameLink() {
             return Number(localTimestamp) + (getServerTime() - Date.now());
         }
 
+        function updateDesktopIdleElapsed(sleep) {
+            if (activeDesktopSleep !== sleep) return;
+            const countdown = document.getElementById('desktopIdleCountdown');
+            if (!countdown) return;
+            const elapsedSeconds = Math.max(0, Math.floor((Date.now() - sleep.rawStartedAt) / 1000));
+            countdown.textContent = `مدة الخمول المحتسبة: ${formatDurationHMS(elapsedSeconds)}`;
+        }
+
+        window.updateManagerIdlePromptStatus = async function(username, requestId, status) {
+            const requestRef = db.ref(`users/${username}/idlePromptRequest`);
+            await requestRef.transaction(request => {
+                if (!request || request.id !== requestId) return;
+                return { ...request, status, statusUpdatedAt: getServerTime() };
+            });
+        };
+
         function saveDesktopIdleStart(event) {
             if (!currentUser || currentUser.role === 'admin' ||
-                currentUser.username !== event.username || currentUser.isOnBreak || !db) return;
+                currentUser.username !== event.username || currentUser.isOnBreak) {
+                console.warn('تم تجاهل بدء تسجيل الخمول لأن جلسة الموظف الحالية لا تطابق جلسة المراقبة.');
+                hideDesktopIdleDialog();
+                return;
+            }
+            if (activeDesktopSleep &&
+                activeDesktopSleep.username === event.username &&
+                activeDesktopSleep.rawStartedAt === Number(event.startedAt)) return;
+            if (!db) {
+                showDesktopIdleDatabaseError('تسجيل الخمول', new Error('اتصال قاعدة البيانات غير جاهز.'));
+                return;
+            }
 
             const startedAt = desktopIdleServerTime(event.startedAt);
             const promptedAt = desktopIdleServerTime(event.promptedAt);
@@ -18688,6 +19585,7 @@ function shareFilmGameLink() {
                 startedAt,
                 promptedAt,
                 rawStartedAt: Number(event.startedAt),
+                managerRequestId: event.managerRequestId || null,
                 lastHeartbeatAt: Date.now(),
                 saved: false,
                 startPromise: null
@@ -18699,6 +19597,9 @@ function shareFilmGameLink() {
                 '',
                 true
             );
+            if (desktopIdleCountdownTimer) clearInterval(desktopIdleCountdownTimer);
+            updateDesktopIdleElapsed(sleep);
+            desktopIdleCountdownTimer = setInterval(() => updateDesktopIdleElapsed(sleep), 1000);
             sleep.startPromise = db.ref(`users/${event.username}/idleStatus`).set({
                 state: 'sleeping',
                 promptedAt,
@@ -18707,6 +19608,10 @@ function shareFilmGameLink() {
                 device: event.device || 'desktop'
             }).then(() => {
                 sleep.saved = true;
+                if (sleep.managerRequestId) {
+                    window.updateManagerIdlePromptStatus(event.username, sleep.managerRequestId, 'sleeping')
+                        .catch(error => console.error("تعذر تحديث حالة سؤال النوم:", error));
+                }
                 if (activeDesktopSleep === sleep) {
                     setDesktopIdleDialog(
                         '😴 دخلت في وضع النوم',
@@ -18714,14 +19619,20 @@ function shareFilmGameLink() {
                         '',
                         true
                     );
+                    updateDesktopIdleElapsed(sleep);
                 }
             }).catch(error => {
-                if (activeDesktopSleep === sleep) activeDesktopSleep = null;
+                if (activeDesktopSleep === sleep) {
+                    activeDesktopSleep = null;
+                    if (desktopIdleCountdownTimer) clearInterval(desktopIdleCountdownTimer);
+                    desktopIdleCountdownTimer = null;
+                }
                 showDesktopIdleDatabaseError('تسجيل الخمول', error);
                 throw error;
             });
             sleep.startPromise.catch(() => {});
         }
+        window.desktopIdleStartSleep = saveDesktopIdleStart;
 
         async function saveDesktopIdleEnd(event) {
             hideDesktopIdleDialog();
@@ -18759,6 +19670,13 @@ function shareFilmGameLink() {
             }
             try {
                 await userRef.update(updates);
+                if (event.managerRequestId) {
+                    const status = ['employee-response', 'activity'].includes(event.reason)
+                        ? 'responded'
+                        : 'cancelled';
+                    await window.updateManagerIdlePromptStatus(event.username, event.managerRequestId, status)
+                        .catch(error => console.error("تعذر تحديث حالة سؤال النوم:", error));
+                }
             } catch (error) {
                 showDesktopIdleDatabaseError('إنهاء تسجيل الخمول', error);
             }
@@ -18771,14 +19689,23 @@ function shareFilmGameLink() {
                     reason,
                     promptedAt: browserIdlePromptedAt,
                     startedAt: browserIdleStartedAt,
-                    endedAt: Date.now()
+                    endedAt: Date.now(),
+                    managerRequestId: browserIdleManagerRequestId
                 });
+            } else if (browserIdleManagerRequestId) {
+                const status = ['employee-response', 'activity'].includes(reason) ? 'responded' : 'cancelled';
+                window.updateManagerIdlePromptStatus(
+                    browserIdleContext.username,
+                    browserIdleManagerRequestId,
+                    status
+                ).catch(error => console.error("تعذر تحديث حالة سؤال النوم:", error));
             } else {
                 hideDesktopIdleDialog();
             }
             browserIdlePhase = 'idle';
             browserIdlePromptedAt = 0;
             browserIdleStartedAt = 0;
+            browserIdleManagerRequestId = null;
             browserIdleLastActivityAt = Date.now();
         }
 
@@ -18787,11 +19714,38 @@ function shareFilmGameLink() {
                 finishBrowserIdle(reason);
             } else {
                 hideDesktopIdleDialog();
+                if (browserIdleManagerRequestId) {
+                    window.updateManagerIdlePromptStatus(
+                        browserIdleContext.username,
+                        browserIdleManagerRequestId,
+                        'cancelled'
+                    ).catch(error => console.error("تعذر تحديث حالة سؤال النوم:", error));
+                }
                 browserIdlePhase = 'idle';
                 browserIdlePromptedAt = 0;
                 browserIdleStartedAt = 0;
+                browserIdleManagerRequestId = null;
             }
         }
+
+        window.askEmployeeIfSleepingInBrowser = function(request) {
+            if (!currentUser || currentUser.role === 'admin' ||
+                currentUser.username !== request.username ||
+                currentUser.isOnBreak ||
+                !browserIdleContext.enabled ||
+                document.visibilityState !== 'visible' ||
+                browserIdlePhase === 'sleeping') return false;
+            browserIdlePhase = 'prompt';
+            browserIdlePromptedAt = Date.now();
+            browserIdleManagerRequestId = request.id;
+            setDesktopIdleDialog(
+                'المدير بيسألك: أنت نايم؟ 😴',
+                'رد خلال دقيقة: دوس «لا، أنا صاحي» أو كمل شغلك. لو مفيش رد هنبدأ نحسب وقت النوم.',
+                '',
+                false
+            );
+            return true;
+        };
 
         function handleBrowserActivity() {
             if (window.desktopIdle) {
@@ -18819,6 +19773,7 @@ function shareFilmGameLink() {
                 now - browserIdleLastActivityAt >= DESKTOP_IDLE_THRESHOLD_MS) {
                 browserIdlePhase = 'prompt';
                 browserIdlePromptedAt = now;
+                browserIdleManagerRequestId = null;
                 setDesktopIdleDialog(
                     'الماوس نام ولا إنت؟ 😴',
                     'بقالك 3 دقايق من غير تفاعل مع الصفحة! حرّك الماوس أو الكيبورد، أو دوس «أيوه صاحي» خلال دقيقة. لو مفيش رد هنبدأ نحسب وقت الخمول.',
@@ -18839,7 +19794,8 @@ function shareFilmGameLink() {
                         username: browserIdleContext.username,
                         promptedAt: browserIdlePromptedAt,
                         startedAt: browserIdleStartedAt,
-                        device: 'browser'
+                        device: 'browser',
+                        managerRequestId: browserIdleManagerRequestId
                     });
                 }
             } else if (browserIdlePhase === 'sleeping' &&
@@ -18874,17 +19830,66 @@ function shareFilmGameLink() {
                 if (!currentUser || currentUser.role === 'admin' ||
                     currentUser.username !== event.username || currentUser.isOnBreak) return;
 
+                if (desktopIdleDeadlineRetryTimer) clearTimeout(desktopIdleDeadlineRetryTimer);
+                desktopIdleDeadlineRetryTimer = null;
                 const deadline = Number(event.promptedAt) + Number(event.responseWindowMs || 60000);
+                if (event.source === 'manager' && event.managerRequestId) {
+                    window.updateManagerIdlePromptStatus(event.username, event.managerRequestId, 'prompted')
+                        .catch(error => console.error("تعذر تحديث حالة سؤال النوم:", error));
+                }
                 setDesktopIdleDialog(
-                    'إنت موجود؟',
-                    'بقالك 3 دقايق من غير حركة! حرّك الماوس أو الكيبورد، أو دوس «أيوه صاحي» خلال دقيقة. لو مفيش رد هنبدأ نحسب وقت الخمول.',
+                    event.source === 'manager' ? 'المدير بيسألك: أنت نايم؟ 😴' : 'إنت موجود؟',
+                    event.source === 'manager'
+                        ? 'رد خلال دقيقة بالضغط على «لا، أنا صاحي». لو مفيش رد هنبدأ نحسب وقت النوم.'
+                        : 'بقالك 3 دقايق من غير حركة! حرّك الماوس أو الكيبورد، أو دوس «أيوه صاحي» خلال دقيقة. لو مفيش رد هنبدأ نحسب وقت الخمول.',
                     '',
                     false
                 );
                 if (desktopIdleCountdownTimer) clearInterval(desktopIdleCountdownTimer);
+                let deadlineCheckInProgress = false;
+                const confirmPromptDeadline = async () => {
+                    if (deadlineCheckInProgress) return;
+                    deadlineCheckInProgress = true;
+                    const countdown = document.getElementById('desktopIdleCountdown');
+                    if (countdown) countdown.textContent = 'جاري التحقق من حركة الجهاز...';
+                    try {
+                        const result = await window.desktopIdle.confirmPromptDeadline({
+                            username: event.username,
+                            promptedAt: event.promptedAt
+                        });
+                        if (result === 'sleeping') {
+                            saveDesktopIdleStart({
+                                username: event.username,
+                                promptedAt: event.promptedAt,
+                                startedAt: deadline,
+                                managerRequestId: event.managerRequestId || null
+                            });
+                            return;
+                        }
+                        if (result === 'pending') {
+                            deadlineCheckInProgress = false;
+                            desktopIdleDeadlineRetryTimer = setTimeout(confirmPromptDeadline, 500);
+                            return;
+                        }
+                        if (result === 'cancelled') return;
+                        throw new Error('تعذر على التطبيق تأكيد انتهاء مهلة التنبيه.');
+                    } catch (error) {
+                        console.error('تعذر تأكيد بدء احتساب الخمول:', error);
+                        const errorEl = document.getElementById('desktopIdleError');
+                        if (errorEl) errorEl.textContent = 'تعذر تأكيد بدء الحساب. سيعيد التطبيق المحاولة تلقائيًا.';
+                        deadlineCheckInProgress = false;
+                        desktopIdleDeadlineRetryTimer = setTimeout(confirmPromptDeadline, 2000);
+                    }
+                };
                 const updateCountdown = () => {
                     const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
                     const countdown = document.getElementById('desktopIdleCountdown');
+                    if (remaining === 0) {
+                        if (desktopIdleCountdownTimer) clearInterval(desktopIdleCountdownTimer);
+                        desktopIdleCountdownTimer = null;
+                        if (!deadlineCheckInProgress) confirmPromptDeadline();
+                        return;
+                    }
                     if (countdown) countdown.textContent = `الرد خلال ${formatDurationHMS(remaining)}`;
                 };
                 updateCountdown();
@@ -18905,6 +19910,41 @@ function shareFilmGameLink() {
 
         initializeDesktopIdleMonitor();
     </script>
+    <script>
+        (async function initializeRememberedLogin() {
+            const desktop = window.desktopIdle;
+            const checkbox = document.getElementById('rememberLogin');
+            const row = document.getElementById('rememberLoginRow');
+            const password = document.getElementById('loginPass');
+            const status = document.getElementById('rememberLoginStatus');
+            if (!desktop || !checkbox || !row || !password ||
+        typeof desktop.getRememberedLogin !== 'function') return;
+
+            row.classList.remove('hidden');
+            try {
+        const savedLogin = await desktop.getRememberedLogin();
+        if (!savedLogin) return;
+
+        window.__rememberedLogin = savedLogin;
+        checkbox.checked = true;
+        password.value = savedLogin.password;
+        if (savedLogin.isManager !== isManagerLogin) toggleManagerLogin();
+        if (savedLogin.isManager) {
+            document.getElementById('loginManagerUser').value = savedLogin.username;
+        } else if (typeof updateLoginUserOptions === 'function') {
+            updateLoginUserOptions();
+        }
+        status.textContent = 'بيانات الدخول محفوظة ومشفّرة على هذا الجهاز.';
+        status.classList.remove('hidden');
+        status.style.color = '#94a3b8';
+            } catch (error) {
+        console.error('تعذر تحميل بيانات الدخول المحفوظة:', error);
+        status.textContent = 'تعذر تحميل كلمة المرور المحفوظة.';
+        status.classList.remove('hidden');
+        status.style.color = '#fca5a5';
+            }
+        })();
+    </script>
         
-                    </body>
+            </body>
                     </html>
