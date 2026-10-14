@@ -3117,7 +3117,7 @@ html, body {
                                             </head>
                                             <body>
 
-                                            <div id="desktopUpdateStatus" role="status" aria-live="polite" style="display:none;position:fixed;right:14px;bottom:14px;z-index:200100;max-width:min(520px,calc(100vw - 28px));padding:10px 16px;border:1px solid rgba(56,189,248,.55);border-radius:14px;background:rgba(15,23,42,.97);box-shadow:0 8px 28px rgba(0,0,0,.45);color:#e2e8f0;font:700 13px 'Cairo',sans-serif;"></div>
+                                            <div id="desktopUpdateStatus" role="status" aria-live="polite" style="display:none;position:fixed;right:14px;top:14px;z-index:200100;max-width:min(520px,calc(100vw - 28px));padding:10px 16px;border:1px solid rgba(56,189,248,.55);border-radius:14px;background:rgba(15,23,42,.97);box-shadow:0 8px 28px rgba(0,0,0,.45);color:#e2e8f0;font:700 13px 'Cairo',sans-serif;"></div>
                                             <script>
                                                 (() => {
                                                     const statusBar = document.getElementById('desktopUpdateStatus');
@@ -3129,7 +3129,8 @@ html, body {
                                                         const version = typeof status.version === 'string' ? status.version : '';
                                                         let message = '';
                                                         if (status.state === 'current') {
-                                                            message = `إصدار التطبيق الحالي: ${version || 'غير معروف'}`;
+                                                            statusBar.style.display = 'none';
+                                                            return;
                                                         } else if (status.state === 'downloading') {
                                                             const percent = Number.isFinite(status.percent)
                                                                 ? ` (${Math.round(status.percent)}٪)`
@@ -3423,7 +3424,7 @@ html, body {
                                                     <div id="myBreakReportSummary" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-bottom:18px;"></div>
                                                     <section style="margin:0 0 22px; padding:16px; border:1px solid rgba(251,191,36,.45); border-radius:18px; background:rgba(251,191,36,.06);">
                                                         <h3 style="margin:0 0 8px; color:#fbbf24;">😴 تقرير نايم أثناء العمل</h3>
-                                                        <p style="margin:0 0 12px; color:#cbd5e1;">النوبات المسجلة خارج البريك فقط، بعد تنبيه الخمول وعدم الرد خلال دقيقة.</p>
+                                                        <p style="margin:0 0 12px; color:#cbd5e1;">النوبات المسجلة خارج البريك فقط، بعد تنبيه الخمول وعدم الرد خلال 40 ثانية.</p>
                                                         <div id="myWorkSleepSummary" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;"></div>
                                                         <div class="table-responsive" style="margin-top:0;">
                                                             <table style="min-width:600px;">
@@ -4234,6 +4235,22 @@ html, body {
                                                                 <button onclick="renderAdminCsApprovalHistory()" class="btn btn-dark btn-sm">🔄 تحديث السجل</button>
                                                             </div>
                                                         </div>
+                                                        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:10px; margin-bottom:16px;">
+                                                            <input id="adminCsHistorySearch" type="search" placeholder="🔎 ابحث باسم الموظف أو خدمة العملاء" oninput="renderAdminCsApprovalHistory()" aria-label="ابحث باسم الموظف أو موظف خدمة العملاء">
+                                                            <input id="adminCsHistoryFrom" type="date" onchange="renderAdminCsApprovalHistory()" aria-label="من تاريخ">
+                                                            <input id="adminCsHistoryTo" type="date" onchange="renderAdminCsApprovalHistory()" aria-label="إلى تاريخ">
+                                                            <select id="adminCsHistoryStatus" onchange="renderAdminCsApprovalHistory()" aria-label="فلترة حسب الحالة">
+                                                                <option value="">كل الحالات</option>
+                                                                <option value="approved">تمت الموافقة</option>
+                                                                <option value="completed">انتهت المكالمة</option>
+                                                                <option value="pending">قيد الانتظار</option>
+                                                                <option value="rejected">مرفوضة</option>
+                                                                <option value="cancelled">ملغاة</option>
+                                                            </select>
+                                                        </div>
+                                                        <div id="adminCsHistoryDateError" role="alert" style="display:none; color:#fb7185; margin-bottom:12px;">تاريخ البداية يجب أن يكون قبل تاريخ النهاية.</div>
+                                                        <div id="adminCsHistorySummary" aria-live="polite" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px; margin-bottom:14px;"></div>
+                                                        <div id="adminCsHistoryTopAgents" aria-live="polite" style="padding:14px; margin-bottom:16px; border-radius:14px; background:rgba(255,255,255,0.04);"></div>
                                                         <div class="table-responsive">
                                                             <table style="min-width:950px; width:100%;">
                                                                 <thead>
@@ -4538,11 +4555,18 @@ html, body {
                                 <span id="csCallStatsDateError" style="display:none; color:#fb7185; align-self:center;">تاريخ البداية يجب أن يكون قبل تاريخ النهاية.</span>
                             </div>
                             <div class="cs-call-stats-values">
-                                <div class="cs-call-stat">مكالمات وصلتك: <strong id="csCallsReceivedCount">0</strong></div>
-                                <div class="cs-call-stat">مكالمات وافقت عليها: <strong id="csCallsHandledCount">0</strong></div>
+                                <button id="csCallsReceivedCard" type="button" class="cs-call-stat" aria-controls="csCallHistory" aria-pressed="true" title="اضغط لعرض كل المكالمات التي وصلتك" onclick="showCsCallHistory('received')" style="text-align:right; color:inherit; font:inherit; border:1px solid transparent; cursor:pointer;">مكالمات وصلتك: <strong id="csCallsReceivedCount">0</strong></button>
+                                <button id="csCallsHandledCard" type="button" class="cs-call-stat" aria-controls="csCallHistory" aria-pressed="false" title="اضغط لعرض المكالمات التي وافقت عليها فقط" onclick="showCsCallHistory('handled')" style="text-align:right; color:inherit; font:inherit; border:1px solid transparent; cursor:pointer;">مكالمات وافقت عليها: <strong id="csCallsHandledCount">0</strong></button>
                             </div>
+                            <small style="display:block; margin-top:8px; color:#94a3b8;">اضغط على أي عدّاد لعرض مكالماته.</small>
                             <div class="cs-call-history">
-                                <h4 style="margin:0 0 8px; color:#cbd5e1;">📜 سجل المكالمات المسندة إليك</h4>
+                                <label for="csCallHistoryFilter" style="display:flex; align-items:center; gap:8px; margin-bottom:10px; color:#cbd5e1;">
+                                    📜 عرض السجل:
+                                    <select id="csCallHistoryFilter" onchange="renderCsApprovalRequests()" style="padding:6px 8px; border:1px solid rgba(148,163,184,.25); border-radius:8px; background:rgba(15,23,42,.8); color:var(--text-light); font:inherit;">
+                                        <option value="received">كل المكالمات التي وصلتك</option>
+                                        <option value="handled">المكالمات التي وافقت عليها فقط</option>
+                                    </select>
+                                </label>
                                 <p style="margin:0 0 10px; color:#94a3b8; font-size:0.78rem;">الحذف يخفي المكالمة من سجلك فقط، وتظل محفوظة عند المشرف.</p>
                                 <div id="csCallHistory" aria-live="polite"></div>
                             </div>
@@ -6107,8 +6131,14 @@ html, body {
                                                         return;
                                                     }
                                                     const request = csApprovalRequests[requestKey];
-                                                    if (!request || request.assignedTo !== currentUser.username) {
-                                                        alert('لا يمكنك إخفاء مكالمة غير مسندة إلى حسابك.');
+                                                    const wasAssignedToUser = request && request.assignedTo === currentUser.username;
+                                                    const wasVisibleToUser = request && Array.isArray(request.visibleTo) &&
+                                                        request.visibleTo.includes(currentUser.username);
+                                                    const wasDeclinedByUser = request && request.declinedBy &&
+                                                        request.declinedBy[currentUser.username];
+                                                    const wasHandledByUser = request && request.respondedByUsername === currentUser.username;
+                                                    if (!request || !(wasAssignedToUser || wasVisibleToUser || wasDeclinedByUser || wasHandledByUser)) {
+                                                        alert('لا يمكنك إخفاء مكالمة لم تصل إلى حسابك.');
                                                         return;
                                                     }
                                                     if (!isDatabaseConnected) {
@@ -6262,8 +6292,15 @@ html, body {
                                                         db.ref(`csApprovalRequests/${requestKey}`).transaction(currentRequest => {
                                                             if (!currentRequest || currentRequest.status !== 'pending' ||
                                                                 currentRequest.assignedTo !== request.assignedTo) return;
+                                                            const previousAgent = allUsersData[currentRequest.assignedTo];
                                                             return {
                                                                 ...currentRequest,
+                                                                lastTransferredBy: {
+                                                                    username: currentRequest.assignedTo,
+                                                                    name: previousAgent && (previousAgent.realName || previousAgent.username) ||
+                                                                        currentRequest.assignedToName || currentRequest.assignedTo
+                                                                },
+                                                                lastTransferredAt: getServerTime(),
                                                                 assignedTo: nextAgent ? nextAgent.username : null,
                                                                 assignedToName: nextAgent
                                                                     ? (nextAgent.realName || nextAgent.username)
@@ -6514,6 +6551,19 @@ html, body {
                                                     }
                                                 }
 
+                                                function showCsCallHistory(filter) {
+                                                    const filterSelect = document.getElementById('csCallHistoryFilter');
+                                                    if (!filterSelect) return;
+                                                    filterSelect.value = filter === 'handled' ? 'handled' : 'received';
+                                                    const statsDetails = filterSelect.closest('details');
+                                                    if (statsDetails) statsDetails.open = true;
+                                                    renderCsApprovalRequests();
+                                                    document.getElementById('csCallHistory')?.scrollIntoView({
+                                                        behavior: 'smooth',
+                                                        block: 'nearest'
+                                                    });
+                                                }
+
                                                 function renderCsApprovalRequests() {
                                                     const inboxContainer = document.getElementById('csApprovalInbox');
                                                     if (!currentUser) return;
@@ -6554,19 +6604,44 @@ html, body {
                                                         const invalidStatsDateRange = Boolean(statsFrom && statsTo && statsFrom > statsTo);
                                                         const statsDateError = document.getElementById('csCallStatsDateError');
                                                         if (statsDateError) statsDateError.style.display = invalidStatsDateRange ? 'inline' : 'none';
+                                                        const handledCallsCount = invalidStatsDateRange
+                                                            ? 0
+                                                            : entries.filter(([, request]) => {
+                                                                if (request.requesterUsername === currentUser.username ||
+                                                                    request.respondedByUsername !== currentUser.username) return false;
+                                                                const timestamp = Number(request.respondedAt || request.assignedAt || request.timestamp);
+                                                                if (!Number.isFinite(timestamp) || timestamp <= 0) return false;
+                                                                const date = new Date(timestamp);
+                                                                if (Number.isNaN(date.getTime())) return false;
+                                                                const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                                                                return (!statsFrom || dateKey >= statsFrom) && (!statsTo || dateKey <= statsTo);
+                                                            }).length;
                                                         const historyIsReady = csApprovalHiddenHistoryUser === currentUser.username &&
                                                             !csApprovalHiddenHistoryLoading && !csApprovalHiddenHistoryError;
                                                         const statsEntries = invalidStatsDateRange || !historyIsReady
                                                             ? []
-                                                            : entries.filter(([requestKey, request]) => {
-                                                                if (request.requesterUsername === currentUser.username ||
-                                                                    request.assignedTo !== currentUser.username ||
-                                                                    csApprovalHiddenHistory[requestKey]) return false;
+                                                            : entries.map(([requestKey, request]) => {
+                                                                const wasAssignedToUser = request.assignedTo === currentUser.username;
+                                                                const wasVisibleToUser = Array.isArray(request.visibleTo) &&
+                                                                    request.visibleTo.includes(currentUser.username);
+                                                                const declinedByUser = request.declinedBy &&
+                                                                    request.declinedBy[currentUser.username];
+                                                                const wasHandledByUser = request.respondedByUsername === currentUser.username;
+                                                                const declinedAt = Number(declinedByUser && declinedByUser.timestamp);
+                                                                const respondedAt = Number(request.respondedAt);
                                                                 const assignedAt = Number(request.assignedAt);
-                                                                const timestamp = Number.isFinite(assignedAt) && assignedAt > 0
-                                                                    ? assignedAt
-                                                                    : Number(request.timestamp);
-                                                                if (!Number.isFinite(timestamp) || timestamp <= 0) return false;
+                                                                const timestamp = declinedAt > 0
+                                                                    ? declinedAt
+                                                                    : wasHandledByUser && respondedAt > 0
+                                                                        ? respondedAt
+                                                                        : assignedAt > 0 ? assignedAt : Number(request.timestamp);
+                                                                return [requestKey, request, timestamp, wasAssignedToUser ||
+                                                                    wasVisibleToUser || Boolean(declinedByUser) || wasHandledByUser];
+                                                            }).filter(([requestKey, request, timestamp, reachedUser]) => {
+                                                                if (!reachedUser || request.requesterUsername === currentUser.username ||
+                                                                    csApprovalHiddenHistory[requestKey] || !Number.isFinite(timestamp) || timestamp <= 0) {
+                                                                    return false;
+                                                                }
                                                                 const date = new Date(timestamp);
                                                                 if (Number.isNaN(date.getTime())) return false;
                                                                 const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -6575,23 +6650,36 @@ html, body {
                                                         const receivedCountElement = document.getElementById('csCallsReceivedCount');
                                                         const handledCountElement = document.getElementById('csCallsHandledCount');
                                                         if (receivedCountElement) receivedCountElement.innerText = String(statsEntries.length);
-                                                        if (handledCountElement) {
-                                                            handledCountElement.innerText = String(statsEntries.filter(([, request]) =>
-                                                                ['approved', 'completed'].includes(request.status) &&
-                                                                request.respondedByUsername === currentUser.username
-                                                            ).length);
-                                                        }
+                                                        if (handledCountElement) handledCountElement.innerText = String(handledCallsCount);
 
                                                         const historyContainer = document.getElementById('csCallHistory');
                                                         if (historyContainer) {
+                                                            const showHandledOnly = document.getElementById('csCallHistoryFilter')?.value === 'handled';
+                                                            const receivedCard = document.getElementById('csCallsReceivedCard');
+                                                            const handledCard = document.getElementById('csCallsHandledCard');
+                                                            if (receivedCard) {
+                                                                receivedCard.setAttribute('aria-pressed', String(!showHandledOnly));
+                                                                receivedCard.style.borderColor = showHandledOnly ? 'transparent' : 'var(--primary)';
+                                                            }
+                                                            if (handledCard) {
+                                                                handledCard.setAttribute('aria-pressed', String(showHandledOnly));
+                                                                handledCard.style.borderColor = showHandledOnly ? 'var(--primary)' : 'transparent';
+                                                            }
+                                                            const visibleHistoryEntries = showHandledOnly
+                                                                ? statsEntries.filter(([, request]) =>
+                                                                    request.respondedByUsername === currentUser.username
+                                                                )
+                                                                : statsEntries;
                                                             if (csApprovalHiddenHistoryLoading || !historyIsReady && !csApprovalHiddenHistoryError) {
                                                                 historyContainer.innerHTML = '<div style="color:#94a3b8;">جارٍ تحميل سجلك الشخصي...</div>';
                                                             } else if (csApprovalHiddenHistoryError) {
                                                                 historyContainer.innerHTML = `<div style="color:#fb7185;">تعذر تحميل سجل المكالمات: ${escapeHtml(csApprovalHiddenHistoryError)} <button type="button" class="btn btn-dark btn-sm" onclick="loadCsApprovalHiddenHistory(currentUser.username)">إعادة المحاولة</button></div>`;
                                                             } else if (invalidStatsDateRange) {
                                                                 historyContainer.innerHTML = '<div style="color:#94a3b8;">عدّل نطاق التاريخ لعرض السجل.</div>';
-                                                            } else if (statsEntries.length === 0) {
-                                                                historyContainer.innerHTML = '<div style="color:#94a3b8;">لا توجد مكالمات مسندة إليك في الفترة المحددة.</div>';
+                                                            } else if (visibleHistoryEntries.length === 0) {
+                                                                historyContainer.innerHTML = showHandledOnly
+                                                                    ? '<div style="color:#94a3b8;">لا توجد مكالمات وافقت عليها في الفترة المحددة.</div>'
+                                                                    : '<div style="color:#94a3b8;">لا توجد مكالمات وصلتك في الفترة المحددة.</div>';
                                                             } else {
                                                                 const statusLabels = {
                                                                     pending: 'قيد الانتظار',
@@ -6600,19 +6688,26 @@ html, body {
                                                                     cancelled: 'ملغاة',
                                                                     rejected: 'مرفوضة'
                                                                 };
-                                                                historyContainer.innerHTML = statsEntries.map(([key, request]) => {
-                                                                    const timestamp = Number(request.assignedAt || request.timestamp);
+                                                                historyContainer.innerHTML = visibleHistoryEntries.map(([key, request, timestamp]) => {
                                                                     const time = Number.isFinite(timestamp) && timestamp > 0
                                                                         ? new Date(timestamp).toLocaleString('ar-EG')
                                                                         : '—';
                                                                     const agentName = escapeHtml(currentUser.realName || currentUser.username);
+                                                                    const requesterName = request.requesterName || request.requesterUsername;
                                                                     const message = escapeHtml(request.message === 'تحويل مكالمة' ? 'مكالمة جديدة' : request.message || '');
                                                                     const status = escapeHtml(statusLabels[request.status] || 'غير محددة');
+                                                                    const previousTransfer = Object.values(request.declinedBy || {})
+                                                                        .filter(agent => agent && agent.name)
+                                                                        .sort((a, b) => Number(b.timestamp || 0) - Number(a.timestamp || 0))[0];
+                                                                    const reassignedBy = request.lastTransferredBy && request.lastTransferredBy.name ||
+                                                                        previousTransfer && previousTransfer.name;
                                                                     return `<article style="padding:12px; margin-top:10px; border-radius:12px; background:var(--employee-record-background, rgba(255,255,255,0.04)); border-right:3px solid var(--accent);">
                                                                         <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;">
                                                                             <strong>${agentName}</strong><small style="color:#94a3b8;">${escapeHtml(time)}</small>
                                                                         </div>
                                                                         <div style="margin:6px 0; color:#cbd5e1;">${message || 'مكالمة جديدة'} · ${status}</div>
+                                                                        ${requesterName ? `<div style="margin-bottom:8px; color:#94a3b8; font-size:0.82rem;">المحوّل: ${escapeHtml(requesterName)}</div>` : ''}
+                                                                        ${reassignedBy ? `<div style="margin-bottom:8px; color:#94a3b8; font-size:0.82rem;">آخر من أعاد توجيه المكالمة: ${escapeHtml(reassignedBy)}</div>` : ''}
                                                                         <button type="button" class="btn btn-danger btn-sm" onclick="hideCsCallFromMyHistory(this.dataset.requestKey, this)" data-request-key="${encodeURIComponent(key)}">🗑 حذف من سجلي</button>
                                                                     </article>`;
                                                                 }).join('');
@@ -6699,12 +6794,120 @@ html, body {
                                                 function renderAdminCsApprovalHistory() {
                                                     const tbody = document.getElementById('adminCsApprovalHistoryBody');
                                                     if (!tbody || !currentUser || currentUser.role !== 'admin') return;
+                                                    const search = (document.getElementById('adminCsHistorySearch')?.value || '').trim().toLocaleLowerCase();
+                                                    const dateFrom = document.getElementById('adminCsHistoryFrom')?.value || '';
+                                                    const dateTo = document.getElementById('adminCsHistoryTo')?.value || '';
+                                                    const statusFilter = document.getElementById('adminCsHistoryStatus')?.value || '';
+                                                    const dateError = document.getElementById('adminCsHistoryDateError');
+                                                    const invalidDateRange = Boolean(dateFrom && dateTo && dateFrom > dateTo);
+                                                    if (dateError) dateError.style.display = invalidDateRange ? 'block' : 'none';
                                                     const entries = Object.entries(csApprovalRequests || {})
                                                         .filter(([, request]) => request && typeof request === 'object')
+                                                        .filter(([, request]) => {
+                                                            if (invalidDateRange) return false;
+                                                            const timestamp = Number(request.timestamp);
+                                                            if (!Number.isFinite(timestamp) || timestamp <= 0) return false;
+                                                            const date = new Date(timestamp);
+                                                            const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                                                            if ((dateFrom && dateKey < dateFrom) || (dateTo && dateKey > dateTo)) return false;
+                                                            if (statusFilter && request.status !== statusFilter) return false;
+                                                            if (search) {
+                                                                const responder = request.respondedByUsername && allUsersData[request.respondedByUsername];
+                                                                const declinedBy = request.declinedBy || {};
+                                                                const declinedNames = Object.entries(declinedBy)
+                                                                    .flatMap(([username, agent]) => [username, agent && agent.name]);
+                                                                const searchableText = [
+                                                                    request.requesterName,
+                                                                    request.requesterUsername,
+                                                                    request.respondedBy,
+                                                                    request.respondedByUsername,
+                                                                    responder && responder.realName,
+                                                                    request.assignedToName,
+                                                                    ...declinedNames
+                                                                ].filter(Boolean).join(' ').toLocaleLowerCase();
+                                                                if (!searchableText.includes(search)) return false;
+                                                            }
+                                                            return true;
+                                                        })
                                                         .sort((a, b) => Number(b[1].timestamp || 0) - Number(a[1].timestamp || 0));
 
+                                                    const summary = document.getElementById('adminCsHistorySummary');
+                                                    const topAgents = document.getElementById('adminCsHistoryTopAgents');
+                                                    const acceptedCount = entries.filter(([, request]) =>
+                                                        request.status === 'approved' || request.status === 'completed'
+                                                    ).length;
+                                                    const pendingCount = entries.filter(([, request]) => request.status === 'pending').length;
+                                                    const rejectedCount = entries.filter(([, request]) =>
+                                                        request.status === 'rejected' || request.status === 'cancelled'
+                                                    ).length;
+                                                    if (summary) {
+                                                        const card = (label, count, color) => `<div style="padding:12px; border-radius:12px; background:rgba(255,255,255,0.05); border-right:3px solid ${color};"><small style="color:#94a3b8;">${label}</small><div style="font-size:1.25rem; font-weight:900; color:${color};">${count}</div></div>`;
+                                                        summary.innerHTML = card('إجمالي الطلبات', entries.length, '#38bdf8') +
+                                                            card('استلمها / وافق عليها', acceptedCount, '#34d399') +
+                                                            card('قيد الانتظار', pendingCount, '#fbbf24') +
+                                                            card('مرفوضة أو ملغاة', rejectedCount, '#fb7185');
+                                                    }
+                                                    if (topAgents) {
+                                                        const receivedCounts = {};
+                                                        const declinedCounts = {};
+                                                        const addAgentCount = (counts, username, fallbackName) => {
+                                                            if (!username) return;
+                                                            if (!counts[username]) counts[username] = { count: 0, name: fallbackName || '' };
+                                                            counts[username].count++;
+                                                        };
+                                                        entries.forEach(([, request]) => {
+                                                            const declinedBy = request.declinedBy || {};
+                                                            const receivedAgents = new Map();
+                                                            Object.entries(declinedBy).forEach(([username, agent]) => {
+                                                                receivedAgents.set(username, agent && agent.name);
+                                                                addAgentCount(declinedCounts, username, agent && agent.name);
+                                                            });
+                                                            if (request.respondedByUsername) {
+                                                                receivedAgents.set(request.respondedByUsername, request.respondedBy);
+                                                            }
+                                                            if (request.assignedTo) {
+                                                                receivedAgents.set(request.assignedTo, request.assignedToName);
+                                                            }
+                                                            if (request.status === 'pending') {
+                                                                const recipients = new Set([
+                                                                    ...(Array.isArray(request.visibleTo) ? request.visibleTo : []),
+                                                                    request.assignedTo
+                                                                ].filter(Boolean));
+                                                                recipients.forEach(username => {
+                                                                    const agent = allUsersData[username];
+                                                                    receivedAgents.set(username, agent && (agent.realName || agent.username));
+                                                                });
+                                                            }
+                                                            receivedAgents.forEach((name, username) => addAgentCount(receivedCounts, username, name));
+                                                        });
+                                                        const rankAgents = counts => Object.entries(counts)
+                                                            .map(([username, data]) => {
+                                                                const user = allUsersData[username];
+                                                                return {
+                                                                    username,
+                                                                    name: user && (user.realName || user.username) || data.name || username,
+                                                                    count: data.count
+                                                                };
+                                                            })
+                                                            .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+                                                        const renderRanking = (title, color, agents, emptyMessage) =>
+                                                            `<section style="flex:1; min-width:240px;"><strong style="color:${color};">${title}</strong>` +
+                                                            (agents.length
+                                                                ? `<ol style="margin:8px 0 0; padding-right:22px;">${agents.map(agent =>
+                                                                    `<li style="margin-top:5px;">${escapeHtml(agent.name)} <small style="color:#94a3b8;">(@${escapeHtml(agent.username)})</small> — <strong>${agent.count}</strong></li>`
+                                                                ).join('')}</ol>`
+                                                                : `<div style="color:#94a3b8; margin-top:6px;">${emptyMessage}</div>`) +
+                                                            '</section>';
+                                                        topAgents.innerHTML =
+                                                            renderRanking('📥 الأكثر استلامًا للمكالمات', '#38bdf8', rankAgents(receivedCounts), 'لا توجد مكالمات مستلمة في النتائج الحالية.') +
+                                                            renderRanking('↩️ الأكثر اعتذارًا عن المكالمات', '#fb7185', rankAgents(declinedCounts), 'لا توجد اعتذارات عن المكالمات في النتائج الحالية.');
+                                                        topAgents.style.display = 'flex';
+                                                        topAgents.style.flexWrap = 'wrap';
+                                                        topAgents.style.gap = '24px';
+                                                    }
+
                                                     if (!entries.length) {
-                                                        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#94a3b8; padding:20px;">لا توجد طلبات مسجلة حتى الآن.</td></tr>';
+                                                        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#94a3b8; padding:20px;">${invalidDateRange ? 'راجع نطاق التاريخ المحدد.' : 'لا توجد طلبات مطابقة للفلاتر.'}</td></tr>`;
                                                         return;
                                                     }
 
@@ -6944,6 +7147,8 @@ html, body {
                                                                     return {
                                                                         ...request,
                                                                         declinedBy,
+                                                                        lastTransferredBy: currentAgent,
+                                                                        lastTransferredAt: currentAgent.timestamp,
                                                                         assignedTo: remainingVisible[0],
                                                                         assignedToName: (allUsersData[remainingVisible[0]] && (allUsersData[remainingVisible[0]].realName || remainingVisible[0])) || remainingVisible[0],
                                                                         visibleTo: remainingVisible,
@@ -6962,6 +7167,8 @@ html, body {
                                                                     return {
                                                                         ...request,
                                                                         declinedBy,
+                                                                        lastTransferredBy: currentAgent,
+                                                                        lastTransferredAt: currentAgent.timestamp,
                                                                         assignedTo: null,
                                                                         assignedToName: 'صندوق المكالمات المتاحة',
                                                                         visibleTo: [],
@@ -6975,6 +7182,8 @@ html, body {
                                                                 return {
                                                                     ...request,
                                                                     declinedBy,
+                                                                    lastTransferredBy: currentAgent,
+                                                                    lastTransferredAt: currentAgent.timestamp,
                                                                     assignedTo: nextAgent.username,
                                                                     assignedToName: nextAgent.realName || nextAgent.username,
                                                                     visibleTo: [nextAgent.username],
@@ -8367,6 +8576,28 @@ html, body {
                                                         if(updatedMe) { const r = currentUser.role; currentUser = updatedMe; currentUser.role = r; }
                                                         if (currentUser.role !== 'admin') {
                                                             const idlePromptRequest = currentUser.idlePromptRequest;
+                                                            const idleManagerStopRequest = currentUser.idleManagerStopRequest;
+                                                            const previousIdleManagerStopRequest = previousUsersData[currentUser.username] &&
+                                                                previousUsersData[currentUser.username].idleManagerStopRequest;
+                                                            if (idleManagerStopRequest &&
+                                                                idleManagerStopRequest.status === 'pending' &&
+                                                                idleManagerStopRequest.id &&
+                                                                idleManagerStopRequest.id !== (previousIdleManagerStopRequest && previousIdleManagerStopRequest.id)) {
+                                                                const stopRequest = idleManagerStopRequest;
+                                                                if (!MANAGERS.includes(stopRequest.requestedBy)) {
+                                                                    console.warn('تم تجاهل طلب إنهاء نوم غير صادر عن مشرف معتمد.');
+                                                                } else if (typeof window.stopDesktopIdleFromManager === 'function') {
+                                                                    const stopped = window.stopDesktopIdleFromManager(currentUser.username);
+                                                                    db.ref(`users/${currentUser.username}/idleManagerStopRequest`).transaction(request => {
+                                                                        if (!request || request.id !== stopRequest.id || request.status !== 'pending') return;
+                                                                        return {
+                                                                            ...request,
+                                                                            status: stopped ? 'completed' : 'failed',
+                                                                            completedAt: getServerTime()
+                                                                        };
+                                                                    }).catch(error => console.error('تعذر تحديث نتيجة إنهاء النوم من لوحة المشرف:', error));
+                                                                }
+                                                            }
                                                             if (idlePromptRequest &&
                                                                 ['approved', 'rejected'].includes(idlePromptRequest.status) &&
                                                                 idlePromptRequest.id !== handledManagerIdleDecisionId) {
@@ -8413,7 +8644,7 @@ html, body {
                                 // حساب "شكل" الجدول الحالي (عدد الموظفين + أسماؤهم + حالاتهم)
                                 const currentTableStructure = Object.values(allUsersData).filter(u => u && u.username && !MANAGERS.includes(u.username)).map(u => {
                                     const websiteSession = getLatestWebsiteSession(u);
-                                    return `${u.username}-${u.isOnBreak}-${u.breakType}-${u.state}-${u.desktopAppStatus && u.desktopAppStatus.state}-${websiteSession && websiteSession.state}-${websiteSession && websiteSession.openedAt}-${websiteSession && websiteSession.closedAt}-${isActiveDesktopIdle(u)}-${u.lastIdleSleep && u.lastIdleSleep.endedAt}-${u.idlePromptRequest && u.idlePromptRequest.id}-${u.idlePromptRequest && u.idlePromptRequest.status}-${u.repeatedInputAlert && u.repeatedInputAlert.detectedAt}-${u.repeatedInputAlert && u.repeatedInputAlert.acknowledgedAt}`;
+                                    return `${u.username}-${u.isOnBreak}-${u.breakType}-${u.state}-${u.desktopAppStatus && u.desktopAppStatus.state}-${websiteSession && websiteSession.state}-${websiteSession && websiteSession.openedAt}-${websiteSession && websiteSession.closedAt}-${isActiveDesktopIdle(u)}-${u.lastIdleSleep && u.lastIdleSleep.endedAt}-${u.idlePromptRequest && u.idlePromptRequest.id}-${u.idlePromptRequest && u.idlePromptRequest.status}-${u.idleManagerStopRequest && u.idleManagerStopRequest.id}-${u.idleManagerStopRequest && u.idleManagerStopRequest.status}-${u.repeatedInputAlert && u.repeatedInputAlert.detectedAt}-${u.repeatedInputAlert && u.repeatedInputAlert.acknowledgedAt}`;
                                 }).join('|');
 
                                 // لو الشكل اتغير (موظف جديد أو غادر أو غير حالته)، نرسم الجدول من جديد
@@ -9150,7 +9381,7 @@ html, body {
             }
             const statusColor = u.isOnBreak ? 'var(--danger)' : (isActiveDesktopIdle(u) ? 'var(--warning)' : 'var(--success)');
             const idleStatusMarkup = isActiveDesktopIdle(u)
-                ? `<small style="display:block; color:#fbbf24; font-weight:700;">😴 خمول منذ <span id="idle_elapsed_${u.username}">...</span></small>`
+                ? `<small style="display:block; color:#fbbf24; font-weight:700;">😴 خمول منذ <span id="idle_elapsed_${u.username}">...</span></small><button onclick="stopEmployeeIdleSleep('${u.username}')" class="btn btn-danger btn-sm" style="margin-top:4px;">⏹️ إنهاء النوم</button>`
                 : '';
             const lastIdleSleep = u.lastIdleSleep;
             const lastIdleDuration = Number(lastIdleSleep && lastIdleSleep.durationSeconds);
@@ -9174,7 +9405,7 @@ html, body {
             const repeatedInputAlertMarkup = repeatedInputAlert
                 ? repeatedInputAlert.acknowledgedAt
                     ? `<small style="color:#94a3b8;">تمت مراجعة تنبيه تكرار الضغطات</small>`
-                    : `<small style="color:#fca5a5;">⚠️ تكرار آلي لزر «${escapeHtml(String(repeatedInputAlert.key || '؟'))}» (${Math.max(0, Number(repeatedInputAlert.count) || 0)} مرة) — تنبيه فقط <button onclick="acknowledgeRepeatedInputAlert('${u.username}')" class="btn btn-dark btn-sm">تمت المراجعة</button></small>`
+                    : `<small style="color:#fca5a5;">⚠️ تكرار ضغطات نفس المفتاح (${Math.max(0, Number(repeatedInputAlert.count) || 0)} ضغطة خلال 5 ثوانٍ) — ظهر تنبيه للموظف، ويبدأ النوم إذا لم يضغط «أيوه صاحي» خلال 40 ثانية <button onclick="acknowledgeRepeatedInputAlert('${u.username}')" class="btn btn-dark btn-sm">تمت المراجعة</button></small>`
                 : '';
             const sleepCheckPending = sleepCheckRequest &&
                 (sleepCheckRequest.status === 'answered' ||
@@ -14637,6 +14868,39 @@ if (sohraBtn) {
                     alert(`تعذر حفظ المراجعة: ${error.message}`);
                 }
             };
+            window.stopEmployeeIdleSleep = async function(un) {
+                if (!currentUser || !MANAGERS.includes(currentUser.username)) {
+                    alert("إنهاء نوم الموظف متاح للمشرفين فقط.");
+                    return;
+                }
+                const employee = allUsersData[un];
+                if (!employee || !isActiveDesktopIdle(employee)) {
+                    alert("الموظف ليس في وضع النوم حاليًا.");
+                    return;
+                }
+
+                const requestRef = db.ref(`users/${un}/idleManagerStopRequest`);
+                const requestId = requestRef.push().key;
+                try {
+                    const result = await requestRef.transaction(request => {
+                        if (request && request.status === 'pending') return;
+                        return {
+                            id: requestId,
+                            status: 'pending',
+                            requestedAt: getServerTime(),
+                            requestedBy: currentUser.username
+                        };
+                    });
+                    if (!result.committed) {
+                        alert("يوجد طلب إنهاء نوم قيد التنفيذ لهذا الموظف.");
+                        return;
+                    }
+                    alert("تم إرسال طلب إنهاء النوم للموظف.");
+                } catch (error) {
+                    console.error("تعذر إرسال طلب إنهاء النوم:", error);
+                    alert(`تعذر إنهاء النوم: ${error.message}`);
+                }
+            };
             window.adminStop = (un) => {
                 completeUserActivity(un, true);
             };
@@ -19530,10 +19794,11 @@ function shareFilmGameLink() {
     <script>
         window.__desktopIdleMonitorInstalled = true;
         const DESKTOP_IDLE_THRESHOLD_MS = 3 * 60 * 1000;
-        const DESKTOP_IDLE_RESPONSE_WINDOW_MS = 60 * 1000;
+        const DESKTOP_IDLE_RESPONSE_WINDOW_MS = 40 * 1000;
         const DESKTOP_MANAGER_RESPONSE_WINDOW_MS = 40 * 1000;
-        const REPEATED_KEY_ALERT_THRESHOLD = 12;
+        const REPEATED_KEY_ALERT_THRESHOLD = 26;
         const REPEATED_KEY_ALERT_WINDOW_MS = 5000;
+        const HELD_KEY_ALERT_THRESHOLD_MS = 3500;
         let activeDesktopSleep = null;
         let desktopIdleCountdownTimer = null;
         let desktopIdleDeadlineRetryTimer = null;
@@ -19541,13 +19806,18 @@ function shareFilmGameLink() {
         let browserIdlePhase = 'idle';
         let browserIdlePromptedAt = 0;
         let browserIdleStartedAt = 0;
+        let browserIdlePromptTrigger = null;
         let browserIdleManagerRequestId = null;
         let browserIdleResponseWindowMs = DESKTOP_IDLE_RESPONSE_WINDOW_MS;
         let activeManagerIdleRequestId = null;
         let handledManagerIdleDecisionId = null;
         let browserIdleWaitingForManagerDecision = false;
         let repeatedKeyState = null;
+        let managerIdleSuccessVisible = false;
+        const browserHeldKeyTimers = new Map();
+        const browserHeldModifierKeys = new Set();
         let lastRepeatedKeyAlertAt = 0;
+        let lastRepeatedKeydown = null;
         let browserIdleLastActivityAt = Date.now();
         let browserIdleContext = { username: null, enabled: false };
 
@@ -19583,7 +19853,9 @@ function shareFilmGameLink() {
             }
         }
 
-        function setDesktopIdleDialog(title, message, countdown, sleeping) {
+        function setDesktopIdleDialog(title, message, countdown, sleeping, trigger) {
+            clearManagerIdleSuccessDismissers();
+            clearBrowserHeldKeyTimers();
             const modal = document.getElementById('desktopIdleModal');
             if (!modal) return;
             if (sleeping && window.__desktopIdleMainCountdown) {
@@ -19602,7 +19874,7 @@ function shareFilmGameLink() {
             icon.textContent = sleeping ? '🛌💤' : '👋';
             icon.style.fontSize = sleeping ? '7rem' : '3rem';
             document.getElementById('desktopIdleRespondButton').textContent = sleeping
-                ? '✅ رجعت للشغل'
+                ? trigger === 'repeated-input' ? '✅ أنا صاحي - رجعت للشغل' : '✅ رجعت للشغل'
                 : '✅ أيوه صاحي 😂';
             document.getElementById('desktopIdleRespondButton').disabled = false;
             document.getElementById('desktopIdleError').textContent = '';
@@ -19613,8 +19885,10 @@ function shareFilmGameLink() {
                 document.getElementById('desktopIdleAnswerInput').disabled = false;
                 document.getElementById('desktopIdleAnswerError').textContent = '';
                 modal.style.cssText = 'position:fixed;inset:0;z-index:200000;display:flex;align-items:center;justify-content:center;padding:24px;pointer-events:none;background:rgba(2,6,23,.97);';
-                if (card) card.style.cssText = 'width:min(90vw,720px);box-sizing:border-box;padding:48px 32px;border:2px solid #fbbf24;border-radius:32px;background:#0f172a;color:#e2e8f0;text-align:center;box-shadow:0 20px 70px rgba(0,0,0,.6);';
-                document.getElementById('desktopIdleTitle').textContent = '😴 دخلت في وضع النوم';
+                if (card) card.style.cssText = 'width:min(90vw,720px);box-sizing:border-box;padding:48px 32px;border:2px solid #fbbf24;border-radius:32px;background:#0f172a;color:#e2e8f0;text-align:center;box-shadow:0 20px 70px rgba(0,0,0,.6);pointer-events:auto;';
+                document.getElementById('desktopIdleTitle').textContent = trigger === 'repeated-input'
+                    ? '😴 دخلت في وضع النوم'
+                    : '😴 دخلت في وضع النوم';
                 document.getElementById('desktopIdleMessage').textContent = 'مدة الخمول تُحتسب الآن. لإنهاء التسجيل، اضغط «رجعت للشغل». حركة الماوس أو ضغطات المفاتيح وحدها لا تنهيه.';
             } else {
                 modal.style.cssText = 'position:fixed;inset:0;z-index:200000;display:flex;align-items:flex-end;justify-content:flex-start;padding:20px;pointer-events:none;background:transparent;';
@@ -19638,6 +19912,7 @@ function shareFilmGameLink() {
         }
 
         function hideDesktopIdleDialog() {
+            clearManagerIdleSuccessDismissers();
             const modal = document.getElementById('desktopIdleModal');
             if (modal && modal.contains(document.activeElement)) document.activeElement.blur();
             if (modal) modal.classList.add('hidden');
@@ -19645,6 +19920,52 @@ function shareFilmGameLink() {
             desktopIdleCountdownTimer = null;
             if (desktopIdleDeadlineRetryTimer) clearTimeout(desktopIdleDeadlineRetryTimer);
             desktopIdleDeadlineRetryTimer = null;
+        }
+
+        function clearManagerIdleSuccessDismissers() {
+            if (!managerIdleSuccessVisible) return;
+            managerIdleSuccessVisible = false;
+            if (window.desktopIdle &&
+                typeof window.desktopIdle.setSuccessScreenVisible === 'function') {
+                window.desktopIdle.setSuccessScreenVisible(false);
+            }
+            document.removeEventListener('pointermove', dismissManagerIdleSuccess);
+            document.removeEventListener('keydown', dismissManagerIdleSuccess);
+        }
+
+        function dismissManagerIdleSuccess() {
+            if (!managerIdleSuccessVisible) return;
+            hideDesktopIdleDialog();
+        }
+
+        function showManagerIdleAnswerSuccess() {
+            const modal = document.getElementById('desktopIdleModal');
+            const card = modal && modal.firstElementChild;
+            const button = document.getElementById('desktopIdleRespondButton');
+            if (!modal || !button) return;
+
+            document.getElementById('desktopIdleIcon').textContent = '😆';
+            document.getElementById('desktopIdleTitle').textContent = '😂 لأ، صاحي أهو!';
+            document.getElementById('desktopIdleMessage').textContent =
+                'إجابتك طلعت صح، المدير اتأكد بنفسه 😎 كمل شغلك يا بطل!';
+            document.getElementById('desktopIdleCountdown').textContent = '';
+            document.getElementById('desktopIdleAnswerArea').classList.add('hidden');
+            managerIdleSuccessVisible = true;
+            document.addEventListener('pointermove', dismissManagerIdleSuccess);
+            document.addEventListener('keydown', dismissManagerIdleSuccess);
+            if (window.desktopIdle &&
+                typeof window.desktopIdle.setSuccessScreenVisible === 'function') {
+                window.desktopIdle.setSuccessScreenVisible(true);
+            }
+            button.disabled = false;
+            button.textContent = 'تمام 😂';
+            button.onclick = event => {
+                if (!event.isTrusted) return;
+                hideDesktopIdleDialog();
+            };
+            modal.style.cssText = 'position:fixed;inset:0;z-index:200000;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(2,6,23,.88);';
+            if (card) card.style.cssText = 'width:min(90vw,560px);box-sizing:border-box;padding:40px 28px;border:2px solid #34d399;border-radius:32px;background:#0f172a;color:#e2e8f0;text-align:center;box-shadow:0 20px 70px rgba(0,0,0,.6);pointer-events:auto;';
+            modal.classList.remove('hidden');
         }
 
         function acknowledgeDesktopIdle(event) {
@@ -19741,6 +20062,8 @@ function shareFilmGameLink() {
                     if (!applied) {
                         handledManagerIdleDecisionId = null;
                         console.warn('تم تجاهل قرار المدير لأن تنبيه السؤال لم يعد نشطًا.');
+                    } else if (correct) {
+                        showManagerIdleAnswerSuccess();
                     }
                 } catch (error) {
                     handledManagerIdleDecisionId = null;
@@ -19758,6 +20081,7 @@ function shareFilmGameLink() {
             browserIdleWaitingForManagerDecision = false;
             if (correct) {
                 finishBrowserIdle('employee-response');
+                showManagerIdleAnswerSuccess();
                 return;
             }
             browserIdlePhase = 'sleeping';
@@ -19824,6 +20148,7 @@ function shareFilmGameLink() {
                 promptedAt,
                 rawStartedAt: Number(event.startedAt),
                 managerRequestId: event.managerRequestId || null,
+                trigger: event.trigger || null,
                 lastHeartbeatAt: Date.now(),
                 saved: false,
                 startPromise: null
@@ -19833,7 +20158,8 @@ function shareFilmGameLink() {
                 '😴 دخلت في وضع النوم',
                 'انتهت مهلة الرد وبدأ احتساب مدة الخمول. جاري مزامنة الحالة...',
                 '',
-                true
+                true,
+                sleep.trigger
             );
             if (desktopIdleCountdownTimer) clearInterval(desktopIdleCountdownTimer);
             updateDesktopIdleElapsed(sleep);
@@ -19855,7 +20181,8 @@ function shareFilmGameLink() {
                         '😴 دخلت في وضع النوم',
                         'مدة الخمول تُحتسب الآن. لإنهاء التسجيل، اضغط «رجعت للشغل». حركة الماوس أو ضغطات المفاتيح وحدها لا تنهيه.',
                         '',
-                        true
+                        true,
+                        sleep.trigger
                     );
                     updateDesktopIdleElapsed(sleep);
                 }
@@ -19948,10 +20275,23 @@ function shareFilmGameLink() {
             browserIdleStartedAt = 0;
             browserIdleManagerRequestId = null;
             browserIdleResponseWindowMs = DESKTOP_IDLE_RESPONSE_WINDOW_MS;
+            browserIdlePromptTrigger = null;
             browserIdleWaitingForManagerDecision = false;
             activeManagerIdleRequestId = null;
             browserIdleLastActivityAt = Date.now();
         }
+
+        window.stopDesktopIdleFromManager = function(username) {
+            if (!currentUser || currentUser.role === 'admin' ||
+                currentUser.username !== username || !isActiveDesktopIdle(currentUser)) return false;
+            if (window.desktopIdle) {
+                hideDesktopIdleDialog();
+                window.desktopIdle.respond();
+                return true;
+            }
+            finishBrowserIdle('manager-stop');
+            return true;
+        };
 
         function stopBrowserIdle(reason) {
             if (browserIdlePhase === 'sleeping') {
@@ -19970,6 +20310,7 @@ function shareFilmGameLink() {
                 browserIdleStartedAt = 0;
                 browserIdleManagerRequestId = null;
                 browserIdleResponseWindowMs = DESKTOP_IDLE_RESPONSE_WINDOW_MS;
+                browserIdlePromptTrigger = null;
                 browserIdleWaitingForManagerDecision = false;
                 activeManagerIdleRequestId = null;
             }
@@ -20008,40 +20349,179 @@ function shareFilmGameLink() {
             }
         }
 
-        function handleRepeatedKeyInput(event) {
-            if (!event.repeat || typeof event.key !== 'string' ||
-                !/^\p{L}$/u.test(event.key) || !currentUser ||
-                currentUser.role === 'admin' || currentUser.isOnBreak || !db) {
-                repeatedKeyState = null;
-                return;
-            }
-
+        function triggerRepeatedInputPrompt() {
+            if (!currentUser || currentUser.role === 'admin' || currentUser.isOnBreak ||
+                !db || activeDesktopSleep || browserIdlePhase === 'sleeping' ||
+                browserIdlePhase === 'prompt') return false;
+            clearBrowserHeldKeyTimers();
             const now = Date.now();
-            const key = event.key.toLowerCase();
-            if (!repeatedKeyState || repeatedKeyState.key !== key ||
-                now - repeatedKeyState.startedAt > REPEATED_KEY_ALERT_WINDOW_MS) {
-                repeatedKeyState = { key, count: 1, startedAt: now };
-                return;
-            }
-            repeatedKeyState.count += 1;
-            if (repeatedKeyState.count < REPEATED_KEY_ALERT_THRESHOLD ||
-                now - lastRepeatedKeyAlertAt < 60000) return;
+            browserIdlePhase = 'prompt';
+            browserIdlePromptedAt = now;
+            browserIdleStartedAt = 0;
+            browserIdlePromptTrigger = 'repeated-input';
+            browserIdleResponseWindowMs = DESKTOP_IDLE_RESPONSE_WINDOW_MS;
+            browserIdleWaitingForManagerDecision = false;
+            setDesktopIdleDialog(
+                'الماوس نام ولا إنت؟ 😴',
+                'إنت صاحي؟ لو موجود، دوس «أيوه صاحي» خلال 40 ثانية.',
+                '',
+                false
+            );
+            return true;
+        }
 
-            lastRepeatedKeyAlertAt = now;
+        function publishRepeatedInputAlert(count) {
+            if (!currentUser || currentUser.role === 'admin' || !db ||
+                !Number.isInteger(count) || count <= 25 ||
+                Date.now() - lastRepeatedKeyAlertAt < 60000) return;
+
+            lastRepeatedKeyAlertAt = Date.now();
             const alertRef = db.ref(`users/${currentUser.username}/repeatedInputAlert`);
             alertRef.transaction(existing => {
                 const existingDetectedAt = Number(existing && existing.detectedAt);
                 if (existing && !existing.acknowledgedAt &&
                     Number.isFinite(existingDetectedAt) && getServerTime() - existingDetectedAt < 60000) return;
                 return {
-                    key,
-                    count: repeatedKeyState.count,
+                    count,
                     detectedAt: getServerTime(),
                     acknowledgedAt: null
                 };
             }).catch(error => {
-                console.error('تعذر إرسال تنبيه تكرار ضغطات المفتاح إلى المدير:', error);
+                console.error('تعذر إرسال تنبيه تكرار ضغطات لوحة المفاتيح إلى المدير:', error);
             });
+        }
+
+        function clearBrowserHeldKeyTimers() {
+            for (const timer of browserHeldKeyTimers.values()) clearTimeout(timer);
+            browserHeldKeyTimers.clear();
+        }
+
+        function startBrowserHeldKeyTimer(key) {
+            if (browserHeldKeyTimers.has(key)) return;
+            const isModifier = isBrowserModifierKey(key);
+            const timer = setTimeout(() => {
+                browserHeldKeyTimers.delete(key);
+                if (!currentUser || currentUser.role === 'admin' || currentUser.isOnBreak ||
+                    !db || activeDesktopSleep || browserIdlePhase === 'sleeping' ||
+                    isModifier && !browserHeldModifierKeys.has(key)) return;
+                if (triggerRepeatedInputPrompt()) {
+                    publishRepeatedInputAlert(REPEATED_KEY_ALERT_THRESHOLD);
+                }
+            }, HELD_KEY_ALERT_THRESHOLD_MS);
+            browserHeldKeyTimers.set(key, timer);
+        }
+
+        function handleBrowserKeyRelease(event) {
+            const key = event.code || event.key;
+            if (isBrowserModifierKey(key)) {
+                browserHeldModifierKeys.delete(key);
+            }
+            if (browserHeldKeyTimers.has(key)) {
+                clearTimeout(browserHeldKeyTimers.get(key));
+                browserHeldKeyTimers.delete(key);
+            }
+            if (browserHeldModifierKeys.size > 0) clearBrowserHeldModifierTimers();
+        }
+
+        function clearBrowserHeldModifierTimers() {
+            for (const [key, timer] of browserHeldKeyTimers) {
+                if (!isBrowserModifierKey(key)) continue;
+                clearTimeout(timer);
+                browserHeldKeyTimers.delete(key);
+            }
+        }
+
+        function isBrowserModifierKey(key) {
+            return /^(Alt|Control|Meta)(Left|Right)?$/.test(key);
+        }
+
+        function recordRepeatedInputCharacter(key, now) {
+            if (!repeatedKeyState || repeatedKeyState.key !== key ||
+                now - repeatedKeyState.startedAt > REPEATED_KEY_ALERT_WINDOW_MS) {
+                repeatedKeyState = { key, count: 1, startedAt: now };
+                return;
+            }
+            repeatedKeyState.count += 1;
+            if (repeatedKeyState.count < REPEATED_KEY_ALERT_THRESHOLD) return;
+
+            const detectedCount = repeatedKeyState.count;
+            repeatedKeyState = null;
+            if (triggerRepeatedInputPrompt()) {
+                publishRepeatedInputAlert(detectedCount);
+            }
+        }
+
+        function handleRepeatedKeyInput(event) {
+            if (!currentUser || currentUser.role === 'admin' || currentUser.isOnBreak || !db) {
+                repeatedKeyState = null;
+                lastRepeatedKeydown = null;
+                return;
+            }
+            if (event.isComposing || ['Process', 'Unidentified', 'Dead'].includes(event.key)) {
+                lastRepeatedKeydown = null;
+                return;
+            }
+            if (typeof event.key !== 'string') {
+                repeatedKeyState = null;
+                lastRepeatedKeydown = null;
+                return;
+            }
+            if (['Alt', 'Control', 'Meta'].includes(event.key)) {
+                const modifierKey = event.code || event.key;
+                browserHeldModifierKeys.add(modifierKey);
+                if (browserHeldModifierKeys.size > 1) {
+                    clearBrowserHeldModifierTimers();
+                    return;
+                }
+                startBrowserHeldKeyTimer(modifierKey);
+                return;
+            }
+            if (['Shift', 'CapsLock'].includes(event.key)) {
+                return;
+            }
+            if (event.ctrlKey || event.metaKey || event.altKey) {
+                clearBrowserHeldModifierTimers();
+                repeatedKeyState = null;
+                lastRepeatedKeydown = null;
+                return;
+            }
+            startBrowserHeldKeyTimer(event.code || event.key);
+
+            const now = Date.now();
+            const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+            lastRepeatedKeydown = { key, at: now };
+            recordRepeatedInputCharacter(key, now);
+        }
+
+        function handleRepeatedTextInput(event) {
+            if (!currentUser || currentUser.role === 'admin' || currentUser.isOnBreak || !db) return;
+            if (event.isComposing) return;
+            if (typeof event.data !== 'string' || !event.data) {
+                return;
+            }
+
+            const now = Date.now();
+            const characters = [...event.data.toLowerCase()];
+            if (characters.length !== 1) {
+                repeatedKeyState = null;
+                return;
+            }
+            if (characters[0] === '\n' || characters[0] === '\r') {
+                if (lastRepeatedKeydown && lastRepeatedKeydown.key === 'Enter' &&
+                    now - lastRepeatedKeydown.at < 100) return;
+                repeatedKeyState = null;
+                return;
+            }
+            if (lastRepeatedKeydown &&
+                lastRepeatedKeydown.key === characters[0] &&
+                now - lastRepeatedKeydown.at < 100) return;
+
+            const character = characters[0];
+            if ([...character].length !== 1 || character < ' ' || character === '\u007f') {
+                repeatedKeyState = null;
+                return;
+            }
+            recordRepeatedInputCharacter(character, now);
         }
 
         function monitorBrowserIdle() {
@@ -20057,7 +20537,7 @@ function shareFilmGameLink() {
                 browserIdleResponseWindowMs = DESKTOP_IDLE_RESPONSE_WINDOW_MS;
                 setDesktopIdleDialog(
                     'الماوس نام ولا إنت؟ 😴',
-                    'بقالك 3 دقايق من غير حركة. لو صاحي، دوس «أيوه صاحي» خلال دقيقة؛ حركة الماوس أو الكيبورد وحدها مش هتلغي التنبيه.',
+                    'بقالك 3 دقايق من غير حركة. لو صاحي، دوس «أيوه صاحي» خلال 40 ثانية؛ حركة الماوس أو الكيبورد وحدها مش هتلغي التنبيه.',
                     '',
                     false
                 );
@@ -20076,7 +20556,8 @@ function shareFilmGameLink() {
                         promptedAt: browserIdlePromptedAt,
                         startedAt: browserIdleStartedAt,
                         device: 'browser',
-                        managerRequestId: browserIdleManagerRequestId
+                        managerRequestId: browserIdleManagerRequestId,
+                        trigger: browserIdlePromptTrigger
                     });
                 }
             } else if (browserIdlePhase === 'sleeping' &&
@@ -20091,7 +20572,15 @@ function shareFilmGameLink() {
         }
 
         function initializeDesktopIdleMonitor() {
-            document.addEventListener('keydown', handleRepeatedKeyInput);
+            if (window.desktopIdle &&
+                typeof window.desktopIdle.onSuccessScreenDismiss === 'function') {
+                window.desktopIdle.onSuccessScreenDismiss(dismissManagerIdleSuccess);
+            }
+            if (!window.desktopIdle) {
+                document.addEventListener('keydown', handleRepeatedKeyInput);
+                document.addEventListener('keyup', handleBrowserKeyRelease);
+                document.addEventListener('input', handleRepeatedTextInput);
+            }
             ['pointermove', 'pointerdown', 'mousemove', 'keydown', 'mousedown', 'wheel', 'touchstart', 'click'].forEach(eventName => {
                 document.addEventListener(eventName, handleBrowserActivity, { passive: true });
             });
@@ -20109,6 +20598,21 @@ function shareFilmGameLink() {
                 return;
             }
 
+            window.desktopIdle.onRepeatedInput(event => {
+                if (!currentUser || currentUser.role === 'admin' ||
+                    currentUser.username !== event.username) return;
+                publishRepeatedInputAlert(event.count);
+            });
+            window.desktopIdle.onInputMonitorError(event => {
+                const statusBar = document.getElementById('desktopUpdateStatus');
+                if (!statusBar) return;
+                statusBar.textContent = event && event.message
+                    ? event.message
+                    : 'تعذر تفعيل مراقبة تكرار ضغطات لوحة المفاتيح أثناء وجود التطبيق بجانب الساعة.';
+                statusBar.style.display = 'block';
+                statusBar.style.borderColor = 'rgba(248,113,113,.65)';
+            });
+
             window.desktopIdle.onPrompt(event => {
                 if (!currentUser || currentUser.role === 'admin' ||
                     currentUser.username !== event.username || currentUser.isOnBreak) return;
@@ -20124,10 +20628,12 @@ function shareFilmGameLink() {
                     ? event.managerRequestId
                     : null;
                 setDesktopIdleDialog(
-                    event.source === 'manager' ? 'المدير بيسألك: أنت نايم؟ 😴' : 'إنت موجود؟',
+                    event.source === 'manager' ? 'المدير بيسألك: أنت نايم؟ 😴' : 'الماوس نام ولا إنت؟ 😴',
                     event.source === 'manager'
                         ? event.question || 'أجب خلال 40 ثانية؛ إذا لم يصل رد سيبدأ احتساب النوم.'
-                        : 'بقالك 3 دقايق من غير حركة. لو صاحي، دوس «أيوه صاحي» خلال دقيقة؛ حركة الماوس أو الكيبورد وحدها مش هتلغي التنبيه.',
+                        : event.source === 'repeated-input'
+                            ? 'إنت صاحي؟ لو موجود، دوس «أيوه صاحي» خلال 40 ثانية.'
+                            : 'بقالك 3 دقايق من غير حركة. لو صاحي، دوس «أيوه صاحي» خلال 40 ثانية؛ حركة الماوس أو الكيبورد وحدها مش هتلغي التنبيه.',
                     '',
                     false
                 );
@@ -20152,7 +20658,8 @@ function shareFilmGameLink() {
                                 username: event.username,
                                 promptedAt: event.promptedAt,
                                 startedAt: deadline,
-                                managerRequestId: event.managerRequestId || null
+                                managerRequestId: event.managerRequestId || null,
+                                trigger: event.source === 'repeated-input' ? 'repeated-input' : null
                             });
                             return;
                         }
