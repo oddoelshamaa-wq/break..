@@ -4,7 +4,7 @@
                                             <head>
                         <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">                        <!-- تم تحديث هذا السطر للسماح بعمل المكتبات -->
-            <meta http-equiv="Content-Security-Policy" content="default-src * data: blob: filesystem: about: ws: wss: 'unsafe-inline' 'unsafe-eval'; script-src * data: blob: 'unsafe-inline' 'unsafe-eval'; connect-src * data: blob: 'unsafe-inline'; img-src * data: blob: 'unsafe-inline'; frame-src * data: blob: ; style-src * data: blob: 'unsafe-inline'; font-src * data: blob: 'unsafe-inline'; media-src * blob: data:;">            <title>ELSHAMAA | إدارة البريك</title>
+            <meta http-equiv="Content-Security-Policy" content="default-src * data: blob: filesystem: about: ws: wss: 'unsafe-inline' 'unsafe-eval'; script-src * data: blob: 'unsafe-inline' 'unsafe-eval'; connect-src * data: blob: 'unsafe-inline'; img-src * data: blob: 'unsafe-inline'; frame-src * data: blob: ; style-src * data: blob: 'unsafe-inline'; font-src * data: blob: 'unsafe-inline'; media-src * blob: data: file:;">            <title>ELSHAMAA | إدارة البريك</title>
                     <!-- كود تحويل الموقع لتطبيق (PWA) -->
         <link rel="manifest" href="manifest.json">
                     <meta name="theme-color" content="#6366f1">
@@ -129,6 +129,13 @@
                                                     /* جداول */
                                                     .table-responsive { width: 100%; overflow-x: auto; border-radius: 20px; border: 1px solid var(--glass-border); margin-top: 15px; }
                                                     table { width: 100%; border-collapse: collapse; min-width: 900px; background: rgba(0,0,0,0.2); }
+                                                    .wave-call-panel { margin: 18px 0; padding: 18px; border: 1px solid rgba(45,212,191,.28); border-radius: 18px; background: linear-gradient(135deg,rgba(15,118,110,.12),rgba(15,23,42,.82)); }
+                                                    .wave-call-permission-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(230px,1fr)); gap: 10px; margin-top: 14px; }
+                                                    .wave-call-permission-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border: 1px solid rgba(148,163,184,.2); border-radius: 14px; background: rgba(15,23,42,.72); }
+                                                    .wave-call-permission-card small { display: block; color: #94a3b8; margin-top: 3px; }
+                                                    .wave-call-permission-card input { width: 18px; height: 18px; accent-color: #14b8a6; flex: 0 0 auto; }
+                                                    .wave-call-table td { vertical-align: middle; }
+                                                    .wave-call-action { margin: 3px; white-space: nowrap; }
                                                     th { background: rgba(255,255,255,0.05); color: var(--primary); padding: 15px; font-size: 0.85rem; }
                                                     td { padding: 12px; border-bottom: 1px solid var(--glass-border); text-align: center; font-size: 0.85rem; }
 
@@ -3838,7 +3845,26 @@ html, body {
                 <button onclick="switchAdminTab('cs-approval-history')" class="btn btn-primary btn-sm" style="background:#0f766e">
                     📜 سجل موافقات التحويل
                 </button>
+                <button onclick="switchAdminTab('wave-calls')" class="btn btn-primary btn-sm" style="background:#0f766e">
+                    📞 سجل رنين Wave
+                </button>
                                                     </div>
+
+                    <div id="tab-wave-calls" class="hidden wave-call-panel">
+                        <h3 style="margin-top:0; color:#5eead4;">📞 سجل نوافذ مكالمات Wave</h3>
+                        <p style="color:#cbd5e1;">بعد تفعيل الإذن يبدأ تسجيل نافذة المكالمة فور ظهورها مع مؤشر ظاهر، حتى يلتقط ضغط زر الرفض الأحمر قبل إغلاق النافذة. يُحفظ الفيديو أيضًا إذا انتهى الرنين القصير دون أن يتمكن التطبيق من رصد الزر، ويظهر السجل أن الرد أو الضغط لم يُرصد. بعد انتهاء المكالمة يُرفع الفيديو الصامت إلى Cloudinary ويظهر في سجل الموظف، مع حفظ نسخة محلية احتياطية على جهاز التسجيل.</p>
+                        <section class="wave-call-panel" style="margin-top:16px;">
+                            <h4 style="margin:0;color:#99f6e4;">صلاحية تسجيل الفيديو لموظفي خدمة العملاء</h4>
+                            <p style="margin:6px 0 0;color:#cbd5e1;">التسجيل متوقف افتراضيًا لموظفي ومساعدي خدمة العملاء. فعّل الإذن لكل موظف على حدة.</p>
+                            <div id="waveCallRecordingPermissions" class="wave-call-permission-grid"></div>
+                        </section>
+                        <div class="table-responsive">
+                            <table class="wave-call-table">
+                                <thead><tr><th>الموظف</th><th>وقت الظهور</th><th>المدة</th><th>النتيجة المرصودة</th><th>الفيديو / التنزيل / الحذف</th></tr></thead>
+                                <tbody id="adminWaveCallsBody"><tr><td colspan="4" style="text-align:center;color:#94a3b8;">لا توجد سجلات بعد.</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
 
                     <!-- قسم الجدول الأسبوعي للصلاة - للمشرف -->
                     
@@ -3983,7 +4009,7 @@ html, body {
                                                     <div id="tab-permissions" class="hidden">
                                                         <h3 style="color:#a855f7">🚪 طلبات الاستأذان والمغادرة</h3>
                                                         <div class="table-responsive">
-                                                            <table>
+                                                            <table class="wave-call-table">
                                                                 <thead>
                                                                     <tr>
                                                                         <th>الموظف</th>
@@ -4332,6 +4358,17 @@ html, body {
                                                     <div id="desktopIdleNotice" class="hidden" style="margin:0 0 16px; padding:12px 16px; border:1px solid rgba(251,191,36,.45); border-radius:14px; background:rgba(251,191,36,.08); color:#fde68a; font-weight:700;">
                                                         👀 المتابعة بعد 3 دقائق من عدم التفاعل مع الصفحة، وتتوقف أثناء البريك. في المتصفح تراقب هذه الصفحة فقط.
                                                     </div>
+                                                    <section style="margin:0 0 18px; padding:16px; border:1px solid rgba(45,212,191,.4); border-radius:18px; background:rgba(15,23,42,.8);">
+                                                        <h3 style="margin:0 0 8px; color:#5eead4;">📞 سجل نوافذ مكالمات Wave</h3>
+                                                        <p id="waveCallMonitorStatus" style="margin:0 0 12px; color:#cbd5e1;">يسجل تطبيق ELSHAMAA المكتبي الشاشة الرئيسية أثناء جلسة عمل الموظف، بصوت غير مسجل، في مقاطع كل منها 30 ثانية. يظهر مؤشر التسجيل طوال الوقت، وتتوقف المقاطع أثناء البريك أو بعد تسجيل الخروج. تُحفظ المقاطع محليًا أولًا ويمكن رفعها للسحابة من الزر أسفل السجل؛ تُحذف النسخة المحلية بعد نجاح رفعها لتوفير المساحة. حد التخزين المحلي 2 جيجابايت. السجل يعرض ما أمكن ملاحظته فقط؛ لا يمكنه قراءة سبب الإنهاء الداخلي من Wave إذا لم يظهر على الشاشة.</p>
+                                                        <div class="table-responsive">
+                                                            <table class="wave-call-table">
+                                                                <thead><tr><th>وقت الظهور</th><th>المدة</th><th>النتيجة المرصودة</th><th>الفيديو / التنزيل</th></tr></thead>
+                                                                <tbody id="employeeWaveCallsBody"><tr><td colspan="4" style="text-align:center;color:#94a3b8;">لا توجد سجلات بعد.</td></tr></tbody>
+                                                            </table>
+                                                        </div>
+                                                        <button id="uploadPendingWaveRecordingsButton" class="btn btn-success" type="button" onclick="uploadPendingWaveRecordings()" style="margin-top:12px;" disabled>رفع الفيديوهات المحفوظة محليًا</button>
+                                                    </section>
                                                     <details style="margin:0 0 18px; padding:14px 18px; border:1px solid var(--glass-border); border-radius:18px; background:var(--glass);">
                                                         <summary style="cursor:pointer; color:var(--primary); font-weight:900;">🎨 تخصيص ألوان صفحتي</summary>
                                                         <p style="margin:10px 0; color:var(--text-light); opacity:0.8;">اختار قالبًا جاهزًا أو غيّر ألوان الصفحة والساعة وخانات تسجيل المكالمة والصور وأزرار الموظف وسجلات المكالمات وسجل اليوم. تقدر كمان تغيّر ألوان نموذج البلاغ بشكل مستقل. ألوانك محفوظة لحسابك.</p>
@@ -5359,6 +5396,28 @@ html, body {
                         alert("❌ تعذر الاتصال بالسيرفر.. تأكد من النت أو إعدادات الحماية.");
                         return null;
                     }
+                }
+
+                async function uploadWaveRecordingToCloudinary(blob, callId) {
+                    if (!(blob instanceof Blob) || blob.size === 0) {
+                        throw new Error('ملف تسجيل مكالمة Wave فارغ أو غير صالح.');
+                    }
+
+                    const formData = new FormData();
+                    formData.append('file', blob, `wave-call-${callId}.webm`);
+                    formData.append('upload_preset', UPLOAD_PRESET);
+
+                    const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await response.json();
+                    if (!response.ok || typeof data.secure_url !== 'string') {
+                        throw new Error(data.error && data.error.message
+                            ? data.error.message
+                            : 'تعذر رفع فيديو مكالمة Wave إلى السحابة.');
+                    }
+                    return data.secure_url;
                 }
 
                                                 // 1. تعديل دالة فتح البروفايل لاستخدام النافذة الآمنة
@@ -8564,6 +8623,7 @@ html, body {
                                                         if (pending) { if (ring.paused) ring.play().catch(e=>{}); } else { ring.pause(); ring.currentTime = 0; }
                                                     }
                                                     allUsersData = newData;
+                                                    if (currentUser && currentUser.role === 'admin') renderAdminWaveCallEvents();
                                                     reassignUnavailableCsRequests();
                                                     renderAdminCsAvailability();
                                                     updateLoginUserOptions();
@@ -8574,6 +8634,7 @@ html, body {
                                                     if (currentUser) {
                                                         const updatedMe = allUsersData[currentUser.username];
                                                         if(updatedMe) { const r = currentUser.role; currentUser = updatedMe; currentUser.role = r; }
+                                                        if (currentUser.role !== 'admin') renderEmployeeWaveCallEvents();
                                                         if (currentUser.role !== 'admin') {
                                                             const idlePromptRequest = currentUser.idlePromptRequest;
                                                             const idleManagerStopRequest = currentUser.idleManagerStopRequest;
@@ -9105,7 +9166,7 @@ html, body {
 
                                                 function switchAdminTab(t) {
                         // أخفي كل التبويبات القديمة والجديدة
-                        const tabs = ['tab-monitor', 'tab-reports', 'tab-users', 'tab-groups', 'tab-overtime', 'tab-emergency', 'tab-meetings', 'tab-permissions'];
+                        const tabs = ['tab-monitor', 'tab-reports', 'tab-users', 'tab-groups', 'tab-overtime', 'tab-emergency', 'tab-meetings', 'tab-permissions', 'tab-wave-calls'];
 
                         tabs.forEach(id => {
                             const element = document.getElementById(id);
@@ -14259,7 +14320,7 @@ if (sohraBtn) {
                 }
         function switchAdminTab(t) {
         // قائمة بجميع معرفات التبويبات في لوحة المشرف
-        const tabs = ['tab-monitor', 'tab-reports', 'tab-users', 'tab-groups', 'tab-overtime', 'tab-emergency', 'tab-meetings', 'tab-permissions', 'tab-cs-reports', 'tab-cs-approval-history', 'tab-game-manager'];
+        const tabs = ['tab-monitor', 'tab-reports', 'tab-users', 'tab-groups', 'tab-overtime', 'tab-emergency', 'tab-meetings', 'tab-permissions', 'tab-cs-reports', 'tab-cs-approval-history', 'tab-game-manager', 'tab-wave-calls'];
         
         tabs.forEach(id => {
             const el = document.getElementById(id);
@@ -14279,6 +14340,7 @@ if (sohraBtn) {
             renderAdminCsAvailability();
         }
         if(t === 'cs-approval-history') renderAdminCsApprovalHistory();
+        if(t === 'wave-calls') renderAdminWaveCallEvents();
         if(t === 'groups') { updateMembersSelector(); renderGroupsTable(); }
         if(t === 'monitor') { populateQueueSelect(); renderPrayerQueue(); }
         
@@ -14478,6 +14540,14 @@ if (sohraBtn) {
                     document.getElementById('loginSection').classList.add('hidden'); 
                     document.getElementById('employeeSection').classList.remove('hidden'); 
                     loadEmployeeSoundVolume();
+                    const waveCallStatus = document.getElementById('waveCallMonitorStatus');
+                    if (waveCallStatus) {
+                        waveCallStatus.textContent = window.desktopIdle &&
+                            typeof window.desktopIdle.setWaveCallContext === 'function'
+                            ? 'في تطبيق سطح المكتب، تُسجّل الشاشة الرئيسية بصمت أثناء جلسة العمل بمؤشر ظاهر، وتُحفظ المقاطع محليًا لرفعها لاحقًا. يتوقف التسجيل أثناء البريك وبعد تسجيل الخروج.'
+                            : 'تسجيل الشاشة يحتاج تطبيق ELSHAMAA المكتبي؛ صفحة المتصفح وحدها لا تلتقط الشاشة.';
+                    }
+                    renderEmployeeWaveCallEvents();
                     const desktopIdleNotice = document.getElementById('desktopIdleNotice');
                     if (desktopIdleNotice) {
                         desktopIdleNotice.textContent = window.desktopIdle
@@ -19831,8 +19901,28 @@ function shareFilmGameLink() {
             const isAdmin = !currentUser || currentUser.role === 'admin';
             const isOnBreak = Boolean(currentUser && currentUser.isOnBreak);
             const enabled = Boolean(currentUser && !isAdmin && !isOnBreak);
+            const isCsEmployee = Boolean(currentUser && isCsCallAgent(currentUser));
+            const recordingEnabled = Boolean(currentUser &&
+                (!isCsEmployee || currentUser.waveCallRecordingAuthorized === true));
+            const waveStatus = document.getElementById('waveCallMonitorStatus');
+            if (waveStatus && isCsEmployee) {
+                waveStatus.textContent = recordingEnabled
+                    ? 'تم تفعيل تسجيل الشاشة لهذا الحساب من المشرف. يظهر مؤشر التسجيل طوال جلسة العمل؛ تُحفظ مقاطع الشاشة محليًا وتُرفع من الزر أسفل السجل.'
+                    : 'تسجيل الشاشة متوقف لهذا الحساب حتى يمنح المشرف الإذن. لن تُسجل مكالمات Wave لهذا الحساب.';
+            }
             const username = enabled ? currentUser.username : null;
             if (window.desktopIdle) {
+                if (typeof window.desktopIdle.setWaveCallContext === 'function') {
+                    window.desktopIdle.setWaveCallContext({
+                        username: currentUser ? currentUser.username : '',
+                        enabled: Boolean(currentUser && !isAdmin),
+                        recordingEnabled,
+                        screenRecordingEnabled: Boolean(
+                            currentUser && !isAdmin && !isOnBreak && recordingEnabled
+                        ),
+                        isAdmin
+                    });
+                }
                 window.desktopIdle.setContext({
                     username: username || '',
                     enabled,
@@ -19840,6 +19930,10 @@ function shareFilmGameLink() {
                     isOnBreak,
                     idleThresholdMs: DESKTOP_IDLE_THRESHOLD_MS,
                     responseWindowMs: DESKTOP_IDLE_RESPONSE_WINDOW_MS
+                });
+                reconcileWaveScreenRecording({
+                    username: currentUser ? currentUser.username : '',
+                    enabled: Boolean(currentUser && !isAdmin && !isOnBreak && recordingEnabled)
                 });
                 return;
             }
@@ -19850,6 +19944,911 @@ function shareFilmGameLink() {
                 stopBrowserIdle('context-changed');
                 browserIdleContext = { username, enabled };
                 browserIdleLastActivityAt = Date.now();
+            }
+        }
+
+        const WAVE_CALL_DELAY_THRESHOLD_MS = 10 * 1000;
+        const MAX_WAVE_VIDEO_RECORDING_MS = 2 * 60 * 1000;
+        const MAX_WAVE_VIDEO_RECORDING_BYTES = 90 * 1024 * 1024;
+        const WAVE_SCREEN_SEGMENT_DURATION_MS = 30 * 1000;
+        let activeWaveVideoCapture = null;
+        let waveRecordingUploadInProgress = false;
+        let activeWaveScreenRecording = null;
+        let waveScreenRecordingRetryAfter = 0;
+        let waveScreenRecordingRetryTimer = null;
+        const waveCaptureStartErrors = new Map();
+        const waveScreenMetadataQueueKey = username => `wave_screen_metadata_${username}`;
+
+        function rememberWaveCaptureStartError(callId, message) {
+            if (typeof callId !== 'string' || !callId) return;
+            waveCaptureStartErrors.set(callId, message);
+            if (waveCaptureStartErrors.size > 30) {
+                waveCaptureStartErrors.delete(waveCaptureStartErrors.keys().next().value);
+            }
+        }
+
+        function getPendingWaveScreenMetadata(username) {
+            try {
+                const pending = JSON.parse(localStorage.getItem(waveScreenMetadataQueueKey(username)) || '[]');
+                return Array.isArray(pending) ? pending : [];
+            } catch (error) {
+                console.error('تعذر قراءة قائمة مقاطع الشاشة التي تنتظر المزامنة:', error);
+                return [];
+            }
+        }
+
+        function savePendingWaveScreenMetadata(username, pending) {
+            try {
+                localStorage.setItem(waveScreenMetadataQueueKey(username), JSON.stringify(pending));
+            } catch (error) {
+                console.error('تعذر حفظ قائمة مقاطع الشاشة التي تنتظر المزامنة:', error);
+                const status = document.getElementById('waveCallMonitorStatus');
+                if (status) status.textContent = 'تم حفظ الفيديو محليًا، لكن تعذر حفظ بيانات مزامنته؛ لا تغلق التطبيق قبل استعادة الاتصال.';
+            }
+        }
+
+        async function publishPendingWaveScreenMetadata(username) {
+            if (!currentUser || currentUser.username !== username || !db) return;
+            const pending = getPendingWaveScreenMetadata(username);
+            const remaining = [];
+            for (const record of pending) {
+                try {
+                    await db.ref(`users/${username}/waveCallEvents/${record.recordingId}`).set(record);
+                    if (!currentUser.waveCallEvents) currentUser.waveCallEvents = {};
+                    currentUser.waveCallEvents[record.recordingId] = record;
+                } catch (error) {
+                    console.error(`تعذرت مزامنة بيانات مقطع الشاشة ${record.recordingId}:`, error);
+                    remaining.push(record);
+                }
+            }
+            savePendingWaveScreenMetadata(username, remaining);
+            if (currentUser && currentUser.username === username) renderEmployeeWaveCallEvents();
+        }
+
+        function reconcileWaveScreenRecording(context) {
+            const shouldRecord = Boolean(context && context.enabled && context.username &&
+                window.desktopIdle &&
+                typeof window.desktopIdle.getWaveScreenCaptureSource === 'function');
+            if (!shouldRecord) {
+                if (activeWaveScreenRecording) {
+                    stopWaveScreenRecording(activeWaveScreenRecording, 'توقف تسجيل الشاشة عند الخروج أو أثناء البريك.')
+                        .catch(error => console.error('تعذر إيقاف تسجيل الشاشة:', error));
+                }
+                return;
+            }
+            if (activeWaveScreenRecording &&
+                activeWaveScreenRecording.username === context.username) return;
+            if (activeWaveScreenRecording) {
+                const previousCapture = activeWaveScreenRecording;
+                stopWaveScreenRecording(previousCapture, 'تغير حساب الموظف.')
+                    .then(() => {
+                        if (currentUser && currentUser.username === context.username &&
+                            Date.now() >= waveScreenRecordingRetryAfter) {
+                            startWaveScreenRecording(context.username)
+                                .catch(error => console.error('تعذر بدء تسجيل الشاشة للحساب الجديد:', error));
+                        }
+                    })
+                    .catch(error => console.error('تعذر تبديل حساب تسجيل الشاشة:', error));
+                return;
+            }
+            if (Date.now() < waveScreenRecordingRetryAfter) return;
+            startWaveScreenRecording(context.username)
+                .catch(error => console.error('تعذر بدء تسجيل شاشة الموظف:', error));
+        }
+
+        function canRecordWaveScreenForCurrentUser(username) {
+            return Boolean(currentUser && currentUser.username === username &&
+                currentUser.role !== 'admin' && !currentUser.isOnBreak &&
+                (!isCsCallAgent(currentUser) || currentUser.waveCallRecordingAuthorized === true));
+        }
+
+        function scheduleWaveScreenRecordingRetry(username, delayMs) {
+            if (waveScreenRecordingRetryTimer) clearTimeout(waveScreenRecordingRetryTimer);
+            waveScreenRecordingRetryTimer = setTimeout(() => {
+                waveScreenRecordingRetryTimer = null;
+                if (!canRecordWaveScreenForCurrentUser(username)) return;
+                reconcileWaveScreenRecording({ username, enabled: true });
+            }, delayMs);
+        }
+
+        async function startWaveScreenRecording(username) {
+            if (activeWaveScreenRecording) return;
+            if (!navigator.mediaDevices ||
+                typeof navigator.mediaDevices.getUserMedia !== 'function' ||
+                typeof MediaRecorder === 'undefined') {
+                throw new Error('تسجيل شاشة الجهاز غير مدعوم في هذا الإصدار.');
+            }
+            const capture = {
+                username,
+                running: false,
+                stream: null,
+                recorder: null,
+                segmentTimer: null,
+                currentSegmentStopped: null,
+                pendingSaves: new Set()
+            };
+            activeWaveScreenRecording = capture;
+            try {
+                const source = await window.desktopIdle.getWaveScreenCaptureSource({ username });
+                if (activeWaveScreenRecording !== capture ||
+                    !canRecordWaveScreenForCurrentUser(username)) {
+                    if (activeWaveScreenRecording === capture) activeWaveScreenRecording = null;
+                    return;
+                }
+                capture.stream = await navigator.mediaDevices.getUserMedia({
+                    audio: false,
+                    video: {
+                        mandatory: {
+                            chromeMediaSource: 'desktop',
+                            chromeMediaSourceId: source.sourceId,
+                            maxWidth: 1920,
+                            maxHeight: 1080,
+                            maxFrameRate: 10
+                        }
+                    }
+                });
+                if (activeWaveScreenRecording !== capture ||
+                    !canRecordWaveScreenForCurrentUser(username)) {
+                    capture.stream.getTracks().forEach(track => track.stop());
+                    if (activeWaveScreenRecording === capture) activeWaveScreenRecording = null;
+                    return;
+                }
+                capture.running = true;
+                waveScreenRecordingRetryAfter = 0;
+                window.desktopIdle.setWaveScreenRecordingActive({ username, active: true });
+                const status = document.getElementById('waveCallMonitorStatus');
+                if (status) status.textContent = 'تسجيل الشاشة الرئيسية أثناء جلسة العمل. تُحفظ مقاطع محلية مدة كل منها 30 ثانية، ثم يمكنك رفعها للسحابة من الزر أدناه. يتوقف التسجيل عند تسجيل الخروج أو بدء البريك.';
+                publishPendingWaveScreenMetadata(username)
+                    .catch(error => console.error('تعذرت مزامنة مقاطع الشاشة السابقة:', error));
+                startWaveScreenSegment(capture);
+            } catch (error) {
+                if (capture.stream) capture.stream.getTracks().forEach(track => track.stop());
+                if (activeWaveScreenRecording === capture) activeWaveScreenRecording = null;
+                waveScreenRecordingRetryAfter = Date.now() + 30 * 1000;
+                window.desktopIdle.setWaveScreenRecordingActive({ username, active: false });
+                const status = document.getElementById('waveCallMonitorStatus');
+                if (status) status.textContent = `تعذر بدء تسجيل الشاشة: ${error.message || 'خطأ غير معروف'}`;
+                scheduleWaveScreenRecordingRetry(username, 30 * 1000);
+                throw error;
+            }
+        }
+
+        function startWaveScreenSegment(capture) {
+            if (!capture.running || activeWaveScreenRecording !== capture) return;
+            try {
+                const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp8')
+                    ? 'video/webm;codecs=vp8'
+                    : 'video/webm';
+                const recorder = new MediaRecorder(capture.stream, {
+                    mimeType,
+                    videoBitsPerSecond: 600000
+                });
+                const chunks = [];
+                const startedAt = Date.now();
+                recorder.addEventListener('dataavailable', event => {
+                    if (event.data && event.data.size > 0) chunks.push(event.data);
+                });
+                recorder.addEventListener('error', event => {
+                    const error = event.error || new Error('تسجيل الشاشة تعطل.');
+                    stopWaveScreenRecording(capture, `توقف تسجيل الشاشة: ${error.message}`)
+                        .then(() => scheduleWaveScreenRecordingRetry(capture.username, 30 * 1000))
+                        .catch(stopError => console.error('تعذر إنهاء تسجيل الشاشة:', stopError));
+                }, { once: true });
+                capture.recorder = recorder;
+                const segmentStopped = new Promise(resolve => {
+                    recorder.addEventListener('stop', () => {
+                        if (capture.segmentTimer) clearTimeout(capture.segmentTimer);
+                        capture.segmentTimer = null;
+                        const endedAt = Date.now();
+                        const blob = new Blob(chunks, { type: recorder.mimeType || mimeType });
+                        const savePromise = blob.size > 0
+                            ? saveWaveScreenSegment(capture, blob, startedAt, endedAt)
+                            : Promise.resolve();
+                        capture.pendingSaves.add(savePromise);
+                        savePromise.catch(error => {
+                            console.error('تعذر حفظ مقطع الشاشة محليًا:', error);
+                            waveScreenRecordingRetryAfter = Date.now() + 60 * 1000;
+                            stopWaveScreenRecording(capture, `توقف تسجيل الشاشة: ${error.message || 'تعذر حفظ المقطع.'}`)
+                                .then(() => {
+                                    if (!String(error.message || '').includes('امتلأت مساحة')) {
+                                        scheduleWaveScreenRecordingRetry(capture.username, 60 * 1000);
+                                    }
+                                })
+                                .catch(stopError => console.error('تعذر إيقاف التسجيل بعد فشل الحفظ:', stopError));
+                        }).finally(() => capture.pendingSaves.delete(savePromise));
+                        resolve(savePromise);
+                        if (capture.running && activeWaveScreenRecording === capture) {
+                            startWaveScreenSegment(capture);
+                        }
+                    }, { once: true });
+                });
+                capture.currentSegmentStopped = segmentStopped;
+                recorder.start();
+                capture.segmentTimer = setTimeout(() => {
+                    if (capture.running && recorder.state === 'recording') recorder.stop();
+                }, WAVE_SCREEN_SEGMENT_DURATION_MS);
+            } catch (error) {
+                stopWaveScreenRecording(capture, `توقف تسجيل الشاشة: ${error.message || 'تعذر بدء مقطع جديد.'}`)
+                    .then(() => scheduleWaveScreenRecordingRetry(capture.username, 30 * 1000))
+                    .catch(stopError => console.error('تعذر إيقاف تسجيل الشاشة:', stopError));
+            }
+        }
+
+        async function saveWaveScreenSegment(capture, blob, startedAt, endedAt) {
+            if (!blob || blob.size === 0 ||
+                blob.size > MAX_WAVE_VIDEO_RECORDING_BYTES) {
+                throw new Error('مقطع الشاشة فارغ أو يتجاوز الحد الأقصى (90 ميجابايت).');
+            }
+            const bytes = await blob.arrayBuffer();
+            const saved = await window.desktopIdle.saveWaveScreenSegment({
+                username: capture.username,
+                startedAt,
+                endedAt,
+                mimeType: blob.type || 'video/webm',
+                bytes
+            });
+            const record = {
+                startedAt,
+                endedAt,
+                durationMs: endedAt - startedAt,
+                reason: 'screen-recording-segment',
+                recordingType: 'screen-segment',
+                recordedAt: getServerTime(),
+                recordingId: saved.recordingId,
+                recordingSizeBytes: saved.sizeBytes,
+                recordingUrl: null,
+                recordingUploadPending: true
+            };
+            try {
+                await db.ref(`users/${capture.username}/waveCallEvents/${saved.recordingId}`).set(record);
+                if (currentUser && currentUser.username === capture.username) {
+                    if (!currentUser.waveCallEvents) currentUser.waveCallEvents = {};
+                    currentUser.waveCallEvents[saved.recordingId] = record;
+                    renderEmployeeWaveCallEvents();
+                }
+            } catch (error) {
+                console.error('تم حفظ مقطع الشاشة محليًا لكن تعذرت مزامنة سجله:', error);
+                const pending = getPendingWaveScreenMetadata(capture.username);
+                if (!pending.some(item => item.recordingId === saved.recordingId)) pending.push(record);
+                savePendingWaveScreenMetadata(capture.username, pending);
+                const status = document.getElementById('waveCallMonitorStatus');
+                if (status) status.textContent = 'تم حفظ مقطع الشاشة على الجهاز؛ تعذرت مزامنة بياناته للسجل. ستتم المحاولة لاحقًا.';
+            }
+            publishPendingWaveScreenMetadata(capture.username)
+                .catch(error => console.error('تعذرت مزامنة بيانات مقاطع الشاشة:', error));
+        }
+
+        async function stopWaveScreenRecording(capture, statusMessage) {
+            if (!capture || capture.stopping) return;
+            capture.stopping = true;
+            capture.running = false;
+            if (capture.segmentTimer) clearTimeout(capture.segmentTimer);
+            capture.segmentTimer = null;
+            if (capture.recorder && capture.recorder.state === 'recording') {
+                const stopped = capture.currentSegmentStopped;
+                capture.recorder.stop();
+                if (stopped) await stopped;
+            }
+            await Promise.allSettled([...capture.pendingSaves]);
+            if (capture.stream) capture.stream.getTracks().forEach(track => track.stop());
+            if (activeWaveScreenRecording === capture) activeWaveScreenRecording = null;
+            if (window.desktopIdle &&
+                typeof window.desktopIdle.setWaveScreenRecordingActive === 'function') {
+                window.desktopIdle.setWaveScreenRecordingActive({
+                    username: capture.username,
+                    active: false
+                });
+            }
+            const status = document.getElementById('waveCallMonitorStatus');
+            if (status && statusMessage) status.textContent = statusMessage;
+        }
+
+        function formatWaveCallTimestamp(timestamp) {
+            const date = new Date(Number(timestamp));
+            return Number.isFinite(date.getTime())
+                ? date.toLocaleString('ar-EG')
+                : 'وقت غير معروف';
+        }
+
+        function formatWaveCallDuration(durationMs) {
+            const milliseconds = Number(durationMs);
+            if (!Number.isFinite(milliseconds) || milliseconds < 0) return 'غير معروف';
+            const totalSeconds = Math.floor(milliseconds / 1000);
+            return `${Math.floor(totalSeconds / 60)}:${String(totalSeconds % 60).padStart(2, '0')}`;
+        }
+
+        function getWaveCloudRecordingUrl(recordingUrl) {
+            if (typeof recordingUrl !== 'string') return null;
+            try {
+                const url = new URL(recordingUrl);
+                if (url.protocol !== 'https:' || url.hostname !== 'res.cloudinary.com' ||
+                    !url.pathname.startsWith(`/${CLOUD_NAME}/video/upload/`)) return null;
+                return url;
+            } catch {
+                return null;
+            }
+        }
+
+        function getWaveCallObservation(event) {
+            if (event.reason === 'screen-recording-segment') return 'مقطع شاشة أثناء جلسة العمل؛ راجع الفيديو لمعرفة ما ظهر وقتها';
+            if (event.reason === 'employee-declined-call') return 'رفض الموظف المكالمة بالزر الأحمر';
+            if (event.reason === 'employee-ended-call-red-button') return 'أنهى الموظف المكالمة بالزر الأحمر';
+            if (event.reason === 'customer-ended') return 'انتهت المكالمة بعد الرد';
+            if (event.reason === 'unanswered-call-dropped') return 'لم يُرصد رد من الموظف خلال 30 ثانية؛ راجع مقطع الشاشة لتأكيد ما حدث';
+            if (event.reason === 'unanswered-call-too-short') return 'انتهى الرنين قبل 30 ثانية دون رصد رد؛ سبب الإنهاء غير محسوم، راجع مقطع الشاشة';
+            if (event.reason === 'monitoring-stopped') return 'توقف الرصد قبل اختفاء النافذة';
+            if (event.reason === 'shortcut-ctrl-shift-q') return 'أنهى الموظف المكالمة باختصار Ctrl+Shift+Q';
+            const durationMs = Number(event.durationMs);
+            if (!Number.isFinite(durationMs) || event.reason !== 'window-closed') {
+                return 'نتيجة الرصد غير مكتملة';
+            }
+            if (durationMs >= WAVE_CALL_DELAY_THRESHOLD_MS) {
+                return 'ظلت النافذة ظاهرة 10 ثوانٍ أو أكثر';
+            }
+            return 'اختفت النافذة قبل 10 ثوانٍ؛ سبب الاختفاء غير معروف';
+        }
+
+        function addWaveCallTableRow(tbody, values) {
+            const row = document.createElement('tr');
+            values.forEach(value => {
+                const cell = document.createElement('td');
+                cell.textContent = value;
+                row.appendChild(cell);
+            });
+            tbody.appendChild(row);
+            return row;
+        }
+
+        function appendWaveVideoControls(row, event, username, eventKey, isAdminView) {
+            const cell = document.createElement('td');
+            row.appendChild(cell);
+
+            const cloudRecordingUrl = getWaveCloudRecordingUrl(event.recordingUrl);
+            if (event.recordingId || cloudRecordingUrl) {
+                const playButton = document.createElement('button');
+                playButton.type = 'button';
+                playButton.className = 'btn btn-primary btn-sm';
+                playButton.classList.add('wave-call-action');
+                playButton.textContent = '▶ تشغيل الفيديو';
+                playButton.addEventListener('click', async () => {
+                    try {
+                        let videoUrl = cloudRecordingUrl && cloudRecordingUrl.href;
+                        if (!videoUrl) {
+                            if (!window.desktopIdle ||
+                                typeof window.desktopIdle.getWaveRecordingUrl !== 'function') {
+                                throw new Error('لا يوجد تسجيل سحابي؛ تشغيل النسخة المحلية متاح في تطبيق سطح المكتب فقط.');
+                            }
+                            videoUrl = await window.desktopIdle.getWaveRecordingUrl({
+                                username,
+                                recordingId: event.recordingId,
+                                recordingType: event.recordingType
+                            });
+                        }
+                        const video = document.createElement('video');
+                        video.controls = true;
+                        video.preload = 'metadata';
+                        video.style.cssText = 'display:block;width:min(420px,70vw);margin-top:8px;border-radius:10px;background:#000;';
+                        video.src = videoUrl;
+                        cell.querySelector('video')?.remove();
+                        cell.appendChild(video);
+                        await video.play();
+                    } catch (error) {
+                        console.error('تعذر تشغيل فيديو مكالمة Wave:', error);
+                        const message = document.createElement('span');
+                        message.style.cssText = 'display:block;color:#fca5a5;margin-top:6px;';
+                        message.textContent = 'تعذر تشغيل الفيديو. تحقق من اتصال الإنترنت أو افتح النسخة المحلية من تطبيق التسجيل.';
+                        cell.appendChild(message);
+                    }
+                });
+                cell.appendChild(playButton);
+                if (cloudRecordingUrl) {
+                    const downloadUrl = new URL(cloudRecordingUrl.href);
+                    downloadUrl.pathname = downloadUrl.pathname.replace('/video/upload/', '/video/upload/fl_attachment/');
+                    const downloadLink = document.createElement('a');
+                    downloadLink.className = 'btn btn-success btn-sm wave-call-action';
+                    downloadLink.href = downloadUrl.href;
+                    downloadLink.download = `wave-call-${event.startedAt}.webm`;
+                    downloadLink.textContent = '⬇ تنزيل';
+                    cell.appendChild(downloadLink);
+                } else if (event.recordingId) {
+                    const localOnly = document.createElement('small');
+                    localOnly.style.cssText = 'display:block;color:#fbbf24;margin-top:5px;';
+                    localOnly.textContent = 'محفوظ محليًا؛ جاهز للرفع لاحقًا';
+                    cell.appendChild(localOnly);
+                }
+            } else {
+                cell.textContent = event.recordingError
+                    ? `تعذر حفظ الفيديو: ${event.recordingError}`
+                    : 'لم يُحفظ فيديو';
+            }
+
+            if (isAdminView) {
+                const deleteButton = document.createElement('button');
+                deleteButton.type = 'button';
+                deleteButton.className = 'btn btn-danger btn-sm';
+                deleteButton.classList.add('wave-call-action');
+                deleteButton.style.marginInlineStart = '6px';
+                deleteButton.textContent = 'حذف';
+                deleteButton.addEventListener('click', () => deleteWaveCallEvent(username, eventKey, event));
+                cell.appendChild(deleteButton);
+            }
+        }
+
+        function renderEmployeeWaveCallEvents() {
+            const tbody = document.getElementById('employeeWaveCallsBody');
+            if (!tbody) return;
+            tbody.replaceChildren();
+
+            const allEvents = currentUser && currentUser.waveCallEvents
+                ? Object.entries(currentUser.waveCallEvents)
+                : [];
+            const pendingUploadCount = allEvents.filter(([, event]) =>
+                event && event.recordingId && !getWaveCloudRecordingUrl(event.recordingUrl)).length;
+            const uploadButton = document.getElementById('uploadPendingWaveRecordingsButton');
+            if (uploadButton) {
+                uploadButton.disabled = waveRecordingUploadInProgress || pendingUploadCount === 0 ||
+                    !window.desktopIdle ||
+                    typeof window.desktopIdle.getWaveRecordingData !== 'function';
+                uploadButton.textContent = waveRecordingUploadInProgress
+                    ? `جارٍ رفع الفيديوهات المحفوظة (${pendingUploadCount} متبقي)`
+                    : `رفع الفيديوهات المحفوظة محليًا (${pendingUploadCount})`;
+            }
+
+            const events = currentUser && currentUser.waveCallEvents
+                ? allEvents
+                    .filter(([, event]) => event && Number.isFinite(Number(event.startedAt)) &&
+                        Number.isFinite(Number(event.durationMs)))
+                    .sort(([, a], [, b]) => Number(b.startedAt) - Number(a.startedAt))
+                    .slice(0, 20)
+                : [];
+            if (events.length === 0) {
+                const row = addWaveCallTableRow(tbody, ['لا توجد سجلات بعد.', '', '', '']);
+                row.cells[0].colSpan = 4;
+                row.deleteCell(3);
+                row.deleteCell(2);
+                row.deleteCell(1);
+                return;
+            }
+
+            events.forEach(([eventKey, event]) => {
+                const row = addWaveCallTableRow(tbody, [
+                    formatWaveCallTimestamp(event.startedAt),
+                    formatWaveCallDuration(event.durationMs),
+                    getWaveCallObservation(event)
+                ]);
+                appendWaveVideoControls(row, event, currentUser.username, eventKey, false);
+            });
+        }
+
+        async function uploadPendingWaveRecordings() {
+            if (waveRecordingUploadInProgress || !currentUser || !db ||
+                !window.desktopIdle ||
+                typeof window.desktopIdle.getWaveRecordingData !== 'function') return;
+
+            const username = currentUser.username;
+            const pending = Object.entries(currentUser.waveCallEvents || {})
+                .filter(([, event]) => event && event.recordingId &&
+                    !getWaveCloudRecordingUrl(event.recordingUrl))
+                .sort(([, first], [, second]) => Number(first.startedAt) - Number(second.startedAt));
+            if (pending.length === 0) {
+                renderEmployeeWaveCallEvents();
+                return;
+            }
+
+            waveRecordingUploadInProgress = true;
+            renderEmployeeWaveCallEvents();
+            const status = document.getElementById('waveCallMonitorStatus');
+            let uploadedCount = 0;
+            let failedCount = 0;
+            try {
+                for (const [eventKey, event] of pending) {
+                    try {
+                        const data = await window.desktopIdle.getWaveRecordingData({
+                            username,
+                            recordingId: event.recordingId,
+                            recordingType: event.recordingType
+                        });
+                        const bytes = data instanceof ArrayBuffer
+                            ? new Uint8Array(data)
+                            : ArrayBuffer.isView(data)
+                                ? new Uint8Array(data.buffer, data.byteOffset, data.byteLength)
+                                : null;
+                        if (!bytes || bytes.byteLength === 0 ||
+                            bytes.byteLength > MAX_WAVE_VIDEO_RECORDING_BYTES) {
+                            throw new Error('ملف الفيديو المحلي فارغ أو يتجاوز الحد الأقصى (90 ميجابايت).');
+                        }
+                        const blob = new Blob([bytes], { type: 'video/webm' });
+                        const recordingUrl = await uploadWaveRecordingToCloudinary(
+                            blob,
+                            event.recordingId
+                        );
+                        await db.ref(`users/${username}/waveCallEvents/${eventKey}`).update({
+                            recordingUrl,
+                            recordingUploadFailed: false,
+                            recordingUploadPending: false
+                        });
+                        event.recordingUrl = recordingUrl;
+                        event.recordingUploadFailed = false;
+                        event.recordingUploadPending = false;
+                        if (event.recordingType === 'screen-segment' &&
+                            typeof window.desktopIdle.archiveWaveScreenRecording === 'function') {
+                            try {
+                                await window.desktopIdle.archiveWaveScreenRecording({
+                                    username,
+                                    recordingId: event.recordingId
+                                });
+                                event.localRecordingArchived = true;
+                            } catch (error) {
+                                console.error(`تم رفع المقطع ${event.recordingId} لكن تعذر حذف نسخته المحلية:`, error);
+                            }
+                        }
+                        uploadedCount++;
+                    } catch (error) {
+                        failedCount++;
+                        console.error(`تعذر رفع فيديو مكالمة Wave (${event.recordingId}):`, error);
+                    }
+                    if (status) {
+                        status.textContent = `تم رفع ${uploadedCount} من ${pending.length} فيديو؛ المتبقي ${pending.length - uploadedCount - failedCount}.`;
+                    }
+                    renderEmployeeWaveCallEvents();
+                }
+            } finally {
+                waveRecordingUploadInProgress = false;
+                renderEmployeeWaveCallEvents();
+            }
+
+            if (status) {
+                status.textContent = failedCount
+                    ? `اكتمل رفع ${uploadedCount} فيديو، وتعذر رفع ${failedCount}. بقيت النسخ المحلية محفوظة؛ تحقق من الإنترنت وإعدادات الرفع ثم أعد المحاولة.`
+                    : `تم رفع ${uploadedCount} فيديو إلى السجل؛ النسخ المحلية ما زالت محفوظة على هذا الجهاز.`;
+            }
+        }
+
+        function renderAdminWaveCallEvents() {
+            const tbody = document.getElementById('adminWaveCallsBody');
+            if (!tbody) return;
+            renderWaveRecordingPermissions();
+            tbody.replaceChildren();
+
+            const events = [];
+            Object.entries(allUsersData || {}).forEach(([username, user]) => {
+                if (!user || MANAGERS.includes(username) || !user.waveCallEvents) return;
+                Object.entries(user.waveCallEvents).forEach(([eventKey, event]) => {
+                    if (!event || !Number.isFinite(Number(event.startedAt)) ||
+                        !Number.isFinite(Number(event.durationMs))) return;
+                    events.push({ username, user, eventKey, event });
+                });
+            });
+            events.sort((a, b) => Number(b.event.startedAt) - Number(a.event.startedAt));
+
+            if (events.length === 0) {
+                const row = addWaveCallTableRow(tbody, ['لا توجد سجلات بعد.', '', '', '', '']);
+                row.cells[0].colSpan = 5;
+                row.deleteCell(4);
+                row.deleteCell(3);
+                row.deleteCell(2);
+                row.deleteCell(1);
+                return;
+            }
+            events.slice(0, 200).forEach(({ username, user, eventKey, event }) => {
+                const row = addWaveCallTableRow(tbody, [
+                    user.realName || username,
+                    formatWaveCallTimestamp(event.startedAt),
+                    formatWaveCallDuration(event.durationMs),
+                    getWaveCallObservation(event)
+                ]);
+                appendWaveVideoControls(row, event, username, eventKey, true);
+            });
+        }
+
+        function renderWaveRecordingPermissions() {
+            const container = document.getElementById('waveCallRecordingPermissions');
+            if (!container) return;
+            container.replaceChildren();
+
+            if (!currentUser || currentUser.role !== 'admin' || !MANAGERS.includes(currentUser.username)) {
+                return;
+            }
+
+            const csUsers = Object.entries(allUsersData || {})
+                .filter(([username, user]) => user && !MANAGERS.includes(username) &&
+                    user.role !== 'admin' && isCsCallAgent(user))
+                .sort(([, first], [, second]) =>
+                    String(first.realName || '').localeCompare(String(second.realName || ''), 'ar'));
+            if (csUsers.length === 0) {
+                const empty = document.createElement('p');
+                empty.style.cssText = 'grid-column:1/-1;margin:0;color:#94a3b8;';
+                empty.textContent = 'لا يوجد موظفو خدمة عملاء حاليًا.';
+                container.appendChild(empty);
+                return;
+            }
+
+            csUsers.forEach(([username, user]) => {
+                const card = document.createElement('label');
+                card.className = 'wave-call-permission-card';
+                const identity = document.createElement('span');
+                identity.textContent = user.realName || username;
+                const state = document.createElement('small');
+                state.textContent = user.waveCallRecordingAuthorized === true
+                    ? 'التسجيل مسموح'
+                    : 'التسجيل متوقف';
+                identity.appendChild(state);
+
+                const permission = document.createElement('input');
+                permission.type = 'checkbox';
+                permission.checked = user.waveCallRecordingAuthorized === true;
+                permission.setAttribute('aria-label', `السماح بتسجيل فيديو Wave لـ${user.realName || username}`);
+                permission.addEventListener('change', async () => {
+                    const authorized = permission.checked;
+                    permission.disabled = true;
+                    state.textContent = 'جارٍ حفظ الإذن...';
+                    try {
+                        await db.ref(`users/${username}`).update({
+                            waveCallRecordingAuthorized: authorized
+                        });
+                        if (!allUsersData[username]) allUsersData[username] = {};
+                        allUsersData[username].waveCallRecordingAuthorized = authorized;
+                        if (currentUser && currentUser.username === username) {
+                            currentUser.waveCallRecordingAuthorized = authorized;
+                            syncDesktopIdleContext();
+                        }
+                        state.textContent = authorized ? 'التسجيل مسموح' : 'التسجيل متوقف';
+                    } catch (error) {
+                        console.error('تعذر تحديث صلاحية تسجيل Wave للموظف:', error);
+                        permission.checked = !authorized;
+                        state.textContent = 'تعذر الحفظ؛ حاول مرة أخرى';
+                        alert(`تعذر تحديث صلاحية التسجيل: ${error.message || 'خطأ غير معروف'}`);
+                    } finally {
+                        permission.disabled = false;
+                    }
+                });
+
+                card.append(identity, permission);
+                container.appendChild(card);
+            });
+        }
+
+        async function startWaveVideoCapture(event) {
+            if (!event) return;
+            if (!currentUser || currentUser.username !== event.username ||
+                currentUser.role === 'admin' || !window.desktopIdle ||
+                typeof window.desktopIdle.saveWaveRecording !== 'function') {
+                rememberWaveCaptureStartError(
+                    event.callId,
+                    'لم يكن حساب الموظف جاهزًا لبدء التسجيل عند وصول تنبيه Wave.'
+                );
+                return;
+            }
+            if (activeWaveVideoCapture) {
+                console.warn('تم تجاهل بدء تسجيل Wave جديد قبل إنهاء التسجيل السابق.');
+                rememberWaveCaptureStartError(
+                    event.callId,
+                    'كان تسجيل مكالمة أخرى قيد البدء؛ لم يبدأ تسجيل هذه المكالمة.'
+                );
+                return;
+            }
+
+            const capture = {
+                callId: event.callId,
+                username: event.username,
+                startedAt: Number(event.startedAt),
+                sourceId: event.sourceId,
+                maxDurationMs: Math.min(Number(event.maxDurationMs) || MAX_WAVE_VIDEO_RECORDING_MS,
+                    MAX_WAVE_VIDEO_RECORDING_MS),
+                chunks: [],
+                stream: null,
+                recorder: null,
+                starting: true,
+                ended: false,
+                resolveStarted: null,
+                limitReached: false,
+                stopped: null,
+                limitTimer: null
+            };
+            activeWaveVideoCapture = capture;
+            try {
+                if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function' ||
+                    typeof MediaRecorder === 'undefined' || !capture.sourceId ||
+                    !Number.isFinite(capture.startedAt)) {
+                    throw new Error('تسجيل نافذة Wave غير مدعوم في هذا الإصدار من التطبيق.');
+                }
+
+                capture.stream = await navigator.mediaDevices.getUserMedia({
+                    audio: false,
+                    video: {
+                        mandatory: {
+                            chromeMediaSource: 'desktop',
+                            chromeMediaSourceId: capture.sourceId,
+                            maxWidth: 1280,
+                            maxHeight: 720,
+                            maxFrameRate: 10
+                        }
+                    }
+                });
+                if (!currentUser || currentUser.username !== capture.username) {
+                    capture.stream.getTracks().forEach(track => track.stop());
+                    capture.starting = false;
+                    if (capture.resolveStarted) capture.resolveStarted();
+                    return;
+                }
+
+                const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp8')
+                    ? 'video/webm;codecs=vp8'
+                    : 'video/webm';
+                capture.recorder = new MediaRecorder(capture.stream, {
+                    mimeType,
+                    videoBitsPerSecond: 400000
+                });
+                capture.stopped = new Promise((resolve, reject) => {
+                    capture.recorder.addEventListener('dataavailable', dataEvent => {
+                        if (dataEvent.data && dataEvent.data.size > 0) capture.chunks.push(dataEvent.data);
+                    });
+                    capture.recorder.addEventListener('error', recorderError => {
+                        reject(recorderError.error || new Error('تعذر تسجيل فيديو نافذة Wave.'));
+                    }, { once: true });
+                    capture.recorder.addEventListener('stop', () => {
+                        resolve(new Blob(capture.chunks, { type: capture.recorder.mimeType || mimeType }));
+                    }, { once: true });
+                });
+                capture.stopped.catch(() => {});
+                capture.recorder.start(1000);
+                capture.starting = false;
+                if (capture.resolveStarted) capture.resolveStarted();
+                const status = document.getElementById('waveCallMonitorStatus');
+                if (status) status.textContent = 'يُسجّل فيديو صامت لنافذة الرنين. المؤشر الأحمر الظاهر أعلى الشاشة يظل معروضًا طوال التسجيل.';
+                capture.limitTimer = setTimeout(() => {
+                    capture.limitReached = true;
+                    if (capture.recorder.state === 'recording') capture.recorder.stop();
+                    capture.stream.getTracks().forEach(track => track.stop());
+                    if (window.desktopIdle &&
+                        typeof window.desktopIdle.updateWaveRecordingIndicator === 'function') {
+                        window.desktopIdle.updateWaveRecordingIndicator('انتهى حد التسجيل (دقيقتان)');
+                    }
+                }, capture.maxDurationMs);
+            } catch (error) {
+                console.error('تعذر بدء تسجيل فيديو نافذة Wave:', error);
+                capture.error = error && error.message
+                    ? error.message.slice(0, 240)
+                    : 'تعذر بدء التقاط الفيديو.';
+                rememberWaveCaptureStartError(event.callId, capture.error);
+                if (capture.stream) capture.stream.getTracks().forEach(track => track.stop());
+                capture.starting = false;
+                if (capture.resolveStarted) capture.resolveStarted();
+                const status = document.getElementById('waveCallMonitorStatus');
+                if (status) status.textContent = `تعذر تسجيل فيديو الرنين: ${capture.error}`;
+            }
+        }
+
+        async function saveWaveCallEvent(event) {
+            if (!event || typeof event.username !== 'string' || event.username.length > 100 || !db) {
+                console.warn('تم تجاهل سجل نافذة Wave لعدم صلاحية بيانات الموظف.');
+                return;
+            }
+            const startedAt = Number(event.startedAt);
+            const endedAt = Number(event.endedAt);
+            if (!Number.isFinite(startedAt) || !Number.isFinite(endedAt) || endedAt < startedAt ||
+                ![
+                    'window-closed',
+                    'monitoring-stopped',
+                    'shortcut-ctrl-shift-q',
+                    'employee-declined-call',
+                    'employee-ended-call-red-button',
+                    'customer-ended',
+                    'unanswered-call-dropped',
+                    'unanswered-call-too-short'
+                ].includes(event.reason)) {
+                console.error('تم تجاهل سجل نافذة Wave ببيانات غير صالحة.');
+                return;
+            }
+
+            let recording = null;
+            let recordingUrl = null;
+            let recordingError = null;
+            const capture = activeWaveVideoCapture;
+            if (capture && capture.callId === event.callId) {
+                activeWaveVideoCapture = null;
+                capture.ended = true;
+                if (capture.limitTimer) clearTimeout(capture.limitTimer);
+                try {
+                    if (capture.starting) {
+                        await new Promise(resolve => { capture.resolveStarted = resolve; });
+                    }
+                    let blob = null;
+                    if (capture.recorder && capture.stopped) {
+                        if (capture.recorder.state === 'recording') capture.recorder.stop();
+                        blob = await capture.stopped;
+                    }
+                    if (capture.stream) capture.stream.getTracks().forEach(track => track.stop());
+                    if (blob && blob.size > 0) {
+                        if (blob.size > MAX_WAVE_VIDEO_RECORDING_BYTES) {
+                            throw new Error('حجم الفيديو تجاوز الحد المسموح وهو 90 ميجابايت.');
+                        }
+                        const bytes = await blob.arrayBuffer();
+                        recording = await window.desktopIdle.saveWaveRecording({
+                            callId: event.callId,
+                            username: event.username,
+                            startedAt,
+                            endedAt,
+                            mimeType: blob.type || 'video/webm',
+                            bytes
+                        });
+                    } else {
+                        recordingError = capture.error || 'لم يصل أي إطار فيديو من نافذة Wave.';
+                    }
+                } catch (error) {
+                    recordingError = error && error.message
+                        ? error.message.slice(0, 240)
+                        : 'تعذر حفظ ملف الفيديو على هذا الجهاز.';
+                    console.error('تعذر حفظ فيديو مكالمة Wave محليًا:', error);
+                } finally {
+                    if (capture.stream) capture.stream.getTracks().forEach(track => track.stop());
+                    await window.desktopIdle.finishWaveRecording({ callId: event.callId })
+                        .catch(error => console.error('تعذر إنهاء تسجيل Wave:', error));
+                }
+            } else if (window.desktopIdle &&
+                typeof window.desktopIdle.finishWaveRecording === 'function') {
+                await window.desktopIdle.finishWaveRecording({ callId: event.callId })
+                    .catch(error => console.error('تعذر إنهاء تسجيل Wave:', error));
+            }
+            if (!recording && !recordingError) {
+                recordingError = capture && capture.error
+                    ? capture.error
+                    : waveCaptureStartErrors.get(event.callId) ||
+                        'لم يصل إشعار بدء التسجيل إلى صفحة التطبيق.';
+            }
+            waveCaptureStartErrors.delete(event.callId);
+
+            const record = {
+                startedAt,
+                endedAt,
+                durationMs: endedAt - startedAt,
+                reason: event.reason,
+                recordedAt: getServerTime(),
+                recordingId: recording && recording.recordingId || null,
+                recordingSizeBytes: recording && recording.sizeBytes || null,
+                recordingUrl,
+                recordingError,
+                recordingUploadFailed: false,
+                recordingUploadPending: Boolean(recording),
+                recordingLimitReached: Boolean(capture && capture.limitReached)
+            };
+            try {
+                await db.ref(`users/${event.username}/waveCallEvents`).push(record);
+                const status = document.getElementById('waveCallMonitorStatus');
+                if (status) status.textContent = recording
+                    ? 'تم حفظ الفيديو على هذا الجهاز. استخدم زر «رفع الفيديوهات المحفوظة محليًا» لرفعه للسحابة وقتما يناسبك.'
+                    : `لم يُحفظ فيديو لهذه المكالمة: ${recordingError}`;
+                if (currentUser && currentUser.username === event.username) renderEmployeeWaveCallEvents();
+            } catch (error) {
+                console.error('تعذر حفظ سجل نافذة Wave:', error);
+                const status = document.getElementById('waveCallMonitorStatus');
+                if (status) status.textContent = 'تعذر حفظ سجل الرنين. تحقق من اتصال الإنترنت وصلاحيات قاعدة البيانات.';
+            }
+        }
+
+        async function deleteWaveCallEvent(username, eventKey, event) {
+            if (!currentUser || currentUser.role !== 'admin' ||
+                !MANAGERS.includes(currentUser.username) || !eventKey) {
+                alert('حذف تسجيلات المكالمات متاح للمشرفين المعتمدين فقط.');
+                return;
+            }
+            if (!confirm('هل تريد حذف سجل المكالمة؟ ستظل نسخة Cloudinary السحابية موجودة.')) return;
+
+            try {
+                if (event.recordingId && window.desktopIdle &&
+                    typeof window.desktopIdle.deleteWaveRecording === 'function') {
+                    await window.desktopIdle.deleteWaveRecording({
+                        username,
+                        recordingId: event.recordingId,
+                        recordingType: event.recordingType
+                    });
+                }
+                await db.ref(`users/${username}/waveCallEvents/${eventKey}`).remove();
+                renderAdminWaveCallEvents();
+                alert('تم حذف سجل المكالمة والنسخة المحلية المتاحة. لم تُحذف نسخة Cloudinary السحابية.');
+            } catch (error) {
+                console.error('تعذر حذف سجل مكالمة Wave:', error);
+                alert(`تعذر حذف سجل المكالمة: ${error.message || 'خطأ غير معروف'}`);
             }
         }
 
@@ -20598,11 +21597,41 @@ function shareFilmGameLink() {
                 return;
             }
 
+            if (typeof window.desktopIdle.onWaveCallStarted === 'function') {
+                window.desktopIdle.onWaveCallStarted(startWaveVideoCapture);
+            }
             window.desktopIdle.onRepeatedInput(event => {
                 if (!currentUser || currentUser.role === 'admin' ||
                     currentUser.username !== event.username) return;
                 publishRepeatedInputAlert(event.count);
             });
+            if (typeof window.desktopIdle.onWaveCallEnded === 'function') {
+                window.desktopIdle.onWaveCallEnded(saveWaveCallEvent);
+            }
+            if (typeof window.desktopIdle.onWaveMonitorError === 'function') {
+                window.desktopIdle.onWaveMonitorError(event => {
+                    console.error('تعذر اكتشاف نافذة Wave:', event && event.message);
+                    const status = document.getElementById('waveCallMonitorStatus');
+                    if (status) status.textContent = event && event.message
+                        ? `${event.message} لا يتم تسجيل صورة أو صوت.`
+                        : 'تعذر اكتشاف نافذة Wave على هذا الجهاز.';
+                    if (event && typeof event.message === 'string' &&
+                        event.message.includes('مؤشر تسجيل الشاشة') &&
+                        activeWaveScreenRecording) {
+                        stopWaveScreenRecording(
+                            activeWaveScreenRecording,
+                            'توقف التسجيل لأن مؤشر تسجيل الشاشة لم يظهر.'
+                        ).catch(error => console.error('تعذر إيقاف تسجيل الشاشة دون مؤشر:', error));
+                    }
+                });
+            }
+            if (typeof window.desktopIdle.onWaveMonitorStatus === 'function') {
+                window.desktopIdle.onWaveMonitorStatus(event => {
+                    if (!event || typeof event.message !== 'string') return;
+                    const status = document.getElementById('waveCallMonitorStatus');
+                    if (status) status.textContent = event.message;
+                });
+            }
             window.desktopIdle.onInputMonitorError(event => {
                 const statusBar = document.getElementById('desktopUpdateStatus');
                 if (!statusBar) return;
