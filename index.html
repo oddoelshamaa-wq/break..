@@ -4174,6 +4174,7 @@ html, body {
                                                     <th id="headerFilePass" style="color:var(--accent)">قفل الملف</th>
                                                     <th>المدة</th>
                                                     <th>اللقب/الدلع</th>
+                                                    <th>حالة الدخول</th>
                                                     <th>إجراء</th>
                                                 </tr>
                                             </thead><tbody id="usersManagementBody"></tbody></table></div>
@@ -8563,6 +8564,27 @@ html, body {
                                                 db.ref('users').on('value', (snap) => {
                                                     const previousUsersData = allUsersData;
                                                     const newData = snap.val() || {};
+                                                    const signedInUser = currentUser && newData[currentUser.username];
+                                                    if (isLoaded && currentUser && currentUser.role !== 'admin' &&
+                                                        signedInUser && signedInUser.accountEnabled === false) {
+                                                        const disabledUsername = currentUser.username;
+                                                        const updates = { state: 'offline' };
+                                                        if (getDeviceType() === 'desktop') updates.pcSessionId = null;
+                                                        currentUser = null;
+                                                        localStorage.removeItem('break_sys_user');
+                                                        localStorage.removeItem('active_pc_session_id');
+                                                        sessionStorage.removeItem('systemActive');
+                                                        sessionStorage.removeItem('systemActiveDay');
+                                                        db.ref(`users/${disabledUsername}`).update(updates).then(() => {
+                                                            alert('تم تعطيل حسابك من قبل المشرف. لن تتمكن من استخدام النظام حتى إعادة تفعيله.');
+                                                            location.reload();
+                                                        }).catch(error => {
+                                                            console.error('تعذر إنهاء جلسة الموظف بعد تعطيل الحساب:', error);
+                                                            alert('تم تعطيل حسابك، لكن تعذر تحديث حالة الجلسة. سيتم تسجيل خروجك الآن.');
+                                                            location.reload();
+                                                        });
+                                                        return;
+                                                    }
                                                     if (currentUser && currentUser.role === 'admin' && isLoaded) {
                                                         const requestTypes = ['emRequest', 'meetingRequest', 'otRequest', 'permRequest'];
                                                         const hasNewEmployeeRequest = Object.keys(newData).some(un => {
@@ -8842,6 +8864,12 @@ html, body {
     }
             function checkSavedSession() { 
                 const s = localStorage.getItem('break_sys_user'); 
+                if (s && allUsersData[s] && allUsersData[s].accountEnabled === false) {
+                    localStorage.removeItem('break_sys_user');
+                    localStorage.removeItem('active_pc_session_id');
+                    alert('حسابك معطّل من قبل المشرف. لن تتمكن من تسجيل الدخول حتى إعادة تفعيله.');
+                    return;
+                }
                 if (s && allUsersData[s]) { 
                     currentUser = allUsersData[s]; 
                     currentUser.role = MANAGERS.includes(s) ? 'admin' : 'employee'; 
@@ -8861,6 +8889,11 @@ html, body {
         function attemptLogin(username) { 
             const u = username.trim().toLowerCase();
             const p = document.getElementById('loginPass').value.trim(); 
+
+            if (allUsersData[u] && allUsersData[u].accountEnabled === false && !MANAGERS.includes(u)) {
+                alert('حسابك معطّل من قبل المشرف. لن تتمكن من تسجيل الدخول حتى إعادة تفعيله.');
+                return;
+            }
             
             if (allUsersData[u] && allUsersData[u].password === p) { 
                 saveRememberedLoginAfterAuthentication(u, p);
@@ -11168,6 +11201,11 @@ if (sohraBtn) {
                                                         // إذا لم يكن محمود: نعرض نص فارغ '' حتى لا يتم رسم الخلية وتخرب التنسيق
                                                         const passCell = isMahmoud ? `<td>${u.password}</td>` : '';
                                                         const lockCell = isMahmoud ? `<td style="font-family:monospace;">${filePassDisplay}</td>` : '';
+                                                        const isAccountEnabled = u.accountEnabled !== false;
+                                                        const accountStatus = isAccountEnabled
+                                                            ? '<span style="color:var(--success);font-weight:bold;">مفعّل</span>'
+                                                            : '<span style="color:var(--danger);font-weight:bold;">معطّل</span>';
+                                                        const accountToggle = `<button onclick="toggleEmployeeAccount('${encodeURIComponent(u.username)}')" class="btn ${isAccountEnabled ? 'btn-danger' : 'btn-success'} btn-sm">${isAccountEnabled ? '⛔ تعطيل الدخول' : '✅ تفعيل الدخول'}</button>`;
 
                                                         // اللقب
                                                         const funTitle = u.funTitle ? `<span style="color:#ffd700">${u.funTitle}</span>` : '---';
@@ -11181,7 +11219,9 @@ if (sohraBtn) {
 
                                                             <td>${u.allowance}د</td>
                                                             <td>${funTitle}</td>
+                                                            <td>${accountStatus}</td>
                                                             <td>
+                                                                ${accountToggle}
                                                                 <button onclick="openUserProfile('${u.username}')" class="btn btn-dark btn-sm" title="الملف">📂</button>
                                                                 <button onclick="editUser('${u.username}')" class="btn btn-warning btn-sm">✎</button>
                                                                 <button onclick="deleteUser('${u.username}')" class="btn btn-danger btn-sm">🗑</button>
@@ -11190,6 +11230,46 @@ if (sohraBtn) {
                                                         </tr>`;
                                                     });
                                                 }
+
+                                                window.toggleEmployeeAccount = async function(encodedUsername) {
+                                                    if (!currentUser || !MANAGERS.includes(currentUser.username)) {
+                                                        alert('إدارة حالة دخول الموظفين متاحة للمشرفين فقط.');
+                                                        return;
+                                                    }
+
+                                                    let username;
+                                                    try {
+                                                        username = decodeURIComponent(encodedUsername);
+                                                    } catch (error) {
+                                                        alert('تعذر تحديد حساب الموظف.');
+                                                        return;
+                                                    }
+
+                                                    if (MANAGERS.includes(username)) {
+                                                        alert('لا يمكن تغيير حالة دخول حسابات المشرفين من هنا.');
+                                                        return;
+                                                    }
+
+                                                    const employee = allUsersData[username];
+                                                    if (!employee) {
+                                                        alert('حساب الموظف غير موجود أو لم يتم تحميله.');
+                                                        return;
+                                                    }
+
+                                                    const enableAccount = employee.accountEnabled === false;
+                                                    const action = enableAccount ? 'تفعيل' : 'تعطيل';
+                                                    if (!confirm(`هل تريد ${action} دخول الموظف ${employee.realName || username}؟`)) return;
+
+                                                    try {
+                                                        await db.ref(`users/${username}/accountEnabled`).set(enableAccount);
+                                                        alert(enableAccount
+                                                            ? 'تم تفعيل حساب الموظف، ويمكنه تسجيل الدخول الآن.'
+                                                            : 'تم تعطيل حساب الموظف ولن يتمكن من تسجيل الدخول.');
+                                                    } catch (error) {
+                                                        console.error('تعذر تحديث حالة دخول الموظف:', error);
+                                                        alert(`تعذر ${action} حساب الموظف: ${error.message}`);
+                                                    }
+                                                };
 
                                                 window.toggleCsAgentAvailability = async function(username, makeAvailable) {
                                                     if (!currentUser) {
@@ -11341,6 +11421,7 @@ if (sohraBtn) {
                         ...data, 
                         username: un, 
                         role: 'employee', 
+                        accountEnabled: true,
                         isCSAvailable: false,
                         usedSeconds: 0, 
                         prayerSeconds: 0, 
@@ -15036,6 +15117,7 @@ const isSohra = document.getElementById('isSohraBreak').checked;
                         ...userData,
                         username: un,
                         role: 'employee',
+                        accountEnabled: true,
                         usedSeconds: 0,
                         prayerSeconds: 0,
                         meetingSeconds: 0,
@@ -17244,6 +17326,11 @@ const isSohra = document.getElementById('isSohraBreak').checked;
         ? document.getElementById('loginManagerUser').value
         : document.getElementById('loginUser').value).trim().toLowerCase();
     const p = document.getElementById('loginPass').value.trim();
+
+    if (allUsersData[u] && allUsersData[u].accountEnabled === false && !MANAGERS.includes(u)) {
+        alert('حسابك معطّل من قبل المشرف. لن تتمكن من تسجيل الدخول حتى إعادة تفعيله.');
+        return;
+    }
 
     if (allUsersData[u] && MANAGERS.includes(u) === isManagerLogin && allUsersData[u].password === p) {
         attemptLogin(u);
