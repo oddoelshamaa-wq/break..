@@ -24,8 +24,6 @@
                                                 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
                                                 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
                                                 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-                                                <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
-                                                <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
                                                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 
@@ -55,7 +53,7 @@
                                                     }
 
                                                     /* خلفية Aura متحركة */
-                                                    .aura { position: fixed; width: 600px; height: 600px; border-radius: 50%; filter: blur(120px); z-index: -1; opacity: 0.15; animation: move 20s infinite alternate; }
+                                                    .aura { display: none; }
                                                     .aura-1 { background: var(--primary); top: -200px; left: -200px; }
                                                     .aura-2 { background: var(--accent); bottom: -200px; right: -200px; animation-delay: -10s; }
                                                     @keyframes move { from { transform: translate(0,0); } to { transform: translate(100px, 100px); } }
@@ -68,7 +66,7 @@
                                                     .وضع-التنبيه { animation: oxidation-glow 0.8s infinite !important; }
 
                                                     .container { 
-                                                        max-width: 1200px; margin: auto; background: var(--glass); backdrop-filter: blur(30px);
+                                                        max-width: 1200px; margin: auto; background: color-mix(in srgb, var(--surface-color) 92%, transparent);
                                                         border-radius: 35px; border: 1px solid var(--glass-border); padding: 30px;
                                                         box-shadow: 0 25px 50px rgba(0,0,0,0.5);
                                                     }
@@ -570,7 +568,6 @@
                                                         border-radius: 22px;
                                                         border: 2px solid color-mix(in srgb, var(--clock-color) 75%, transparent);
                                                         box-shadow: 0 0 25px color-mix(in srgb, var(--clock-color) 55%, transparent), inset 0 0 12px color-mix(in srgb, var(--clock-color) 24%, transparent);
-                                                        backdrop-filter: blur(10px);
                                                     }
 
                                                     .employee-clock-time {
@@ -584,7 +581,11 @@
 
                                                     #broadcastOverlay {
                                                         position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95);
-                                                        z-index: 10000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(20px);
+                                                        z-index: 10000; display: none; align-items: center; justify-content: center;
+                                                    }
+                                                    [style*="backdrop-filter"] {
+                                                        backdrop-filter: none !important;
+                                                        -webkit-backdrop-filter: none !important;
                                                     }
                                                     .broadcast-content {
                                                         background: #000; border: 4px solid var(--danger); padding: 40px; border-radius: 40px;
@@ -3852,7 +3853,7 @@ html, body {
 
                     <div id="tab-wave-calls" class="hidden wave-call-panel">
                         <h3 style="margin-top:0; color:#5eead4;">📞 سجل نوافذ مكالمات Wave</h3>
-                        <p style="color:#cbd5e1;">بعد تفعيل الإذن يبدأ التقاط الشاشة عند ظهور مكالمة Wave مع مؤشر ظاهر. يُحفظ الفيديو إذا رفض الموظف المكالمة، أو استمر الرنين دون رد 20 ثانية، أو أنهى الموظف المكالمة بعد الرد. إذا أنهى العميل المكالمة فلا يُحفظ فيديو. تُحفظ المقاطع على جهاز الموظف أولًا، ثم يرفعها الموظف يدويًا من سجل مكالماته.</p>
+                        <p style="color:#cbd5e1;">بعد تفعيل الإذن يبدأ التقاط الشاشة عند ظهور مكالمة Wave. يُحفظ الفيديو عند رفض الموظف للمكالمة، أو انتهائها قبل الرد (سواء أنهى العميل الاتصال أو انتهى الرنين سريعًا)، أو استمرار الرنين دون رد 10 ثوانٍ، أو انتهاء المكالمة بعد الرد. تُحفظ المقاطع على جهاز الموظف أولًا، ثم يرفعها الموظف يدويًا من سجل مكالماته.</p>
                         <section class="wave-call-panel" style="margin-top:16px;">
                             <h4 style="margin:0;color:#99f6e4;">صلاحية تسجيل الفيديو لموظفي خدمة العملاء</h4>
                             <p style="margin:6px 0 0;color:#cbd5e1;">التسجيل متوقف افتراضيًا لموظفي ومساعدي خدمة العملاء. فعّل الإذن لكل موظف على حدة.</p>
@@ -4467,7 +4468,7 @@ html, body {
                         <h3 style="margin:0 0 8px; color:#5eead4;">📞 تسجيلات مكالمات Wave</h3>
                         <button type="button" class="btn btn-dark btn-sm" onclick="toggleEmployeeWaveCallsPanel(false)" aria-label="إغلاق تسجيلات المكالمات">✖ إغلاق</button>
                     </div>
-                    <p id="waveCallMonitorStatus" style="margin:0 0 12px; color:#cbd5e1;">يبدأ تطبيق سطح المكتب التقاط الشاشة فقط بعد التعرّف على نافذة رنين Wave التي يظهر فيها زرا الرد الأخضر والإلغاء الأحمر. يُحفظ الفيديو إذا ألغى الموظف المكالمة، أو أنهى المكالمة بالزر الأحمر أو Ctrl+Shift+Q، أو استمر الرنين دون رد 20 ثانية. تُحفظ الفيديوهات محليًا أولًا ويمكن رفعها للسحابة يدويًا من الزر أدناه.</p>
+                    <p id="waveCallMonitorStatus" style="margin:0 0 12px; color:#cbd5e1;">يبدأ تطبيق سطح المكتب التقاط الشاشة فقط بعد التعرّف على نافذة رنين Wave التي يظهر فيها زرا الرد الأخضر والإلغاء الأحمر. تُحفظ المكالمة بعد تأكيد اختفاء نافذتها، ولا تُعتبر الضغطة وحدها إلغاءً. كما يُحفظ التسجيل عند استخدام Ctrl+Shift+Q أو استمرار الرنين دون رد 10 ثوانٍ. تُحفظ الفيديوهات محليًا أولًا ويمكن رفعها للسحابة يدويًا من الزر أدناه.</p>
                     <div class="table-responsive">
                         <table class="wave-call-table">
                             <thead><tr><th>وقت الظهور</th><th>المدة</th><th>النتيجة المرصودة</th><th>الفيديو / التنزيل</th></tr></thead>
@@ -9344,12 +9345,14 @@ html, body {
 
                         if (currentUser) {
                             if (currentUser.role === 'admin') {
-                                // 1. تحديث الساعة والتاريخ في لوحة المشرف
-                                if(document.getElementById('adminServerTime')) document.getElementById('adminServerTime').innerText = timeStr;
-                                if(document.getElementById('adminServerDate')) document.getElementById('adminServerDate').innerText = dateStr;
+                                if (document.visibilityState === 'visible') {
+                                    // 1. تحديث الساعة والتاريخ في لوحة المشرف
+                                    if(document.getElementById('adminServerTime')) document.getElementById('adminServerTime').innerText = timeStr;
+                                    if(document.getElementById('adminServerDate')) document.getElementById('adminServerDate').innerText = dateStr;
 
-                                // 2. تحديث عدادات الجدول (البريك المتبقي) لحظياً
-                                updateMonitorValuesOnly();
+                                    // 2. تحديث عدادات الجدول (البريك المتبقي) لحظياً
+                                    updateMonitorValuesOnly();
+                                }
 
                                 // 3. 🚀 الفحص التلقائي لتوزيع رصيد الصلاة (قبل الظهر بـ 10 دقائق)
                                 checkAutoPrayerDistribution();
@@ -9377,12 +9380,11 @@ html, body {
                                         }
                                     } else {
                                         // إذا أغلقت الإدارة نافذة الصلاة، يثبت العداد على الوقت الحالي (Paused)
-                                        db.ref('settings/turnTimer/pausedElapsed').once('value', (snap) => {
-                                            const pausedElapsed = snap.val() || 0;
-                                            const remainingWhenPaused = 600 - pausedElapsed;
+                                        if (turnTimerPausedElapsed !== null) {
+                                            const remainingWhenPaused = 600 - turnTimerPausedElapsed;
                                             queueTimerEl.innerText = formatTime(remainingWhenPaused > 0 ? remainingWhenPaused : 0);
                                             queueTimerEl.style.color = "#ff4444"; // اللون الأحمر للتنبيه بالتوقف
-                                        });
+                                        }
                                     }
                                 }
                             } else {
@@ -9403,7 +9405,7 @@ html, body {
                             }
                         }
                     } catch (e) { console.error(e); }
-                }, 1000); // تحديث كل ثانية واحدة
+                }, 2000); // تحديث واجهة المؤقت كل ثانيتين
             }
             function renderMonitorTable() {
         const tbody = document.getElementById('monitorBody');
@@ -9411,8 +9413,6 @@ html, body {
         
         const search = document.getElementById('monitorSearch');
         const searchVal = search ? search.value.toLowerCase() : '';
-
-        tbody.innerHTML = '';
 
         // عدادات للحالة العامة في الأعلى
         let actB = 0, actP = 0, onlineCount = 0, sleepingCount = 0;
@@ -9434,6 +9434,7 @@ html, body {
             return (a.realName || a.username).localeCompare(b.realName || b.username);
         });
 
+        let rowsHtml = '';
         usersList.forEach(u => {
             const isOnline = u.state === 'online';
             if (isOnline) onlineCount++;
@@ -9556,7 +9557,7 @@ html, body {
             const alertClass = (u.isOnBreak && u.breakType==='بريك عام' && rem < 300 && rem > 0) ? 'وضع-التنبيه' : '';
 
             // بناء الصف مع الـ IDs المطلوبة للتحديث التلقائي
-            tbody.innerHTML += `
+            rowsHtml += `
                 <tr class="${alertClass}" style="${isOnline ? '' : 'opacity:0.7;'}">
                     <td style="text-align:right;">
                         <div style="display:flex; align-items:center; gap:8px;">
@@ -9585,6 +9586,8 @@ html, body {
                     <td><div style="display:flex; flex-direction:column; gap:4px; align-items:center;">${sleepCheckButton}${ctrl}</div></td>
                 </tr>`;
         });
+
+        tbody.innerHTML = rowsHtml;
 
         // تحديث شريط العدادات العلوي للإحصائيات
         const statusDisplay = document.getElementById('statusCountersDisplay');
@@ -12524,6 +12527,7 @@ if (sohraBtn) {
                 /* --- نظام مواقيت الصلاة: نسخة الإنقاذ السريع --- */
                 var prayerTimesData = null;
                 var prayerInterval = null;
+                var activePrayerRowId = null;
 
                 async function fetchPrayerTimes() {
                     const nameEl = document.getElementById('nextPrayerName');
@@ -12617,24 +12621,33 @@ if (sohraBtn) {
                         const mins = Math.floor((diffMs % 3600000) / 60000);
                         const secs = Math.floor((diffMs % 60000) / 1000);
 
-                        document.getElementById('nextPrayerCount').innerText = 
-                            `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-                        document.getElementById('nextPrayerName').innerText = `المتبقي على صلاة ${arNames[nextIndex]}`;
+                        const countdownText = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                        const countdownEl = document.getElementById('nextPrayerCount');
+                        if (countdownEl && countdownEl.textContent !== countdownText) {
+                            countdownEl.textContent = countdownText;
+                        }
 
-                        // === الجزء المسؤول عن "التنوير" ===
-                        // حذف التميز من كل الصلوات أولاً
-                        document.querySelectorAll('.prayer-item').forEach(li => li.classList.remove('next-prayer-highlight'));
-                        
-                        // إضافة التميز (التنوير) للصلاة التي عليها الدور فقط
-                        const activeRow = document.getElementById(`prayer-row-${pNames[nextIndex]}`);
-                        if (activeRow) {
-                            activeRow.classList.add('next-prayer-highlight');
+                        const prayerNameText = `المتبقي على صلاة ${arNames[nextIndex]}`;
+                        const prayerNameEl = document.getElementById('nextPrayerName');
+                        if (prayerNameEl && prayerNameEl.textContent !== prayerNameText) {
+                            prayerNameEl.textContent = prayerNameText;
+                        }
+
+                        const nextPrayerRowId = `prayer-row-${pNames[nextIndex]}`;
+                        if (activePrayerRowId !== nextPrayerRowId) {
+                            const previousRow = activePrayerRowId && document.getElementById(activePrayerRowId);
+                            if (previousRow) previousRow.classList.remove('next-prayer-highlight');
+
+                            const activeRow = document.getElementById(nextPrayerRowId);
+                            if (activeRow) {
+                                activeRow.classList.add('next-prayer-highlight');
+                                activePrayerRowId = nextPrayerRowId;
+                            } else {
+                                activePrayerRowId = null;
+                            }
                         }
                     }, 1000);
                 }
-
-                // تشغيل النظام فور تحميل الصفحة
-                document.addEventListener('DOMContentLoaded', fetchPrayerTimes);
 
                 // دالة رسم القائمة
                 function renderPrayerList() {
@@ -12665,7 +12678,7 @@ if (sohraBtn) {
                     if (prayerInterval) clearInterval(prayerInterval);
 
                     prayerInterval = setInterval(() => {
-                        if (!prayerTimesData) return;
+                        if (!prayerTimesData || document.visibilityState !== 'visible') return;
 
                         const now = new Date();
                         const pNames = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
@@ -12702,18 +12715,30 @@ if (sohraBtn) {
                         const mins = Math.floor((diffMs % 3600000) / 60000);
                         const secs = Math.floor((diffMs % 60000) / 1000);
 
-                        document.getElementById('nextPrayerCount').innerText = 
-                            `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-                        document.getElementById('nextPrayerName').innerText = `المتبقي على صلاة ${arNames[nextIndex]}`;
+                        const countdownText = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                        const countdownEl = document.getElementById('nextPrayerCount');
+                        if (countdownEl && countdownEl.textContent !== countdownText) {
+                            countdownEl.textContent = countdownText;
+                        }
 
-                        // === الجزء المسؤول عن "التنوير" ===
-                        // حذف التميز من كل الصلوات أولاً
-                        document.querySelectorAll('.prayer-item').forEach(li => li.classList.remove('next-prayer-highlight'));
-                        
-                        // إضافة التميز (التنوير) للصلاة التي عليها الدور فقط
-                        const activeRow = document.getElementById(`prayer-row-${pNames[nextIndex]}`);
-                        if (activeRow) {
-                            activeRow.classList.add('next-prayer-highlight');
+                        const prayerNameText = `المتبقي على صلاة ${arNames[nextIndex]}`;
+                        const prayerNameEl = document.getElementById('nextPrayerName');
+                        if (prayerNameEl && prayerNameEl.textContent !== prayerNameText) {
+                            prayerNameEl.textContent = prayerNameText;
+                        }
+
+                        const nextPrayerRowId = `prayer-row-${pNames[nextIndex]}`;
+                        if (activePrayerRowId !== nextPrayerRowId) {
+                            const previousRow = activePrayerRowId && document.getElementById(activePrayerRowId);
+                            if (previousRow) previousRow.classList.remove('next-prayer-highlight');
+
+                            const activeRow = document.getElementById(nextPrayerRowId);
+                            if (activeRow) {
+                                activeRow.classList.add('next-prayer-highlight');
+                                activePrayerRowId = nextPrayerRowId;
+                            } else {
+                                activePrayerRowId = null;
+                            }
                         }
                     }, 1000);
                 }
@@ -12724,8 +12749,6 @@ if (sohraBtn) {
                             widget.classList.toggle('active');
                             btn.classList.toggle('active');
                         }
-
-                        window.addEventListener('load', fetchPrayerTimes);
 
                     // دالة لفتح الأرشيف وجلب البيانات
                     function openSecretArchive() {
@@ -13763,11 +13786,55 @@ if (sohraBtn) {
                         XLSX.writeFile(workbook, `Report_${startDateVal}.xlsx`);
                     }
 
+                let excelExportLibrariesPromise = null;
+
+                function loadExternalScript(src) {
+                    return new Promise((resolve, reject) => {
+                        const script = document.createElement('script');
+                        script.src = src;
+                        script.onload = resolve;
+                        script.onerror = () => reject(new Error(`تعذر تحميل المكتبة: ${src}`));
+                        document.head.appendChild(script);
+                    });
+                }
+
+                async function ensureExcelExportLibraries() {
+                    if (window.ExcelJS && typeof window.saveAs === 'function') return;
+
+                    if (!excelExportLibrariesPromise) {
+                        excelExportLibrariesPromise = Promise.all([
+                            window.ExcelJS
+                                ? Promise.resolve()
+                                : loadExternalScript('https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js'),
+                            typeof window.saveAs === 'function'
+                                ? Promise.resolve()
+                                : loadExternalScript('https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js')
+                        ]).catch(error => {
+                            excelExportLibrariesPromise = null;
+                            throw error;
+                        });
+                    }
+
+                    await excelExportLibrariesPromise;
+                    if (!window.ExcelJS || typeof window.saveAs !== 'function') {
+                        excelExportLibrariesPromise = null;
+                        throw new Error('لم يتم تحميل مكتبات تصدير Excel المطلوبة.');
+                    }
+                }
+
                 async function exportProfessionalExcel() {
                     const startDateVal = document.getElementById('filterStartDate').value;
                     const endDateVal = document.getElementById('filterEndDate').value;
 
                     if (!startDateVal || !endDateVal) return alert("📅 حدد التاريخ الأول يا مدير!");
+
+                    try {
+                        await ensureExcelExportLibraries();
+                    } catch (error) {
+                        console.error('تعذر تحميل مكتبات تصدير Excel:', error);
+                        alert('تعذر تحميل أدوات تصدير Excel. تحقق من اتصال الإنترنت وحاول مرة أخرى.');
+                        return;
+                    }
 
                     const workbook = new ExcelJS.Workbook();
                     const worksheet = workbook.addWorksheet('تقرير الأداء الشامل', {
@@ -14874,7 +14941,7 @@ if (sohraBtn) {
                     });
                 });
             }
-                        window.addEventListener('DOMContentLoaded', fetchPrayerTimes);
+                document.addEventListener('DOMContentLoaded', fetchPrayerTimes);
                         
                 // دالة حساب المسافة بين نقطتين بالمتر (Haversine Formula)
                 function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -15634,10 +15701,15 @@ const isSohra = document.getElementById('isSohraBreak').checked;
             // ==========================================
 
             let turnTimerStartTime = 0; // متغير عالمي لحفظ وقت بداية الدور
+            let turnTimerPausedElapsed = null;
 
             // 1. مستمع لجلب وقت بداية العداد من Firebase
             db.ref('settings/turnTimer/startTime').on('value', (snap) => {
                 turnTimerStartTime = snap.val() || 0;
+            });
+            db.ref('settings/turnTimer/pausedElapsed').on('value', (snap) => {
+                turnTimerPausedElapsed = Number(snap.val()) || 0;
+                watchPrayerTurnTimer();
             });
 
             // 2. الدالة الرئيسية لتحديث العداد في الشاشة
@@ -15680,11 +15752,10 @@ const isSohra = document.getElementById('isSohraBreak').checked;
                             }
                         } else {
                             // لو الإدارة قفلت وقت الصلاة، العداد يثبت على الوقت المحفوظ
-                            db.ref('settings/turnTimer/pausedElapsed').once('value', (snap) => {
-                                const pausedSec = snap.val() || 0;
-                                display.innerText = formatTime(Math.max(0, 600 - pausedSec));
+                            if (turnTimerPausedElapsed !== null) {
+                                display.innerText = formatTime(Math.max(0, 600 - turnTimerPausedElapsed));
                                 display.style.color = "#aaa"; // لون رمادي للدلالة على التوقف
-                            });
+                            }
                         }
                     }
                 } else {
@@ -19999,6 +20070,7 @@ function shareFilmGameLink() {
             const isOnBreak = Boolean(currentUser && currentUser.isOnBreak);
             const enabled = Boolean(currentUser && !isAdmin && !isOnBreak);
             const isCsEmployee = Boolean(currentUser && isCsCallAgent(currentUser));
+            const waveEnabled = enabled;
             const recordingEnabled = Boolean(currentUser &&
                 (!isCsEmployee || currentUser.waveCallRecordingAuthorized === true));
             const waveStatus = document.getElementById('waveCallMonitorStatus');
@@ -20012,11 +20084,9 @@ function shareFilmGameLink() {
                 if (typeof window.desktopIdle.setWaveCallContext === 'function') {
                     window.desktopIdle.setWaveCallContext({
                         username: currentUser ? currentUser.username : '',
-                        enabled,
+                        enabled: waveEnabled,
                         recordingEnabled,
-                        screenRecordingEnabled: Boolean(
-                            enabled && recordingEnabled
-                        ),
+                        screenRecordingEnabled: recordingEnabled,
                         isAdmin
                     });
                 }
@@ -20443,13 +20513,16 @@ function shareFilmGameLink() {
 
         function getWaveCallObservation(event) {
             if (event.reason === 'screen-recording-segment') return 'مقطع شاشة أثناء جلسة العمل؛ راجع الفيديو لمعرفة ما ظهر وقتها';
-            if (event.reason === 'employee-declined-call') return 'رفض الموظف المكالمة بالزر الأحمر';
+            if (event.reason === 'employee-declined-call') return 'ألغى الموظف المكالمة قبل الرد';
             if (event.reason === 'employee-ended-call-red-button') return 'أنهى الموظف المكالمة بالزر الأحمر';
+            if (event.reason === 'ring-over-10-seconds') return 'استمر رنين المكالمة 10 ثوانٍ أو أكثر؛ راجع فيديو الشاشة';
             if (event.reason === 'ring-over-20-seconds') return 'استمر رنين المكالمة 20 ثانية أو أكثر؛ راجع فيديو الشاشة';
             if (event.reason === 'ring-over-30-seconds') return 'استمر رنين المكالمة 30 ثانية أو أكثر؛ راجع فيديو الشاشة';
             if (event.reason === 'customer-ended') return 'انتهت المكالمة بعد الرد';
-            if (event.reason === 'unanswered-call-dropped') return 'لم يُرصد رد من الموظف خلال 20 ثانية؛ راجع مقطع الشاشة لتأكيد ما حدث';
-            if (event.reason === 'unanswered-call-too-short') return 'انتهى الرنين دون رد قبل 20 ثانية؛ لم يُحفظ فيديو';
+            if (event.reason === 'call-disconnected') return 'تم رصد الرد وظهور نافذة المكالمة؛ انتهى رصد Wave';
+            if (event.reason === 'call-window-disappeared-after-click') return 'اختفت نافذة المكالمة بعد ضغطة داخلها؛ راجع الفيديو لمعرفة ما حدث';
+            if (event.reason === 'unanswered-call-dropped') return 'لم يُرصد رد من الموظف خلال 10 ثوانٍ؛ راجع مقطع الشاشة لتأكيد ما حدث';
+            if (event.reason === 'unanswered-call-too-short') return 'اختفت نافذة الرنين قبل مرور 10 ثوانٍ؛ لا يمكن تحديد من أنهى المكالمة، راجع فيديو الشاشة';
             if (event.reason === 'monitoring-stopped') return 'توقف الرصد قبل اختفاء النافذة';
             if (event.reason === 'shortcut-ctrl-shift-q') return 'أنهى الموظف المكالمة باختصار Ctrl+Shift+Q';
             const durationMs = Number(event.durationMs);
@@ -21023,7 +21096,9 @@ function shareFilmGameLink() {
                         mandatory: {
                             chromeMediaSource: 'desktop',
                             chromeMediaSourceId: screenSource.sourceId,
-                            maxFrameRate: 10
+                            maxWidth: 1280,
+                            maxHeight: 720,
+                            maxFrameRate: 5
                         }
                     }
                 });
@@ -21039,7 +21114,7 @@ function shareFilmGameLink() {
                     : 'video/webm';
                 capture.recorder = new MediaRecorder(capture.stream, {
                     mimeType,
-                    videoBitsPerSecond: 600000
+                    videoBitsPerSecond: 350000
                 });
                 capture.stopped = new Promise((resolve, reject) => {
                     capture.recorder.addEventListener('dataavailable', dataEvent => {
@@ -21057,7 +21132,7 @@ function shareFilmGameLink() {
                 capture.starting = false;
                 if (capture.resolveStarted) capture.resolveStarted();
                 const status = document.getElementById('waveCallMonitorStatus');
-                if (status) status.textContent = 'يُسجّل الآن الشاشة التي تظهر عليها مكالمة Wave؛ لن يُحفظ الفيديو إلا إذا رُفضت المكالمة أو استمر الرنين دون رد 20 ثانية أو أنهى الموظف المكالمة بالزر الأحمر أو الاختصار. إذا أنهى العميل المكالمة فلن يُحفظ الفيديو.';
+                if (status) status.textContent = 'يُسجّل الآن الشاشة التي تظهر عليها مكالمة Wave؛ يُحفظ الفيديو عند رفض المكالمة أو انتهائها قبل الرد أو استمرار الرنين دون رد 10 ثوانٍ أو انتهاء المكالمة بعد الرد.';
             } catch (error) {
                 console.error('تعذر بدء تسجيل شاشة مكالمة Wave:', error);
                 capture.error = error && error.message
@@ -21108,9 +21183,11 @@ function shareFilmGameLink() {
             const eligibleReasons = [
                 'employee-declined-call',
                 'employee-ended-call-red-button',
+                'call-window-disappeared-after-click',
                 'shortcut-ctrl-shift-q',
                 'unanswered-call-dropped',
                 'unanswered-call-too-short',
+                'ring-over-10-seconds',
                 'ring-over-20-seconds',
                 'ring-over-30-seconds'
             ];
